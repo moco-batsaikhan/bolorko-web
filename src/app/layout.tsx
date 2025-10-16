@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AuthProvider } from "../contexts/AuthContext";
+import { ToastProvider } from "../contexts/ToastContext";
 
 export const metadata: Metadata = {
   title: "MEGA",
@@ -13,7 +15,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`antialiased`}>{children}</body>
+      <body className={`antialiased`} suppressHydrationWarning={true}>
+        <ToastProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ToastProvider>
+      </body>
     </html>
   );
 }

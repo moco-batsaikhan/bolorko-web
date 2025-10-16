@@ -3,12 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { ShoppingCart, User, Menu, X } from "lucide-react";
+import { ShoppingCart, User, Menu, X, LogOut, LogIn } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
+import { LoginModal } from "./LoginModal";
 
 export function Header() {
   const pathname = usePathname();
+  const { isAuthenticated, user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const mobileProfileRef = useRef<HTMLDivElement>(null);
 
@@ -132,18 +136,21 @@ export function Header() {
             <div className="relative" ref={profileRef}>
               <button
                 className="p-2 text-gray-700 hover:text-purple-600 transition-all duration-300 hover:bg-purple-50 rounded-lg transform hover:scale-110"
-                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                onClick={() =>
+                  isAuthenticated ? setIsProfileOpen(!isProfileOpen) : setShowLoginModal(true)
+                }
               >
-                <User className="w-5 h-5" />
+                {isAuthenticated ? <User className="w-5 h-5" /> : <LogIn className="w-5 h-5" />}
               </button>
 
               {/* Profile Dropdown */}
-              {isProfileOpen && (
+              {isProfileOpen && isAuthenticated && (
                 <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50 transform opacity-100 scale-100 animate-in slide-in-from-top-2 fade-in duration-200">
                   <div className="px-4 py-2 border-b border-gray-100">
                     <div className="font-semibold text-gray-900 animate-in slide-in-from-left-4 duration-300">
-                      Baganaa
+                      {user?.name || "Хэрэглэгч"}
                     </div>
+                    <div className="text-sm text-gray-500">{user?.email}</div>
                   </div>
                   <Link
                     href="/profile"
@@ -167,9 +174,13 @@ export function Header() {
                     Захиалга
                   </Link>
                   <button
-                    className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-200 hover:translate-x-1"
-                    onClick={() => setIsProfileOpen(false)}
+                    className="flex items-center w-full text-left px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-200 hover:translate-x-1"
+                    onClick={() => {
+                      logout();
+                      setIsProfileOpen(false);
+                    }}
                   >
+                    <LogOut className="w-4 h-4 mr-2" />
                     Гарах
                   </button>
                 </div>
@@ -248,16 +259,18 @@ export function Header() {
               <div className="relative" ref={mobileProfileRef}>
                 <button
                   className="flex items-center w-full px-3 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 rounded-lg transition-all duration-200 hover:translate-x-1"
-                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  onClick={() =>
+                    isAuthenticated ? setIsProfileOpen(!isProfileOpen) : setShowLoginModal(true)
+                  }
                 >
                   <User className="w-4 h-4 mr-3 transform transition-transform duration-200" />
-                  Профайл
+                  {isAuthenticated ? "Профайл" : "Нэвтрэх"}
                 </button>
 
-                {isProfileOpen && (
+                {isProfileOpen && isAuthenticated && (
                   <div className="ml-7 mt-1 space-y-1 animate-in slide-in-from-left-4 duration-300">
                     <div className="px-3 py-1 text-sm font-medium text-gray-900 border-b border-gray-100">
-                      Baganaa
+                      {user?.name || "Хэрэглэгч"}
                     </div>
                     <Link
                       href="/profile"
@@ -290,12 +303,14 @@ export function Header() {
                       Захиалга
                     </Link>
                     <button
-                      className="block w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 rounded transition-all duration-200 hover:translate-x-1"
+                      className="flex items-center w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 rounded transition-all duration-200 hover:translate-x-1"
                       onClick={() => {
+                        logout();
                         setIsProfileOpen(false);
                         setIsMenuOpen(false);
                       }}
                     >
+                      <LogOut className="w-3 h-3 mr-2" />
                       Гарах
                     </button>
                   </div>
@@ -305,6 +320,7 @@ export function Header() {
           </div>
         </div>
       )}
+      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
     </header>
   );
 }
