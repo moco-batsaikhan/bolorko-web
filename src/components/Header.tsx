@@ -44,10 +44,14 @@ export function Header() {
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center space-x-2 group">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-700 rounded-lg flex items-center justify-center transform group-hover:scale-110 transition-transform duration-200 group-hover:shadow-lg">
-                <div className="w-4 h-4 bg-white rounded-sm transform group-hover:rotate-180 transition-transform duration-300"></div>
+              <div className="w-10 h-10 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-200 ">
+                <img
+                  src="/imgs/mega-logo.png"
+                  alt="MEGA Logo"
+                  className="w-8 h-8 object-contain transform group-hover:rotate-180 transition-transform duration-300"
+                />
               </div>
-              <span className="text-xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors duration-200">
+              <span className="text-xl font-bold text-gray-900 group-hover:text-mega-600 transition-colors duration-200">
                 MEGA{" "}
               </span>
             </Link>
@@ -58,12 +62,12 @@ export function Header() {
             <Link
               href="/"
               className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 group ${
-                pathname === "/" ? "text-purple-600" : "text-gray-700 hover:text-purple-600"
+                pathname === "/" ? "text-mega-600" : "text-gray-700 hover:text-mega-600"
               }`}
             >
               Нүүр
               <span
-                className={`absolute bottom-0 left-0 h-0.5 bg-purple-600 transition-all duration-300 ${
+                className={`absolute bottom-0 left-0 h-0.5 bg-mega-600 transition-all duration-300 ${
                   pathname === "/" ? "w-full" : "w-0 group-hover:w-full"
                 }`}
               ></span>
@@ -71,12 +75,12 @@ export function Header() {
             <Link
               href="/news"
               className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 group ${
-                pathname === "/news" ? "text-purple-600" : "text-gray-700 hover:text-purple-600"
+                pathname === "/news" ? "text-mega-600" : "text-gray-700 hover:text-mega-600"
               }`}
             >
               Мэдээ
               <span
-                className={`absolute bottom-0 left-0 h-0.5 bg-purple-600 transition-all duration-300 ${
+                className={`absolute bottom-0 left-0 h-0.5 bg-mega-600 transition-all duration-300 ${
                   pathname === "/news" ? "w-full" : "w-0 group-hover:w-full"
                 }`}
               ></span>
@@ -84,12 +88,12 @@ export function Header() {
             <Link
               href="/shop"
               className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 group ${
-                pathname === "/shop" ? "text-purple-600" : "text-gray-700 hover:text-purple-600"
+                pathname === "/shop" ? "text-mega-600" : "text-gray-700 hover:text-mega-600"
               }`}
             >
               Дэлгүүр
               <span
-                className={`absolute bottom-0 left-0 h-0.5 bg-purple-600 transition-all duration-300 ${
+                className={`absolute bottom-0 left-0 h-0.5 bg-mega-600 transition-all duration-300 ${
                   pathname === "/shop" ? "w-full" : "w-0 group-hover:w-full"
                 }`}
               ></span>
@@ -97,12 +101,12 @@ export function Header() {
             <Link
               href="/lessons"
               className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 group ${
-                pathname === "/lessons" ? "text-purple-600" : "text-gray-700 hover:text-purple-600"
+                pathname === "/lessons" ? "text-mega-600" : "text-gray-700 hover:text-mega-600"
               }`}
             >
               Хичээл
               <span
-                className={`absolute bottom-0 left-0 h-0.5 bg-purple-600 transition-all duration-300 ${
+                className={`absolute bottom-0 left-0 h-0.5 bg-mega-600 transition-all duration-300 ${
                   pathname === "/lessons" ? "w-full" : "w-0 group-hover:w-full"
                 }`}
               ></span>
@@ -110,14 +114,12 @@ export function Header() {
             <Link
               href="/competitions"
               className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 group ${
-                pathname === "/competitions"
-                  ? "text-purple-600"
-                  : "text-gray-700 hover:text-purple-600"
+                pathname === "/competitions" ? "text-mega-600" : "text-gray-700 hover:text-mega-600"
               }`}
             >
               Тэмцээн
               <span
-                className={`absolute bottom-0 left-0 h-0.5 bg-purple-600 transition-all duration-300 ${
+                className={`absolute bottom-0 left-0 h-0.5 bg-mega-600 transition-all duration-300 ${
                   pathname === "/competitions" ? "w-full" : "w-0 group-hover:w-full"
                 }`}
               ></span>
@@ -128,14 +130,14 @@ export function Header() {
           <div className="hidden md:flex items-center space-x-4">
             <Link
               href="/cart"
-              className="p-2 text-gray-700 hover:text-purple-600 transition-all duration-300 hover:bg-purple-50 rounded-lg transform hover:scale-110"
+              className="p-2 text-gray-700 hover:text-mega-600 transition-all duration-300 hover:bg-mega-50 rounded-lg transform hover:scale-110"
               onClick={() => setIsMenuOpen(false)}
             >
               <ShoppingCart className="w-5 h-5" />
             </Link>
             <div className="relative" ref={profileRef}>
               <button
-                className="p-2 text-gray-700 hover:text-purple-600 transition-all duration-300 hover:bg-purple-50 rounded-lg transform hover:scale-110"
+                className="p-2 text-gray-700 hover:text-mega-600 transition-all duration-300 hover:bg-mega-50 rounded-lg transform hover:scale-110"
                 onClick={() =>
                   isAuthenticated ? setIsProfileOpen(!isProfileOpen) : setShowLoginModal(true)
                 }
@@ -154,21 +156,21 @@ export function Header() {
                   </div>
                   <Link
                     href="/profile"
-                    className="block px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-all duration-200 border-b border-gray-100 hover:translate-x-1"
+                    className="block px-4 py-2 text-gray-700 hover:bg-mega-50 hover:text-mega-600 transition-all duration-200 border-b border-gray-100 hover:translate-x-1"
                     onClick={() => setIsProfileOpen(false)}
                   >
                     Хувийн мэдээлэл
                   </Link>
                   <Link
                     href="/orders"
-                    className="block px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-all duration-200 border-b border-gray-100 hover:translate-x-1"
+                    className="block px-4 py-2 text-gray-700 hover:bg-mega-50 hover:text-mega-600 transition-all duration-200 border-b border-gray-100 hover:translate-x-1"
                     onClick={() => setIsProfileOpen(false)}
                   >
                     Гүйлгээний түүх
                   </Link>
                   <Link
                     href="/settings"
-                    className="block px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-all duration-200 border-b border-gray-100 hover:translate-x-1"
+                    className="block px-4 py-2 text-gray-700 hover:bg-mega-50 hover:text-mega-600 transition-all duration-200 border-b border-gray-100 hover:translate-x-1"
                     onClick={() => setIsProfileOpen(false)}
                   >
                     Захиалга
@@ -190,7 +192,7 @@ export function Header() {
 
           {/* Mobile menu button */}
           <button
-            className="md:hidden p-2 text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-300 transform hover:scale-110"
+            className="md:hidden p-2 text-gray-700 hover:text-mega-600 hover:bg-mega-50 rounded-lg transition-all duration-300 transform hover:scale-110"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             <div className="transform transition-transform duration-300">
@@ -210,35 +212,35 @@ export function Header() {
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t shadow-lg">
             <Link
               href="/"
-              className="block px-3 py-2 text-gray-900 font-medium hover:bg-purple-50 hover:text-purple-600 rounded-lg transition-all duration-200 hover:translate-x-1"
+              className="block px-3 py-2 text-gray-900 font-medium hover:bg-mega-50 hover:text-mega-600 rounded-lg transition-all duration-200 hover:translate-x-1"
               onClick={() => setIsMenuOpen(false)}
             >
               Нүүр
             </Link>
             <Link
               href="/news"
-              className="block px-3 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 rounded-lg transition-all duration-200 hover:translate-x-1"
+              className="block px-3 py-2 text-gray-700 hover:bg-mega-50 hover:text-mega-600 rounded-lg transition-all duration-200 hover:translate-x-1"
               onClick={() => setIsMenuOpen(false)}
             >
               Мэдээ
             </Link>
             <Link
               href="/shop"
-              className="block px-3 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 rounded-lg transition-all duration-200 hover:translate-x-1"
+              className="block px-3 py-2 text-gray-700 hover:bg-mega-50 hover:text-mega-600 rounded-lg transition-all duration-200 hover:translate-x-1"
               onClick={() => setIsMenuOpen(false)}
             >
               Дэлгүүр
             </Link>
             <Link
               href="/lessons"
-              className="block px-3 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 rounded-lg transition-all duration-200 hover:translate-x-1"
+              className="block px-3 py-2 text-gray-700 hover:bg-mega-50 hover:text-mega-600 rounded-lg transition-all duration-200 hover:translate-x-1"
               onClick={() => setIsMenuOpen(false)}
             >
               Хичээл
             </Link>
             <Link
               href="/competitions"
-              className="block px-3 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 rounded-lg transition-all duration-200 hover:translate-x-1"
+              className="block px-3 py-2 text-gray-700 hover:bg-mega-50 hover:text-mega-600 rounded-lg transition-all duration-200 hover:translate-x-1"
               onClick={() => setIsMenuOpen(false)}
             >
               Тэмцээн
@@ -248,7 +250,7 @@ export function Header() {
             <div className="border-t border-gray-200 mt-2 pt-2">
               <Link
                 href="/cart"
-                className="flex items-center px-3 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 rounded-lg transition-all duration-200 hover:translate-x-1"
+                className="flex items-center px-3 py-2 text-gray-700 hover:bg-mega-50 hover:text-mega-600 rounded-lg transition-all duration-200 hover:translate-x-1"
                 onClick={() => setIsMenuOpen(false)}
               >
                 <ShoppingCart className="w-4 h-4 mr-3" />
@@ -258,7 +260,7 @@ export function Header() {
               {/* Mobile Profile Dropdown */}
               <div className="relative" ref={mobileProfileRef}>
                 <button
-                  className="flex items-center w-full px-3 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-600 rounded-lg transition-all duration-200 hover:translate-x-1"
+                  className="flex items-center w-full px-3 py-2 text-gray-700 hover:bg-mega-50 hover:text-mega-600 rounded-lg transition-all duration-200 hover:translate-x-1"
                   onClick={() =>
                     isAuthenticated ? setIsProfileOpen(!isProfileOpen) : setShowLoginModal(true)
                   }
@@ -274,7 +276,7 @@ export function Header() {
                     </div>
                     <Link
                       href="/profile"
-                      className="block px-3 py-2 text-sm text-gray-600 hover:bg-purple-50 hover:text-purple-600 rounded transition-all duration-200 hover:translate-x-1"
+                      className="block px-3 py-2 text-sm text-gray-600 hover:bg-mega-50 hover:text-mega-600 rounded transition-all duration-200 hover:translate-x-1"
                       onClick={() => {
                         setIsProfileOpen(false);
                         setIsMenuOpen(false);
@@ -284,7 +286,7 @@ export function Header() {
                     </Link>
                     <Link
                       href="/orders"
-                      className="block px-3 py-2 text-sm text-gray-600 hover:bg-purple-50 hover:text-purple-600 rounded transition-all duration-200 hover:translate-x-1"
+                      className="block px-3 py-2 text-sm text-gray-600 hover:bg-mega-50 hover:text-mega-600 rounded transition-all duration-200 hover:translate-x-1"
                       onClick={() => {
                         setIsProfileOpen(false);
                         setIsMenuOpen(false);
@@ -294,7 +296,7 @@ export function Header() {
                     </Link>
                     <Link
                       href="/settings"
-                      className="block px-3 py-2 text-sm text-gray-600 hover:bg-purple-50 hover:text-purple-600 rounded transition-all duration-200 hover:translate-x-1"
+                      className="block px-3 py-2 text-sm text-gray-600 hover:bg-mega-50 hover:text-mega-600 rounded transition-all duration-200 hover:translate-x-1"
                       onClick={() => {
                         setIsProfileOpen(false);
                         setIsMenuOpen(false);

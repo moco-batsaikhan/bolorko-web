@@ -8,10 +8,10 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center">
-                <div className="w-4 h-4 bg-white rounded-sm"></div>
+              <div className="w-8 h-8 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-200 ">
+                <img src="/imgs/mega-logo.png" alt="MEGA Logo" className="w-8 h-8 " />
               </div>
-              <span className="text-xl font-bold">CubeClub</span>
+              <span className="text-xl font-bold">MEGA</span>
             </div>
             <p className="text-gray-600 mb-4">ME to WE</p>
           </div>
@@ -20,22 +20,22 @@ export function Footer() {
             <h3 className="text-lg font-semibold mb-4">Холбоос</h3>
             <ul className="space-y-2 text-gray-700">
               <li>
-                <Link href="/lessons" className="hover:text-purple-600 transition-colors">
+                <Link href="/lessons" className="hover:text-mega-600 transition-colors">
                   Хичээл
                 </Link>
               </li>
               <li>
-                <Link href="/competitions" className="hover:text-purple-600 transition-colors">
+                <Link href="/competitions" className="hover:text-mega-600 transition-colors">
                   Тэмцээн уралдаан
                 </Link>
               </li>
               <li>
-                <Link href="/shop" className="hover:text-purple-600 transition-colors">
+                <Link href="/shop" className="hover:text-mega-600 transition-colors">
                   Дэлгүүр
                 </Link>
               </li>
               <li>
-                <Link href="/news" className="hover:text-purple-600 transition-colors">
+                <Link href="/news" className="hover:text-mega-600 transition-colors">
                   Мэдээ мэдээлэл
                 </Link>
               </li>
@@ -62,7 +62,7 @@ export function Footer() {
                 Facebook хаяг:
                 <Link
                   href="https://www.facebook.com/rubikshooniidelguur"
-                  className="hover:text-purple-600 transition-colors"
+                  className="hover:text-mega-600 transition-colors"
                 >
                   MEGA Рубик Шооны Дэлгүүр
                 </Link>

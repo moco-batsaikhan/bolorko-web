@@ -1,3 +1,36 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom MEGA theme colors */
+.text-mega-600 {
+  color: #2f4276;
+}
+
+.bg-mega-600 {
+  background-color: #2f4276;
+}
+
+.hover\:text-mega-600:hover {
+  color: #2f4276;
+}
+
+.hover\:bg-mega-700:hover {
+  background-color: #253654;
+}
+
+.hover\:bg-mega-50:hover {
+  background-color: #f8f9fb;
+}
+
+.border-mega-600 {
+  border-color: #2f4276;
+}
+
+.focus\:ring-mega-500:focus {
+  --tw-ring-color: #3d5194;
+}
+
+.focus\:ring-mega-600:focus {
+  --tw-ring-color: #2f4276;
+}

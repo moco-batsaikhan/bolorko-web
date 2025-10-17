@@ -109,7 +109,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
             onClick={() => setIsLoginMode(true)}
             className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
               isLoginMode
-                ? "text-purple-600 border-b-2 border-purple-600"
+                ? "text-mega-600 border-b-2 border-mega-600"
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
@@ -120,7 +120,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
             onClick={() => setIsLoginMode(false)}
             className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
               !isLoginMode
-                ? "text-purple-600 border-b-2 border-purple-600"
+                ? "text-mega-600 border-b-2 border-mega-600"
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
@@ -136,7 +136,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500 focus:border-transparent transition-all duration-200"
                 placeholder="Нэрээ оруулна уу"
                 required={!isLoginMode}
               />
@@ -149,7 +149,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500 focus:border-transparent transition-all duration-200"
               placeholder="И-мэйл хаягаа оруулна уу"
             />
           </div>
@@ -161,7 +161,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500 focus:border-transparent transition-all duration-200"
                 placeholder="Нууц үгээ оруулна уу"
               />
               <button
@@ -183,7 +183,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-mega-600 text-white py-2 px-4 rounded-lg hover:bg-mega-700 focus:outline-none focus:ring-2 focus:ring-mega-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading
               ? isLoginMode

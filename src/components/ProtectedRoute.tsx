@@ -17,7 +17,7 @@ export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mega-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Уншиж байна...</p>
         </div>
       </div>
@@ -33,9 +33,9 @@ export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
       <>
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="bg-white rounded-lg shadow-lg p-8 text-center max-w-md mx-4">
-            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-mega-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
-                className="w-8 h-8 text-purple-600"
+                className="w-8 h-8 text-mega-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -52,7 +52,7 @@ export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
             <p className="text-gray-600 mb-6">Энэ хуудсыг үзэхийн тулд эхлээд нэвтэрнэ үү.</p>
             <button
               onClick={() => setShowLoginModal(true)}
-              className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors duration-200"
+              className="bg-mega-600 text-white px-6 py-2 rounded-lg hover:bg-mega-700 transition-colors duration-200"
             >
               Нэвтрэх
             </button>
