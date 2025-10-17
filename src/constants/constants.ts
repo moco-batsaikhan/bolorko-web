@@ -17,13 +17,16 @@ export const API_ENDPOINTS = {
     PRODUCTS: "/products",
     CART: "/cart",
   },
+  NEWS: {
+    PUBLIC: "/news/public",
+    CATEGORIES: "/news/categories/public",
+  },
 } as const;
 
 // User Roles
 export const USER_ROLES = {
   ADMIN: "ADMIN",
   USER: "USER",
-  MODERATOR: "MODERATOR",
 } as const;
 
 // Storage Keys

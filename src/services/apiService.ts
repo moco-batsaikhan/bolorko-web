@@ -26,6 +26,63 @@ export interface RegisterCredentials {
   role?: string;
 }
 
+export interface NewsCategory {
+  id: number;
+  name: string;
+  description: string;
+  slug: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NewsComment {
+  id: number;
+  content: string;
+  newsId: number;
+  author: NewsAuthor;
+  authorId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NewsAuthor {
+  id: number;
+  name: string;
+  email: string;
+  roleId: number;
+  createdAt: string;
+}
+
+export interface NewsArticle {
+  id: number;
+  title: string;
+  content: string;
+  excerpt: string;
+  imageUrl: string | null;
+  isPublished: boolean;
+  viewCount: number;
+  author: NewsAuthor;
+  authorId: number;
+  category: NewsCategory | null;
+  categoryId: number | null;
+  comments: NewsComment[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NewsResponse {
+  data: NewsArticle[];
+  total: number;
+  pages: number;
+}
+
+export interface NewsQueryParams {
+  page?: number;
+  limit?: number;
+  categoryId?: number;
+}
+
 class ApiService {
   private baseURL: string;
 
@@ -139,6 +196,51 @@ class ApiService {
     console.log("getCurrentUser: ", response);
 
     return this.handleResponse<User>(response);
+  }
+
+  // News API
+  async getNews(params?: NewsQueryParams): Promise<NewsResponse> {
+    const queryString = new URLSearchParams();
+
+    if (params?.page) queryString.append("page", params.page.toString());
+    if (params?.limit) queryString.append("limit", params.limit.toString());
+    if (params?.categoryId) queryString.append("categoryId", params.categoryId.toString());
+
+    const url = `${this.baseURL}${API_ENDPOINTS.NEWS.PUBLIC}${
+      queryString.toString() ? "?" + queryString.toString() : ""
+    }`;
+
+    const response = await fetch(url, {
+      method: "GET",
+    });
+
+    return this.handleResponse<NewsResponse>(response);
+  }
+
+  async getNewsCategories(): Promise<NewsCategory[]> {
+    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.NEWS.CATEGORIES}`, {
+      method: "GET",
+    });
+
+    return this.handleResponse<NewsCategory[]>(response);
+  }
+
+  async getNewsDetail(id: number): Promise<NewsArticle> {
+    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.NEWS.PUBLIC}/${id}`, {
+      method: "GET",
+    });
+
+    return this.handleResponse<NewsArticle>(response);
+  }
+
+  async addNewsComment(newsId: number, content: string): Promise<NewsComment> {
+    const response = await fetch(`${this.baseURL}/news/${newsId}/comments`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ content }),
+    });
+
+    return this.handleResponse<NewsComment>(response);
   }
 }
 

@@ -34,3 +34,26 @@
 .focus\:ring-mega-600:focus {
   --tw-ring-color: #2f4276;
 }
+
+.bg-mega-100 {
+  background-color: #f0f2f8;
+}
+
+.text-mega-800 {
+  color: #1e2a4a;
+}
+
+/* Text truncation utilities */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
