@@ -48,7 +48,7 @@ export function Header() {
                 <img
                   src="/imgs/mega-logo.png"
                   alt="MEGA Logo"
-                  className="w-8 h-8 object-contain transform group-hover:rotate-180 transition-transform duration-300"
+                  className="w-10 h-10 object-contain transform group-hover:rotate-180 transition-transform duration-300"
                 />
               </div>
               <span className="text-xl font-bold text-gray-900 group-hover:text-mega-600 transition-colors duration-200">

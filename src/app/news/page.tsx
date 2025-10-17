@@ -91,7 +91,7 @@ export default function NewsPage() {
       <Header />
 
       {/* Hero Section */}
-      <div className="relative text-white py-20 h-96 overflow-hidden">
+      <div className="relative text-white py-20 h-[50vh] overflow-hidden flex items-center justify-center">
         <img src="/imgs/news-bg.jpg" alt="bg" className="absolute inset-0 bg-cover bg-center" />
 
         {/* Dark Overlay */}
