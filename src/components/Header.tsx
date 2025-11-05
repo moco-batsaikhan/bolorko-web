@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { ShoppingCart, User, Menu, X, LogOut, LogIn } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { LoginModal } from "./LoginModal";
+import { UserRole } from "@/constants/roles";
 
 export function Header() {
   const pathname = usePathname();
@@ -154,6 +155,15 @@ export function Header() {
                     </div>
                     <div className="text-sm text-gray-500">{user?.email}</div>
                   </div>
+                  {user?.role === UserRole.ADMIN && (
+                    <Link
+                      href="/admin-dashboard"
+                      className="block px-4 py-2 text-gray-700 hover:bg-mega-50 hover:text-mega-600 transition-all duration-200 border-b border-gray-100 hover:translate-x-1"
+                      onClick={() => setIsProfileOpen(false)}
+                    >
+                      Админ панель
+                    </Link>
+                  )}
                   <Link
                     href="/profile"
                     className="block px-4 py-2 text-gray-700 hover:bg-mega-50 hover:text-mega-600 transition-all duration-200 border-b border-gray-100 hover:translate-x-1"
