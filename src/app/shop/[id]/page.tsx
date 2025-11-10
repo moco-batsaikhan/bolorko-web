@@ -3,15 +3,14 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { apiService, Product } from "@/services/apiService";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowLeft,
   ShoppingCart,
   Star,
-  Heart,
-  Share2,
   Package,
   Tag,
   MessageSquare,
@@ -20,14 +19,15 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
+import { useCart } from "@/contexts/CartContext";
 import { LoginModal } from "@/components/LoginModal";
 import Loading from "@/components/Loading";
 
 export default function ProductDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const { isAuthenticated, user } = useAuth();
   const { showToast } = useToast();
+  const { addToCart, loading: cartLoading } = useCart();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,6 +40,9 @@ export default function ProductDetailPage() {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [submittingRating, setSubmittingRating] = useState(false);
+
+  // Cart state
+  const [quantity, setQuantity] = useState(1);
 
   // Fetch product details
   useEffect(() => {
@@ -107,6 +110,26 @@ export default function ProductDetailPage() {
     }
 
     return [];
+  };
+
+  // Handle add to cart
+  const handleAddToCart = async () => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
+
+    if (!product) return;
+
+    try {
+      await addToCart(product.id, quantity);
+      showToast("Бүтээгдэхүүн сагсанд нэмэгдлээ!", "success");
+      // Reset quantity to 1 after adding
+      setQuantity(1);
+    } catch (error) {
+      showToast("Алдаа гарлаа. Дахин оролдоно уу.", "error");
+      console.error("Add to cart error:", error);
+    }
   };
 
   // Handle rating submission
@@ -282,11 +305,14 @@ export default function ProductDetailPage() {
             {images.length > 0 ? (
               <>
                 {/* Main Image */}
-                <div className="aspect-square bg-white rounded-lg overflow-hidden shadow-lg">
-                  <img
+                <div className="aspect-square bg-white rounded-lg overflow-hidden shadow-lg relative">
+                  <Image
                     src={images[selectedImageIndex]}
                     alt={product.name}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    priority
                   />
                 </div>
 
@@ -297,16 +323,18 @@ export default function ProductDetailPage() {
                       <button
                         key={index}
                         onClick={() => setSelectedImageIndex(index)}
-                        className={`aspect-square bg-white rounded-lg overflow-hidden border-2 transition-colors ${
+                        className={`aspect-square bg-white rounded-lg overflow-hidden border-2 transition-colors relative ${
                           selectedImageIndex === index
                             ? "border-mega-600"
                             : "border-gray-200 hover:border-gray-300"
                         }`}
                       >
-                        <img
+                        <Image
                           src={image}
                           alt={`${product.name} ${index + 1}`}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          sizes="120px"
                         />
                       </button>
                     ))}
@@ -325,7 +353,7 @@ export default function ProductDetailPage() {
             {/* Category */}
             <div className="flex items-center">
               <Tag className="w-4 h-4 mr-2 text-gray-400" />
-              <span className="text-sm text-gray-600">{product.category.name}</span>
+              <span className="text-sm text-gray-600">{product.category?.name || "Категори"}</span>
             </div>
 
             {/* Product Name */}
@@ -388,12 +416,41 @@ export default function ProductDetailPage() {
 
             {/* Actions */}
             <div className="space-y-4">
+              <div className="flex items-center space-x-4 mb-4">
+                <label htmlFor="quantity" className="text-sm font-medium text-gray-900">
+                  Тоо ширхэг:
+                </label>
+                <select
+                  id="quantity"
+                  value={quantity}
+                  onChange={(e) => setQuantity(Number(e.target.value))}
+                  className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-mega-500 focus:border-transparent"
+                  disabled={product.stock === 0}
+                >
+                  {Array.from({ length: Math.min(product.stock, 10) }, (_, i) => (
+                    <option key={i + 1} value={i + 1}>
+                      {i + 1}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <button
-                disabled={product.stock === 0}
+                onClick={handleAddToCart}
+                disabled={product.stock === 0 || cartLoading}
                 className="w-full flex items-center justify-center px-6 py-3 bg-mega-600 text-white rounded-lg hover:bg-mega-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-lg font-medium"
               >
                 <ShoppingCart className="w-5 h-5 mr-2" />
-                {product.stock === 0 ? "Дууссан" : "Сагсанд нэмэх"}
+                {cartLoading ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Нэмж байна...
+                  </div>
+                ) : product.stock === 0 ? (
+                  "Дууссан"
+                ) : (
+                  "Сагсанд нэмэх"
+                )}
               </button>
             </div>
           </div>
@@ -504,13 +561,13 @@ export default function ProductDetailPage() {
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-semibold text-gray-900">
-                          {ratingItem.user?.name || "Хэрэглэгч"}
+                          Хэрэглэгч #{ratingItem.userId}
                         </h4>
                         <div className="flex items-center">
                           {renderStars(ratingItem.rating, "sm")}
                         </div>
                       </div>
-                      <p className="text-gray-700 leading-relaxed">{ratingItem.comment}</p>
+                      <p className="text-gray-700 leading-relaxed">{ratingItem.review}</p>
                       <span className="text-sm text-gray-500 mt-2 block">
                         {new Date(ratingItem.createdAt).toLocaleDateString("mn-MN")}
                       </span>

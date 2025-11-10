@@ -45,6 +45,127 @@ export interface CreateNewsRequest {
   image?: File;
 }
 
+export interface Competition {
+  id: number;
+  title: string;
+  description: string;
+  image: string;
+  status: "UPCOMING" | "ONGOING" | "COMPLETED";
+  startDate: string;
+  endDate: string;
+  registerLink: string;
+  address: string;
+  comments: CompetitionComment[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CompetitionComment {
+  id: number;
+  comment: string;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCompetitionRequest {
+  title: string;
+  description: string;
+  image?: File;
+  status: "UPCOMING" | "ONGOING" | "COMPLETED";
+  startDate: string;
+  endDate: string;
+  registerLink: string;
+  address: string;
+}
+
+export interface UpdateCompetitionRequest {
+  title: string;
+  description: string;
+  image?: File;
+  status: "UPCOMING" | "ONGOING" | "COMPLETED";
+  startDate: string;
+  endDate: string;
+  registerLink: string;
+  address: string;
+}
+
+// Cart interfaces
+export interface CartItem {
+  id: number;
+  cartId: number;
+  productId: number;
+  quantity: number;
+  createdAt: string;
+  product: Product;
+}
+
+export interface Cart {
+  id: number;
+  userId: number;
+  createdAt: string;
+  cartItems: CartItem[];
+}
+
+export interface CartTotal {
+  totalItems: number;
+  totalPrice: number;
+  discountAmount: number;
+  finalPrice: number;
+}
+
+export interface AddToCartRequest {
+  productId: number;
+  quantity: number;
+}
+
+export interface UpdateCartItemRequest {
+  quantity: number;
+}
+
+// Order interfaces
+export interface OrderItem {
+  id: number;
+  orderId: number;
+  productId: number;
+  quantity: number;
+  price: string;
+  createdAt: string;
+  product: Product;
+}
+
+export interface Order {
+  id: number;
+  userId: number;
+  total: string;
+  status: "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+  createdAt: string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+    roleId: number;
+    createdAt: string;
+  };
+  orderItems: OrderItem[];
+}
+
+export interface CreateOrderRequest {
+  userId: number;
+  orderItems: {
+    productId: number;
+    quantity: number;
+  }[];
+}
+
+export interface UpdateOrderStatusRequest {
+  status: "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+}
+
 export interface CreateCategoryRequest {
   name: string;
   slug: string;
@@ -265,12 +386,19 @@ class ApiService {
     this.baseURL = API_BASE_URL;
   }
 
-  private getAuthHeaders(): Record<string, string> {
+  private getAuthHeaders(isMultipart: boolean = false): Record<string, string> {
     const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-    return {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-    };
+    const headers: Record<string, string> = {};
+
+    if (!isMultipart) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    return headers;
   }
 
   private async handleResponse<T>(response: Response): Promise<T> {
@@ -857,6 +985,228 @@ class ApiService {
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
+  }
+
+  // Competition methods
+  async getCompetitions(params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+  }): Promise<{ data: Competition[]; total: number; pages: number }> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.append("page", params.page.toString());
+    if (params?.limit) searchParams.append("limit", params.limit.toString());
+    if (params?.status) searchParams.append("status", params.status);
+
+    const response = await fetch(
+      `${this.baseURL}/competitions${searchParams.toString() ? `?${searchParams.toString()}` : ""}`,
+    );
+
+    return this.handleResponse<{ data: Competition[]; total: number; pages: number }>(response);
+  }
+
+  async getCompetitionById(id: number): Promise<Competition> {
+    const response = await fetch(`${this.baseURL}/competitions/${id}`);
+    return this.handleResponse<Competition>(response);
+  }
+
+  async createCompetition(competitionData: CreateCompetitionRequest): Promise<Competition> {
+    const formData = new FormData();
+    formData.append("title", competitionData.title);
+    formData.append("description", competitionData.description);
+    formData.append("status", competitionData.status);
+    formData.append("startDate", competitionData.startDate);
+    formData.append("endDate", competitionData.endDate);
+    formData.append("registerLink", competitionData.registerLink);
+    formData.append("address", competitionData.address);
+
+    if (competitionData.image) {
+      formData.append("image", competitionData.image);
+    }
+
+    const response = await fetch(`${this.baseURL}/competitions`, {
+      method: "POST",
+      headers: this.getAuthHeaders(true), // multipart request
+      body: formData,
+    });
+
+    return this.handleResponse<Competition>(response);
+  }
+
+  async updateCompetition(
+    id: number,
+    competitionData: UpdateCompetitionRequest,
+  ): Promise<Competition> {
+    const formData = new FormData();
+    formData.append("title", competitionData.title);
+    formData.append("description", competitionData.description);
+    formData.append("status", competitionData.status);
+    formData.append("startDate", competitionData.startDate);
+    formData.append("endDate", competitionData.endDate);
+    formData.append("registerLink", competitionData.registerLink);
+    formData.append("address", competitionData.address);
+
+    if (competitionData.image) {
+      formData.append("image", competitionData.image);
+    }
+
+    const response = await fetch(`${this.baseURL}/competitions/${id}`, {
+      method: "PATCH",
+      headers: this.getAuthHeaders(true), // multipart request
+      body: formData,
+    });
+
+    return this.handleResponse<Competition>(response);
+  }
+
+  async deleteCompetition(id: number): Promise<void> {
+    const response = await fetch(`${this.baseURL}/competitions/${id}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  }
+
+  // Competition comments methods
+  async getCompetitionComments(competitionId: number): Promise<CompetitionComment[]> {
+    const response = await fetch(`${this.baseURL}/competitions/${competitionId}/comments`);
+    return this.handleResponse<CompetitionComment[]>(response);
+  }
+
+  async createCompetitionComment(
+    competitionId: number,
+    comment: string,
+  ): Promise<CompetitionComment> {
+    const response = await fetch(`${this.baseURL}/competitions/${competitionId}/comments`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ comment }),
+    });
+
+    return this.handleResponse<CompetitionComment>(response);
+  }
+
+  async deleteCompetitionComment(commentId: number): Promise<void> {
+    const response = await fetch(`${this.baseURL}/competitions/comments/${commentId}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  }
+
+  // Cart methods
+  async addToCart(userId: number, productData: AddToCartRequest): Promise<Cart> {
+    const response = await fetch(`${this.baseURL}/cart/${userId}/add`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(productData),
+    });
+
+    return this.handleResponse<Cart>(response);
+  }
+
+  async getUserCart(userId: number): Promise<Cart> {
+    const response = await fetch(`${this.baseURL}/cart/${userId}`, {
+      headers: this.getAuthHeaders(),
+    });
+
+    return this.handleResponse<Cart>(response);
+  }
+
+  async getCartTotal(userId: number): Promise<CartTotal> {
+    const response = await fetch(`${this.baseURL}/cart/${userId}/total`, {
+      headers: this.getAuthHeaders(),
+    });
+
+    return this.handleResponse<CartTotal>(response);
+  }
+
+  async updateCartItemQuantity(
+    userId: number,
+    itemId: number,
+    quantityData: UpdateCartItemRequest,
+  ): Promise<Cart> {
+    const response = await fetch(`${this.baseURL}/cart/${userId}/items/${itemId}`, {
+      method: "PATCH",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(quantityData),
+    });
+
+    return this.handleResponse<Cart>(response);
+  }
+
+  async removeCartItem(userId: number, itemId: number): Promise<void> {
+    const response = await fetch(`${this.baseURL}/cart/${userId}/items/${itemId}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  }
+
+  async clearCart(userId: number): Promise<void> {
+    const response = await fetch(`${this.baseURL}/cart/${userId}/clear`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  }
+
+  // Order methods
+  async createOrder(orderData: CreateOrderRequest): Promise<Order> {
+    const response = await fetch(`${this.baseURL}/orders`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(orderData),
+    });
+
+    return this.handleResponse<Order>(response);
+  }
+
+  async getAllOrders(): Promise<Order[]> {
+    const response = await fetch(`${this.baseURL}/orders`, {
+      headers: this.getAuthHeaders(),
+    });
+
+    return this.handleResponse<Order[]>(response);
+  }
+
+  async getUserOrders(userId: number): Promise<Order[]> {
+    const response = await fetch(`${this.baseURL}/orders/my-orders/${userId}`, {
+      headers: this.getAuthHeaders(),
+    });
+
+    return this.handleResponse<Order[]>(response);
+  }
+
+  async updateOrderStatus(orderId: number, statusData: UpdateOrderStatusRequest): Promise<Order> {
+    const response = await fetch(`${this.baseURL}/orders/${orderId}`, {
+      method: "PATCH",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(statusData),
+    });
+
+    return this.handleResponse<Order>(response);
+  }
+
+  async markOrderAsPaid(orderId: number): Promise<Order> {
+    const response = await fetch(`${this.baseURL}/orders/${orderId}/mark-paid`, {
+      method: "PATCH",
+      headers: this.getAuthHeaders(),
+    });
+
+    return this.handleResponse<Order>(response);
   }
 }
 

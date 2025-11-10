@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { useState, useEffect } from "react";
 import { apiService, Product, ProductCategory } from "@/services/apiService";
 import Link from "next/link";
+import Image from "next/image";
 import { ShoppingCart, Star, Filter, ChevronDown, Package, Tag, Eye, Heart } from "lucide-react";
 import Loading from "@/components/Loading";
 
@@ -244,10 +245,12 @@ export default function ShopPage() {
                     {/* Product Image */}
                     <div className="relative h-48 overflow-hidden">
                       {imageUrl ? (
-                        <img
+                        <Image
                           src={imageUrl}
                           alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          fill
+                          className="object-cover group-hover:scale-110 transition-transform duration-300"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
@@ -297,7 +300,9 @@ export default function ShopPage() {
                       {/* Category */}
                       <div className="flex items-center mb-2">
                         <Tag className="w-3 h-3 mr-1 text-gray-400" />
-                        <span className="text-xs text-gray-500">{product.category.name}</span>
+                        <span className="text-xs text-gray-500">
+                          {product.category?.name || "Категори"}
+                        </span>
                       </div>
 
                       {/* Product Name */}
@@ -341,13 +346,13 @@ export default function ShopPage() {
                       </div>
 
                       {/* Add to Cart Button */}
-                      <button
+                      {/* <button
                         disabled={product.stock === 0}
                         className="w-full flex items-center justify-center px-4 py-2 bg-mega-600 text-white rounded-lg hover:bg-mega-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <ShoppingCart className="w-4 h-4 mr-2" />
                         {product.stock === 0 ? "Дууссан" : "Сагсанд нэмэх"}
-                      </button>
+                      </button> */}
                     </div>
                   </Link>
                 );
