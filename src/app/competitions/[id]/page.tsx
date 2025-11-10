@@ -244,18 +244,30 @@ export default function CompetitionDetailPage({ params }: CompetitionDetailPageP
               </div>
             </div>
 
-            {/* Register Button */}
-            <div className="border-t pt-6">
-              <a
-                href={competition.registerLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors text-lg font-medium"
-              >
-                <ExternalLink size={20} />
-                Тэмцээнд бүртгүүлэх
-              </a>
-            </div>
+            {/* Register Button - Only show for UPCOMING competitions */}
+            {competition.status === "UPCOMING" && (
+              <div className="border-t pt-6">
+                <a
+                  href={competition.registerLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors text-lg font-medium"
+                >
+                  <ExternalLink size={20} />
+                  Тэмцээнд бүртгүүлэх
+                </a>
+              </div>
+            )}
+
+            {/* Status message for non-upcoming competitions */}
+            {competition.status !== "UPCOMING" && (
+              <div className="border-t pt-6">
+                <div className="inline-flex items-center gap-2 bg-gray-100 text-gray-600 px-6 py-3 rounded-lg text-lg font-medium">
+                  <Trophy size={20} />
+                  {competition.status === "ONGOING" ? "Тэмцээн явагдаж байна" : "Тэмцээн дууссан"}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
