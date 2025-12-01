@@ -180,7 +180,7 @@ export default function NewsDetailPage() {
               src={
                 article!.imageUrl.startsWith("http")
                   ? article!.imageUrl
-                  : `http://0.0.0.0:3000${article!.imageUrl}`
+                  : `http://129.212.228.96${article!.imageUrl}`
               }
               alt={article!.title}
               className="w-full h-auto object-cover"

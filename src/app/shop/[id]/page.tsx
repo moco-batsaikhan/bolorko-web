@@ -101,12 +101,12 @@ export default function ProductDetailPage() {
 
     if (typeof images === "string") {
       if (images === "string") return []; // Invalid data
-      const url = images.startsWith("http") ? images : `http://0.0.0.0:3000${images}`;
+      const url = images.startsWith("http") ? images : `http://129.212.228.96${images}`;
       return [url];
     }
 
     if (Array.isArray(images)) {
-      return images.map((img) => (img.startsWith("http") ? img : `http://0.0.0.0:3000${img}`));
+      return images.map((img) => (img.startsWith("http") ? img : `http://129.212.228.96${img}`));
     }
 
     return [];
@@ -154,7 +154,7 @@ export default function ProductDetailPage() {
     try {
       setSubmittingRating(true);
 
-      const response = await fetch(`http://0.0.0.0:3000/products/${product!.id}/ratings`, {
+      const response = await fetch(`http://129.212.228.96/products/${product!.id}/ratings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

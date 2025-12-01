@@ -96,12 +96,12 @@ export default function ShopPage() {
 
     if (typeof images === "string") {
       if (images === "string") return null; // Invalid data
-      return images.startsWith("http") ? images : `http://0.0.0.0:3000${images}`;
+      return images.startsWith("http") ? images : `http://129.212.228.96${images}`;
     }
 
     if (Array.isArray(images) && images.length > 0) {
       const firstImage = images[0];
-      return firstImage.startsWith("http") ? firstImage : `http://0.0.0.0:3000${firstImage}`;
+      return firstImage.startsWith("http") ? firstImage : `http://129.212.228.96${firstImage}`;
     }
 
     return null;

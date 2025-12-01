@@ -189,7 +189,7 @@ export default function LessonsPage() {
                   <img
                     src={
                       lesson.image
-                        ? `http://0.0.0.0:3000${lesson.image}`
+                        ? `http://129.212.228.96${lesson.image}`
                         : "/imgs/placeholder-lesson.jpg"
                     }
                     alt={lesson.title}

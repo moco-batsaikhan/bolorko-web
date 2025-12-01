@@ -392,7 +392,7 @@ export default function AdminLessonsPage() {
                           className="h-12 w-12 rounded-lg object-cover"
                           src={
                             lesson.image
-                              ? `http://0.0.0.0:3000${lesson.image}`
+                              ? `http://129.212.228.96${lesson.image}`
                               : "/imgs/placeholder-lesson.jpg"
                           }
                           alt={lesson.title}
@@ -645,7 +645,7 @@ export default function AdminLessonsPage() {
                       {selectedLesson.image && (
                         <div className="mt-2">
                           <img
-                            src={`http://0.0.0.0:3000${selectedLesson.image}`}
+                            src={`http://129.212.228.96${selectedLesson.image}`}
                             alt="Current"
                             className="h-20 w-20 object-cover rounded-md"
                           />

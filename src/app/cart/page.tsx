@@ -183,7 +183,7 @@ export default function CartPage() {
                         <Image
                           src={
                             item.product.images?.[0]
-                              ? `http://localhost:3000${item.product.images[0]}`
+                              ? `http://129.212.228.96${item.product.images[0]}`
                               : "/imgs/placeholder.jpg"
                           }
                           alt={item.product.name}

@@ -214,7 +214,7 @@ export default function OrdersPage() {
                               {item.product.images && item.product.images[0] ? (
                                 <Image
                                   className="object-cover rounded-lg"
-                                  src={`http://localhost:3000${item.product.images[0]}`}
+                                  src={`http://129.212.228.96${item.product.images[0]}`}
                                   alt={item.product?.name || "Бүтээгдэхүүн"}
                                   fill
                                   sizes="48px"

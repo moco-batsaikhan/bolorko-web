@@ -480,7 +480,7 @@ export default function AdminNewsPage() {
                       {article.imageUrl && (
                         <div className="flex-shrink-0 mr-4">
                           <img
-                            src={`http://0.0.0.0:3000${article.imageUrl}`}
+                            src={`http://129.212.228.96${article.imageUrl}`}
                             alt={article.title}
                             className="w-16 h-16 object-cover rounded-lg"
                           />
@@ -723,7 +723,7 @@ export default function AdminNewsPage() {
                 {editingNews.imageUrl && (
                   <div className="mt-2">
                     <img
-                      src={`http://0.0.0.0:3000${editingNews.imageUrl}`}
+                      src={`http://129.212.228.96${editingNews.imageUrl}`}
                       alt="Current"
                       className="w-32 h-32 object-cover rounded-lg"
                     />
@@ -846,7 +846,7 @@ export default function AdminNewsPage() {
                 <div className="flex items-start">
                   {deletingNews.imageUrl && (
                     <img
-                      src={`http://0.0.0.0:3000${deletingNews.imageUrl}`}
+                      src={`http://129.212.228.96${deletingNews.imageUrl}`}
                       alt={deletingNews.title}
                       className="w-16 h-16 object-cover rounded-lg mr-3 flex-shrink-0"
                     />
