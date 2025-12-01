@@ -110,14 +110,14 @@ export default function ShopPage() {
 
     if (typeof images === "string") {
       if (images === "string") return null; // Invalid data
-      return images.startsWith("http")
+      return images.startsWith("https")
         ? images
         : `https://api.cubingmongolia.mn${images}`;
     }
 
     if (Array.isArray(images) && images.length > 0) {
       const firstImage = images[0];
-      return firstImage.startsWith("http")
+      return firstImage.startsWith("https")
         ? firstImage
         : `https://api.cubingmongolia.mn${firstImage}`;
     }
