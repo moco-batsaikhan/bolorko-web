@@ -5,7 +5,11 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useToast } from "@/contexts/ToastContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiService, Lesson, CreateLessonCommentRequest } from "@/services/apiService";
+import {
+  apiService,
+  Lesson,
+  CreateLessonCommentRequest,
+} from "@/services/apiService";
 import {
   BookOpen,
   Play,
@@ -94,7 +98,9 @@ export default function LessonsPage() {
 
       // Update the lesson in the main list
       setLessons(
-        lessons.map((lesson) => (lesson.id === selectedLesson.id ? updatedLesson : lesson)),
+        lessons.map((lesson) =>
+          lesson.id === selectedLesson.id ? updatedLesson : lesson
+        )
       );
 
       setNewComment("");
@@ -111,7 +117,7 @@ export default function LessonsPage() {
     .filter(
       (lesson) =>
         lesson.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lesson.description.toLowerCase().includes(searchTerm.toLowerCase()),
+        lesson.description.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .filter((lesson) => lesson.isPublished);
 
@@ -135,7 +141,9 @@ export default function LessonsPage() {
       <div className="bg-gradient-to-r from-gray-900 to-black text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">Онлайн хичээлүүд</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+              Онлайн хичээлүүд
+            </h1>
             <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
               Мэргэжлийн багш нарын хичээлээр өөрийн чадварыг хөгжүүлээрэй
             </p>
@@ -189,7 +197,7 @@ export default function LessonsPage() {
                   <img
                     src={
                       lesson.image
-                        ? `http://129.212.228.96${lesson.image}`
+                        ? `https://api.cubingmongolia.mn${lesson.image}`
                         : "/imgs/placeholder-lesson.jpg"
                     }
                     alt={lesson.title}
@@ -208,7 +216,9 @@ export default function LessonsPage() {
                     {lesson.title}
                   </h3>
 
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">{lesson.description}</p>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                    {lesson.description}
+                  </p>
 
                   <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                     <div className="flex items-center">
@@ -244,9 +254,13 @@ export default function LessonsPage() {
         ) : (
           <div className="text-center py-20">
             <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Хичээл олдсонгүй</h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              Хичээл олдсонгүй
+            </h3>
             <p className="text-gray-600">
-              {searchTerm ? "Хайлтын үр дүн олдсонгүй" : "Одоогоор хичээл байхгүй байна"}
+              {searchTerm
+                ? "Хайлтын үр дүн олдсонгүй"
+                : "Одоогоор хичээл байхгүй байна"}
             </p>
           </div>
         )}
@@ -255,19 +269,21 @@ export default function LessonsPage() {
         {totalPages > 1 && (
           <div className="flex justify-center mt-12">
             <div className="flex space-x-1">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    currentPage === page
-                      ? "bg-mega-600 text-white"
-                      : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      currentPage === page
+                        ? "bg-mega-600 text-white"
+                        : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
             </div>
           </div>
         )}
@@ -307,7 +323,9 @@ export default function LessonsPage() {
                           {comment.user?.name || "Хэрэглэгч"}
                         </span>
                         <span className="text-xs text-gray-500">
-                          {new Date(comment.createdAt).toLocaleDateString("mn-MN")}
+                          {new Date(comment.createdAt).toLocaleDateString(
+                            "mn-MN"
+                          )}
                         </span>
                       </div>
                       <p className="text-sm text-gray-700">{comment.comment}</p>
@@ -318,7 +336,9 @@ export default function LessonsPage() {
                 <div className="text-center py-8">
                   <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                   <p className="text-gray-500">Сэтгэгдэл байхгүй байна</p>
-                  <p className="text-sm text-gray-400">Анхны сэтгэгдэлийг та үлдээж болно</p>
+                  <p className="text-sm text-gray-400">
+                    Анхны сэтгэгдэлийг та үлдээж болно
+                  </p>
                 </div>
               )}
             </div>
@@ -346,14 +366,18 @@ export default function LessonsPage() {
                       ) : (
                         <Send className="w-4 h-4 mr-2" />
                       )}
-                      {isSubmittingComment ? "Илгээж байна..." : "Сэтгэгдэл үлдээх"}
+                      {isSubmittingComment
+                        ? "Илгээж байна..."
+                        : "Сэтгэгдэл үлдээх"}
                     </button>
                   </div>
                 </form>
               </div>
             ) : (
               <div className="p-6 border-t bg-gray-50 text-center">
-                <p className="text-gray-600 mb-3">Сэтгэгдэл үлдээхийн тулд нэвтэрнэ үү</p>
+                <p className="text-gray-600 mb-3">
+                  Сэтгэгдэл үлдээхийн тулд нэвтэрнэ үү
+                </p>
                 <Link
                   href="/"
                   className="bg-mega-600 text-white px-4 py-2 rounded-md hover:bg-mega-700 transition-colors inline-block"

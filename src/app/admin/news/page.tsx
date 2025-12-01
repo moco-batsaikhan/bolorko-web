@@ -94,7 +94,10 @@ export default function AdminNewsPage() {
   const fetchNews = async () => {
     try {
       setLoading(true);
-      const response: NewsResponse = await apiService.getAdminNews(currentPage, limit);
+      const response: NewsResponse = await apiService.getAdminNews(
+        currentPage,
+        limit
+      );
       setNews(response.data);
       setTotalPages(response.pages);
       setTotalNews(response.total);
@@ -130,7 +133,11 @@ export default function AdminNewsPage() {
       const updatedNews = await apiService.updateNews(editingNews.id, editForm);
 
       // Update the news in the local state
-      setNews(news.map((article) => (article.id === editingNews.id ? updatedNews : article)));
+      setNews(
+        news.map((article) =>
+          article.id === editingNews.id ? updatedNews : article
+        )
+      );
 
       setShowEditModal(false);
       setEditingNews(null);
@@ -251,15 +258,19 @@ export default function AdminNewsPage() {
 
       // Update the editing news to remove the deleted comment
       if (editingNews && editingNews.comments) {
-        const updatedComments = editingNews.comments.filter((comment) => comment.id !== commentId);
+        const updatedComments = editingNews.comments.filter(
+          (comment) => comment.id !== commentId
+        );
         const updatedNews = { ...editingNews, comments: updatedComments };
         setEditingNews(updatedNews);
 
         // Also update the news in the main list
         setNews(
           news.map((article) =>
-            article.id === editingNews.id ? { ...article, comments: updatedComments } : article,
-          ),
+            article.id === editingNews.id
+              ? { ...article, comments: updatedComments }
+              : article
+          )
         );
       }
 
@@ -277,9 +288,12 @@ export default function AdminNewsPage() {
     const matchesSearch =
       article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       article.excerpt.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (article.author?.name || "").toLowerCase().includes(searchTerm.toLowerCase());
+      (article.author?.name || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
 
-    const matchesCategory = filterCategory === "all" || article.category?.name === filterCategory;
+    const matchesCategory =
+      filterCategory === "all" || article.category?.name === filterCategory;
 
     const matchesStatus =
       filterStatus === "all" ||
@@ -330,7 +344,9 @@ export default function AdminNewsPage() {
       {/* Page Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Мэдээний удирдлага</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Мэдээний удирдлага
+          </h2>
           <p className="text-gray-600">Нийт {totalNews} мэдээ</p>
         </div>
         <button
@@ -480,7 +496,7 @@ export default function AdminNewsPage() {
                       {article.imageUrl && (
                         <div className="flex-shrink-0 mr-4">
                           <img
-                            src={`http://129.212.228.96${article.imageUrl}`}
+                            src={`https://api.cubingmongolia.mn${article.imageUrl}`}
                             alt={article.title}
                             className="w-16 h-16 object-cover rounded-lg"
                           />
@@ -553,8 +569,13 @@ export default function AdminNewsPage() {
               ))}
               {filteredNews.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                    {news.length === 0 ? "Мэдээ олдсонгүй" : "Хайлтын үр дүн олдсонгүй"}
+                  <td
+                    colSpan={7}
+                    className="px-6 py-8 text-center text-gray-500"
+                  >
+                    {news.length === 0
+                      ? "Мэдээ олдсонгүй"
+                      : "Хайлтын үр дүн олдсонгүй"}
                   </td>
                 </tr>
               )}
@@ -579,19 +600,21 @@ export default function AdminNewsPage() {
                 <ChevronLeft className="w-4 h-4" />
               </button>
 
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => handlePageChange(page)}
-                  className={`px-3 py-1 rounded-md transition-colors ${
-                    currentPage === page
-                      ? "bg-mega-600 text-white"
-                      : "border border-gray-300 hover:bg-gray-50"
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`px-3 py-1 rounded-md transition-colors ${
+                      currentPage === page
+                        ? "bg-mega-600 text-white"
+                        : "border border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
 
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
@@ -610,7 +633,9 @@ export default function AdminNewsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Мэдээ засах</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Мэдээ засах
+              </h3>
               <button
                 onClick={handleEditModalClose}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -622,27 +647,37 @@ export default function AdminNewsPage() {
 
             <form onSubmit={handleEditSubmit} className="space-y-6">
               <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="title"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Гарчиг *
                 </label>
                 <input
                   type="text"
                   id="title"
                   value={editForm.title}
-                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, title: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500 focus:border-transparent"
                   required
                 />
               </div>
 
               <div>
-                <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="excerpt"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Товч агуулга *
                 </label>
                 <textarea
                   id="excerpt"
                   value={editForm.excerpt}
-                  onChange={(e) => setEditForm({ ...editForm, excerpt: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, excerpt: e.target.value })
+                  }
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500 focus:border-transparent"
                   required
@@ -650,13 +685,18 @@ export default function AdminNewsPage() {
               </div>
 
               <div>
-                <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="content"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Дэлгэрэнгүй агуулга *
                 </label>
                 <textarea
                   id="content"
                   value={editForm.content}
-                  onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, content: e.target.value })
+                  }
                   rows={8}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500 focus:border-transparent"
                   required
@@ -675,7 +715,10 @@ export default function AdminNewsPage() {
                     id="categoryId"
                     value={editForm.categoryId}
                     onChange={(e) =>
-                      setEditForm({ ...editForm, categoryId: parseInt(e.target.value) })
+                      setEditForm({
+                        ...editForm,
+                        categoryId: parseInt(e.target.value),
+                      })
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500 focus:border-transparent"
                     required
@@ -699,7 +742,10 @@ export default function AdminNewsPage() {
                     id="isPublished"
                     value={editForm.isPublished.toString()}
                     onChange={(e) =>
-                      setEditForm({ ...editForm, isPublished: e.target.value === "true" })
+                      setEditForm({
+                        ...editForm,
+                        isPublished: e.target.value === "true",
+                      })
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500 focus:border-transparent"
                   >
@@ -710,20 +756,25 @@ export default function AdminNewsPage() {
               </div>
 
               <div>
-                <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="image"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Зураг (шинэчлэх бол сонгоно уу)
                 </label>
                 <input
                   type="file"
                   id="image"
                   accept="image/*"
-                  onChange={(e) => setEditForm({ ...editForm, image: e.target.files?.[0] })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, image: e.target.files?.[0] })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500 focus:border-transparent"
                 />
                 {editingNews.imageUrl && (
                   <div className="mt-2">
                     <img
-                      src={`http://129.212.228.96${editingNews.imageUrl}`}
+                      src={`https://api.cubingmongolia.mn${editingNews.imageUrl}`}
                       alt="Current"
                       className="w-32 h-32 object-cover rounded-lg"
                     />
@@ -740,7 +791,10 @@ export default function AdminNewsPage() {
                   {editingNews.comments && editingNews.comments.length > 0 ? (
                     <div className="space-y-3">
                       {editingNews.comments.map((comment) => (
-                        <div key={comment.id} className="bg-gray-50 rounded-lg p-3">
+                        <div
+                          key={comment.id}
+                          className="bg-gray-50 rounded-lg p-3"
+                        >
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center space-x-2 mb-2">
@@ -751,10 +805,14 @@ export default function AdminNewsPage() {
                                   {comment.author?.name || "Тодорхойгүй"}
                                 </span>
                                 <span className="text-xs text-gray-500">
-                                  {new Date(comment.createdAt).toLocaleDateString("mn-MN")}
+                                  {new Date(
+                                    comment.createdAt
+                                  ).toLocaleDateString("mn-MN")}
                                 </span>
                               </div>
-                              <p className="text-sm text-gray-700">{comment.content}</p>
+                              <p className="text-sm text-gray-700">
+                                {comment.content}
+                              </p>
                             </div>
                             <button
                               onClick={() => handleDeleteComment(comment.id)}
@@ -818,7 +876,9 @@ export default function AdminNewsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Мэдээ устгах</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Мэдээ устгах
+              </h3>
               <button
                 onClick={handleDeleteModalClose}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -834,8 +894,12 @@ export default function AdminNewsPage() {
                   <Trash2 className="w-6 h-6 text-red-600" />
                 </div>
                 <div>
-                  <p className="text-gray-900 font-medium">Энэ үйлдлийг буцаах боломжгүй!</p>
-                  <p className="text-gray-500 text-sm">Мэдээний бүх мэдээлэл бүрмөсөн устна.</p>
+                  <p className="text-gray-900 font-medium">
+                    Энэ үйлдлийг буцаах боломжгүй!
+                  </p>
+                  <p className="text-gray-500 text-sm">
+                    Мэдээний бүх мэдээлэл бүрмөсөн устна.
+                  </p>
                 </div>
               </div>
 
@@ -846,14 +910,18 @@ export default function AdminNewsPage() {
                 <div className="flex items-start">
                   {deletingNews.imageUrl && (
                     <img
-                      src={`http://129.212.228.96${deletingNews.imageUrl}`}
+                      src={`https://api.cubingmongolia.mn${deletingNews.imageUrl}`}
                       alt={deletingNews.title}
                       className="w-16 h-16 object-cover rounded-lg mr-3 flex-shrink-0"
                     />
                   )}
                   <div>
-                    <p className="font-medium text-gray-900 text-sm">{deletingNews.title}</p>
-                    <p className="text-xs text-gray-500 mt-1">{deletingNews.excerpt}</p>
+                    <p className="font-medium text-gray-900 text-sm">
+                      {deletingNews.title}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {deletingNews.excerpt}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -895,7 +963,9 @@ export default function AdminNewsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Шинэ мэдээ нэмэх</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Шинэ мэдээ нэмэх
+              </h3>
               <button
                 onClick={handleCreateModalClose}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -917,7 +987,9 @@ export default function AdminNewsPage() {
                   type="text"
                   id="create-title"
                   value={createForm.title}
-                  onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
+                  onChange={(e) =>
+                    setCreateForm({ ...createForm, title: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500 focus:border-transparent"
                   required
                 />
@@ -933,7 +1005,9 @@ export default function AdminNewsPage() {
                 <textarea
                   id="create-excerpt"
                   value={createForm.excerpt}
-                  onChange={(e) => setCreateForm({ ...createForm, excerpt: e.target.value })}
+                  onChange={(e) =>
+                    setCreateForm({ ...createForm, excerpt: e.target.value })
+                  }
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500 focus:border-transparent"
                   required
@@ -950,7 +1024,9 @@ export default function AdminNewsPage() {
                 <textarea
                   id="create-content"
                   value={createForm.content}
-                  onChange={(e) => setCreateForm({ ...createForm, content: e.target.value })}
+                  onChange={(e) =>
+                    setCreateForm({ ...createForm, content: e.target.value })
+                  }
                   rows={8}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500 focus:border-transparent"
                   required
@@ -969,7 +1045,10 @@ export default function AdminNewsPage() {
                     id="create-categoryId"
                     value={createForm.categoryId}
                     onChange={(e) =>
-                      setCreateForm({ ...createForm, categoryId: parseInt(e.target.value) })
+                      setCreateForm({
+                        ...createForm,
+                        categoryId: parseInt(e.target.value),
+                      })
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500 focus:border-transparent"
                     required
@@ -993,7 +1072,10 @@ export default function AdminNewsPage() {
                     id="create-isPublished"
                     value={createForm.isPublished.toString()}
                     onChange={(e) =>
-                      setCreateForm({ ...createForm, isPublished: e.target.value === "true" })
+                      setCreateForm({
+                        ...createForm,
+                        isPublished: e.target.value === "true",
+                      })
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500 focus:border-transparent"
                   >
@@ -1014,7 +1096,9 @@ export default function AdminNewsPage() {
                   type="file"
                   id="create-image"
                   accept="image/*"
-                  onChange={(e) => setCreateForm({ ...createForm, image: e.target.files?.[0] })}
+                  onChange={(e) =>
+                    setCreateForm({ ...createForm, image: e.target.files?.[0] })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500 focus:border-transparent"
                   required
                 />

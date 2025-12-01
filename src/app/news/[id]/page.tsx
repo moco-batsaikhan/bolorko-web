@@ -87,7 +87,10 @@ export default function NewsDetailPage() {
     try {
       setSubmittingComment(true);
       const articleId = parseInt(params.id as string);
-      const newComment = await apiService.addNewsComment(articleId, commentText);
+      const newComment = await apiService.addNewsComment(
+        articleId,
+        commentText
+      );
 
       // Ensure author data is complete for new comment
       const completeComment = {
@@ -180,7 +183,7 @@ export default function NewsDetailPage() {
               src={
                 article!.imageUrl.startsWith("http")
                   ? article!.imageUrl
-                  : `http://129.212.228.96${article!.imageUrl}`
+                  : `https://api.cubingmongolia.mn${article!.imageUrl}`
               }
               alt={article!.title}
               className="w-full h-auto object-cover"
@@ -224,12 +227,16 @@ export default function NewsDetailPage() {
                   <div className="flex-1">
                     <div className="bg-gray-50 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold text-gray-900">{comment.author.name}</h4>
+                        <h4 className="font-semibold text-gray-900">
+                          {comment.author.name}
+                        </h4>
                         <span className="text-sm text-gray-500">
                           {formatDate(comment.createdAt)}
                         </span>
                       </div>
-                      <p className="text-gray-700 leading-relaxed">{comment.content}</p>
+                      <p className="text-gray-700 leading-relaxed">
+                        {comment.content}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -240,7 +247,9 @@ export default function NewsDetailPage() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   Сэтгэгдэл байхгүй байна
                 </h3>
-                <p className="text-gray-600">Энэ нийтлэлд анхны сэтгэгдлээ үлдээнэ үү!</p>
+                <p className="text-gray-600">
+                  Энэ нийтлэлд анхны сэтгэгдлээ үлдээнэ үү!
+                </p>
               </div>
             )}
           </div>
@@ -285,8 +294,12 @@ export default function NewsDetailPage() {
           ) : (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mt-12 mb-8 text-center">
               <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Сэтгэгдэл бичих</h3>
-              <p className="text-gray-600 mb-4">Сэтгэгдэл бичихийн тулд эхлээд нэвтэрнэ үү</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Сэтгэгдэл бичих
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Сэтгэгдэл бичихийн тулд эхлээд нэвтэрнэ үү
+              </p>
               <button
                 onClick={() => {
                   setShowLoginModal(true);
@@ -301,7 +314,10 @@ export default function NewsDetailPage() {
       </div>
 
       <Footer />
-      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+      />
     </div>
   );
 }

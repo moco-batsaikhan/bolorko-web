@@ -89,7 +89,10 @@ export default function ProductDetailPage() {
   };
 
   // Calculate discount price
-  const getDiscountedPrice = (originalPrice: string, discountPercentage: string) => {
+  const getDiscountedPrice = (
+    originalPrice: string,
+    discountPercentage: string
+  ) => {
     const original = parseFloat(originalPrice);
     const discount = parseFloat(discountPercentage);
     return original - (original * discount) / 100;
@@ -101,12 +104,16 @@ export default function ProductDetailPage() {
 
     if (typeof images === "string") {
       if (images === "string") return []; // Invalid data
-      const url = images.startsWith("http") ? images : `http://129.212.228.96${images}`;
+      const url = images.startsWith("http")
+        ? images
+        : `https://api.cubingmongolia.mn${images}`;
       return [url];
     }
 
     if (Array.isArray(images)) {
-      return images.map((img) => (img.startsWith("http") ? img : `http://129.212.228.96${img}`));
+      return images.map((img) =>
+        img.startsWith("http") ? img : `https://api.cubingmongolia.mn${img}`
+      );
     }
 
     return [];
@@ -154,17 +161,20 @@ export default function ProductDetailPage() {
     try {
       setSubmittingRating(true);
 
-      const response = await fetch(`http://129.212.228.96/products/${product!.id}/ratings`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-        body: JSON.stringify({
-          rating,
-          comment,
-        }),
-      });
+      const response = await fetch(
+        `https://api.cubingmongolia.mn/products/${product!.id}/ratings`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          },
+          body: JSON.stringify({
+            rating,
+            comment,
+          }),
+        }
+      );
 
       if (response.status === 400) {
         const errorData = await response.json();
@@ -197,8 +207,12 @@ export default function ProductDetailPage() {
         };
 
         // Recalculate average rating
-        const totalRating = (product.ratings || []).reduce((sum, r) => sum + r.rating, 0) + rating;
-        updatedProduct.averageRating = (totalRating / updatedProduct.ratingCount).toFixed(1);
+        const totalRating =
+          (product.ratings || []).reduce((sum, r) => sum + r.rating, 0) +
+          rating;
+        updatedProduct.averageRating = (
+          totalRating / updatedProduct.ratingCount
+        ).toFixed(1);
 
         setProduct(updatedProduct);
       }
@@ -216,10 +230,14 @@ export default function ProductDetailPage() {
   };
 
   // Render star rating for display
-  const renderStars = (rating: string | number, size: "sm" | "md" | "lg" = "md") => {
+  const renderStars = (
+    rating: string | number,
+    size: "sm" | "md" | "lg" = "md"
+  ) => {
     const numRating = typeof rating === "string" ? parseFloat(rating) : rating;
     const stars = [];
-    const sizeClass = size === "sm" ? "w-4 h-4" : size === "lg" ? "w-6 h-6" : "w-5 h-5";
+    const sizeClass =
+      size === "sm" ? "w-4 h-4" : size === "lg" ? "w-6 h-6" : "w-5 h-5";
 
     for (let i = 1; i <= 5; i++) {
       stars.push(
@@ -228,7 +246,7 @@ export default function ProductDetailPage() {
           className={`${sizeClass} ${
             i <= numRating ? "text-yellow-400 fill-current" : "text-gray-300"
           }`}
-        />,
+        />
       );
     }
     return stars;
@@ -239,13 +257,20 @@ export default function ProductDetailPage() {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
       stars.push(
-        <button key={i} type="button" onClick={() => setRating(i)} className="focus:outline-none">
+        <button
+          key={i}
+          type="button"
+          onClick={() => setRating(i)}
+          className="focus:outline-none"
+        >
           <Star
             className={`w-8 h-8 transition-colors ${
-              i <= rating ? "text-yellow-400 fill-current" : "text-gray-300 hover:text-yellow-200"
+              i <= rating
+                ? "text-yellow-400 fill-current"
+                : "text-gray-300 hover:text-yellow-200"
             }`}
           />
-        </button>,
+        </button>
       );
     }
     return stars;
@@ -353,7 +378,9 @@ export default function ProductDetailPage() {
             {/* Category */}
             <div className="flex items-center">
               <Tag className="w-4 h-4 mr-2 text-gray-400" />
-              <span className="text-sm text-gray-600">{product.category?.name || "Категори"}</span>
+              <span className="text-sm text-gray-600">
+                {product.category?.name || "Категори"}
+              </span>
             </div>
 
             {/* Product Name */}
@@ -411,13 +438,18 @@ export default function ProductDetailPage() {
             {/* Description */}
             <div className="space-y-2">
               <h3 className="text-lg font-semibold text-gray-900">Тайлбар</h3>
-              <p className="text-gray-600 leading-relaxed">{product.description}</p>
+              <p className="text-gray-600 leading-relaxed">
+                {product.description}
+              </p>
             </div>
 
             {/* Actions */}
             <div className="space-y-4">
               <div className="flex items-center space-x-4 mb-4">
-                <label htmlFor="quantity" className="text-sm font-medium text-gray-900">
+                <label
+                  htmlFor="quantity"
+                  className="text-sm font-medium text-gray-900"
+                >
                   Тоо ширхэг:
                 </label>
                 <select
@@ -427,11 +459,14 @@ export default function ProductDetailPage() {
                   className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-mega-500 focus:border-transparent"
                   disabled={product.stock === 0}
                 >
-                  {Array.from({ length: Math.min(product.stock, 10) }, (_, i) => (
-                    <option key={i + 1} value={i + 1}>
-                      {i + 1}
-                    </option>
-                  ))}
+                  {Array.from(
+                    { length: Math.min(product.stock, 10) },
+                    (_, i) => (
+                      <option key={i + 1} value={i + 1}>
+                        {i + 1}
+                      </option>
+                    )
+                  )}
                 </select>
               </div>
 
@@ -475,14 +510,21 @@ export default function ProductDetailPage() {
 
             {/* Rating Form */}
             {showRatingForm && (
-              <form onSubmit={handleRatingSubmit} className="mb-8 p-6 bg-gray-50 rounded-lg">
+              <form
+                onSubmit={handleRatingSubmit}
+                className="mb-8 p-6 bg-gray-50 rounded-lg"
+              >
                 <h3 className="text-lg font-semibold mb-4">Үнэлгээ өгөх</h3>
 
                 <div className="space-y-4">
                   {/* Stars */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Үнэлгээ</label>
-                    <div className="flex space-x-1">{renderInteractiveStars()}</div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Үнэлгээ
+                    </label>
+                    <div className="flex space-x-1">
+                      {renderInteractiveStars()}
+                    </div>
                   </div>
 
                   {/* Comment */}
@@ -512,7 +554,9 @@ export default function ProductDetailPage() {
                     </button>
                     <button
                       type="submit"
-                      disabled={submittingRating || rating === 0 || !comment.trim()}
+                      disabled={
+                        submittingRating || rating === 0 || !comment.trim()
+                      }
                       className="flex items-center px-4 py-2 bg-mega-600 text-white rounded-lg hover:bg-mega-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {submittingRating ? (
@@ -536,8 +580,12 @@ export default function ProductDetailPage() {
             {!isAuthenticated && (
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-8 text-center">
                 <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Үнэлгээ өгөх</h3>
-                <p className="text-gray-600 mb-4">Үнэлгээ өгөхийн тулд эхлээд нэвтэрнэ үү</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Үнэлгээ өгөх
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Үнэлгээ өгөхийн тулд эхлээд нэвтэрнэ үү
+                </p>
                 <button
                   onClick={() => setShowLoginModal(true)}
                   className="bg-mega-600 text-white px-6 py-2 rounded-lg hover:bg-mega-700 transition-colors"
@@ -567,9 +615,13 @@ export default function ProductDetailPage() {
                           {renderStars(ratingItem.rating, "sm")}
                         </div>
                       </div>
-                      <p className="text-gray-700 leading-relaxed">{ratingItem.review}</p>
+                      <p className="text-gray-700 leading-relaxed">
+                        {ratingItem.review}
+                      </p>
                       <span className="text-sm text-gray-500 mt-2 block">
-                        {new Date(ratingItem.createdAt).toLocaleDateString("mn-MN")}
+                        {new Date(ratingItem.createdAt).toLocaleDateString(
+                          "mn-MN"
+                        )}
                       </span>
                     </div>
                   </div>
@@ -580,7 +632,9 @@ export default function ProductDetailPage() {
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     Үнэлгээ байхгүй байна
                   </h3>
-                  <p className="text-gray-600">Энэ бүтээгдэхүүнд анхны үнэлгээгээ өгнө үү!</p>
+                  <p className="text-gray-600">
+                    Энэ бүтээгдэхүүнд анхны үнэлгээгээ өгнө үү!
+                  </p>
                 </div>
               )}
             </div>
@@ -589,7 +643,10 @@ export default function ProductDetailPage() {
       </div>
 
       <Footer />
-      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+      />
     </div>
   );
 }

@@ -164,9 +164,12 @@ export default function OrdersPage() {
           // Empty state
           <div className="text-center py-16">
             <Package className="w-24 h-24 text-gray-400 mx-auto mb-6" />
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Захиалга байхгүй байна</h2>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+              Захиалга байхгүй байна
+            </h2>
             <p className="text-gray-600 mb-8 max-w-md mx-auto">
-              Та одоогоор захиалга хийгээгүй байна. Дэлгүүрээс бүтээгдэхүүн сонгож эхэлцгээе.
+              Та одоогоор захиалга хийгээгүй байна. Дэлгүүрээс бүтээгдэхүүн
+              сонгож эхэлцгээе.
             </p>
             <Link
               href="/shop"
@@ -184,7 +187,9 @@ export default function OrdersPage() {
                 <div key={order.id} className="bg-white rounded-lg shadow p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">Захиалга #{order.id}</h3>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Захиалга #{order.id}
+                      </h3>
                       <div className="flex items-center text-sm text-gray-500 mt-1">
                         <Calendar className="w-4 h-4 mr-1" />
                         {formatDate(order.createdAt)}
@@ -206,15 +211,20 @@ export default function OrdersPage() {
                   {/* Order Items */}
                   {order.orderItems && order.orderItems.length > 0 ? (
                     <div className="border-t border-gray-200 pt-4">
-                      <h4 className="font-medium text-gray-900 mb-3">Захиалсан бараа:</h4>
+                      <h4 className="font-medium text-gray-900 mb-3">
+                        Захиалсан бараа:
+                      </h4>
                       <div className="space-y-3">
                         {order.orderItems.map((item) => (
-                          <div key={item.id} className="flex items-center space-x-4">
+                          <div
+                            key={item.id}
+                            className="flex items-center space-x-4"
+                          >
                             <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center relative overflow-hidden">
                               {item.product.images && item.product.images[0] ? (
                                 <Image
                                   className="object-cover rounded-lg"
-                                  src={`http://129.212.228.96${item.product.images[0]}`}
+                                  src={`https://api.cubingmongolia.mn${item.product.images[0]}`}
                                   alt={item.product?.name || "Бүтээгдэхүүн"}
                                   fill
                                   sizes="48px"
@@ -228,11 +238,14 @@ export default function OrdersPage() {
                                 {item.product?.name || "Бүтээгдэхүүн"}
                               </p>
                               <p className="text-sm text-gray-500">
-                                Тоо ширхэг: {item.quantity} × {formatPrice(item.product.price)}
+                                Тоо ширхэг: {item.quantity} ×{" "}
+                                {formatPrice(item.product.price)}
                               </p>
                             </div>
                             <div className="text-sm font-medium text-gray-900">
-                              {formatPrice(parseFloat(item.product.price) * item.quantity)}
+                              {formatPrice(
+                                parseFloat(item.product.price) * item.quantity
+                              )}
                             </div>
                           </div>
                         ))}

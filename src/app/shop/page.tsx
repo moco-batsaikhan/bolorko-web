@@ -6,7 +6,16 @@ import { useState, useEffect } from "react";
 import { apiService, Product, ProductCategory } from "@/services/apiService";
 import Link from "next/link";
 import Image from "next/image";
-import { ShoppingCart, Star, Filter, ChevronDown, Package, Tag, Eye, Heart } from "lucide-react";
+import {
+  ShoppingCart,
+  Star,
+  Filter,
+  ChevronDown,
+  Package,
+  Tag,
+  Eye,
+  Heart,
+} from "lucide-react";
 import Loading from "@/components/Loading";
 
 export default function ShopPage() {
@@ -69,7 +78,10 @@ export default function ShopPage() {
   };
 
   // Calculate discount price
-  const getDiscountedPrice = (originalPrice: string, discountPercentage: string) => {
+  const getDiscountedPrice = (
+    originalPrice: string,
+    discountPercentage: string
+  ) => {
     const original = parseFloat(originalPrice);
     const discount = parseFloat(discountPercentage);
     return original - (original * discount) / 100;
@@ -83,8 +95,10 @@ export default function ShopPage() {
       stars.push(
         <Star
           key={i}
-          className={`w-4 h-4 ${i <= numRating ? "text-yellow-400 fill-current" : "text-gray-300"}`}
-        />,
+          className={`w-4 h-4 ${
+            i <= numRating ? "text-yellow-400 fill-current" : "text-gray-300"
+          }`}
+        />
       );
     }
     return stars;
@@ -96,12 +110,16 @@ export default function ShopPage() {
 
     if (typeof images === "string") {
       if (images === "string") return null; // Invalid data
-      return images.startsWith("http") ? images : `http://129.212.228.96${images}`;
+      return images.startsWith("http")
+        ? images
+        : `https://api.cubingmongolia.mn${images}`;
     }
 
     if (Array.isArray(images) && images.length > 0) {
       const firstImage = images[0];
-      return firstImage.startsWith("http") ? firstImage : `http://129.212.228.96${firstImage}`;
+      return firstImage.startsWith("http")
+        ? firstImage
+        : `https://api.cubingmongolia.mn${firstImage}`;
     }
 
     return null;
@@ -143,18 +161,27 @@ export default function ShopPage() {
             {/* Subtitle */}
             <p className="text-xl md:text-2xl mb-8 opacity-90 max-w-3xl mx-auto leading-relaxed">
               MEGA клубын албан ёсны дэлгүүр.
-              <span className="font-semibold"> Рубикийн шоо болон хэрэгсэл</span>
+              <span className="font-semibold">
+                {" "}
+                Рубикийн шоо болон хэрэгсэл
+              </span>
             </p>
 
             {/* Stats */}
             <div className="flex flex-wrap justify-center gap-8 mt-12">
               <div className="text-center">
-                <div className="text-3xl font-bold text-white">{products.length}+</div>
+                <div className="text-3xl font-bold text-white">
+                  {products.length}+
+                </div>
                 <div className="text-white opacity-75">Бүтээгдэхүүн</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-white">
-                  {products.reduce((total, product) => total + product.stock, 0)}+
+                  {products.reduce(
+                    (total, product) => total + product.stock,
+                    0
+                  )}
+                  +
                 </div>
                 <div className="text-white opacity-75">Нөөцөд</div>
               </div>
@@ -193,7 +220,9 @@ export default function ShopPage() {
                   <button
                     onClick={() => handleCategoryFilter(null)}
                     className={`w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors ${
-                      selectedCategory === null ? "bg-mega-50 text-mega-600" : ""
+                      selectedCategory === null
+                        ? "bg-mega-50 text-mega-600"
+                        : ""
                     }`}
                   >
                     Бүх ангилал
@@ -203,7 +232,9 @@ export default function ShopPage() {
                       key={category.id}
                       onClick={() => handleCategoryFilter(category.id)}
                       className={`w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors ${
-                        selectedCategory === category.id ? "bg-mega-50 text-mega-600" : ""
+                        selectedCategory === category.id
+                          ? "bg-mega-50 text-mega-600"
+                          : ""
                       }`}
                     >
                       {category.name}
@@ -231,9 +262,13 @@ export default function ShopPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
               {products.map((product) => {
                 const imageUrl = getProductImageUrl(product.images);
-                const hasDiscount = product.originalPrice && product.discountPercentage;
+                const hasDiscount =
+                  product.originalPrice && product.discountPercentage;
                 const discountedPrice = hasDiscount
-                  ? getDiscountedPrice(product.originalPrice!, product.discountPercentage!)
+                  ? getDiscountedPrice(
+                      product.originalPrice!,
+                      product.discountPercentage!
+                    )
                   : null;
 
                 return (
@@ -278,7 +313,9 @@ export default function ShopPage() {
                               : "bg-red-500 text-white"
                           }`}
                         >
-                          {product.stock > 0 ? `${product.stock} ширхэг` : "Дууссан"}
+                          {product.stock > 0
+                            ? `${product.stock} ширхэг`
+                            : "Дууссан"}
                         </span>
                       </div>
 
@@ -365,8 +402,12 @@ export default function ShopPage() {
                 <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
                   <Package className="w-12 h-12 text-gray-400" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Бүтээгдэхүүн олдсонгүй</h3>
-                <p className="text-gray-600">Энэ ангиллаар бүтээгдэхүүн байхгүй байна.</p>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  Бүтээгдэхүүн олдсонгүй
+                </h3>
+                <p className="text-gray-600">
+                  Энэ ангиллаар бүтээгдэхүүн байхгүй байна.
+                </p>
               </div>
             )}
           </>

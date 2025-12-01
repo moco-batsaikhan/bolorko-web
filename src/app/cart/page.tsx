@@ -14,7 +14,8 @@ import Loading from "@/components/Loading";
 
 export default function CartPage() {
   const { isAuthenticated, user } = useAuth();
-  const { cart, loading, updateQuantity, removeItem, clearCart, refreshCart } = useCart();
+  const { cart, loading, updateQuantity, removeItem, clearCart, refreshCart } =
+    useCart();
   const { showToast } = useToast();
   const [isUpdating, setIsUpdating] = useState<number | null>(null);
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
@@ -139,7 +140,9 @@ export default function CartPage() {
           // Empty cart
           <div className="text-center py-16">
             <ShoppingCart className="w-24 h-24 text-gray-400 mx-auto mb-6" />
-            <h2 className="text-3xl font-semibold text-gray-900 mb-4">Таны сагс хоосон байна</h2>
+            <h2 className="text-3xl font-semibold text-gray-900 mb-4">
+              Таны сагс хоосон байна
+            </h2>
             <p className="text-gray-600 mb-8 max-w-md mx-auto">
               Та дэлгүүрээс бүтээгдэхүүн сонгож, сагсандаа нэмж эхэлцгээе.
             </p>
@@ -183,7 +186,7 @@ export default function CartPage() {
                         <Image
                           src={
                             item.product.images?.[0]
-                              ? `http://129.212.228.96${item.product.images[0]}`
+                              ? `https://api.cubingmongolia.mn${item.product.images[0]}`
                               : "/imgs/placeholder.jpg"
                           }
                           alt={item.product.name}
@@ -206,8 +209,12 @@ export default function CartPage() {
                       {/* Quantity Controls */}
                       <div className="flex items-center space-x-2">
                         <button
-                          onClick={() => handleQuantityUpdate(item.id, item.quantity - 1)}
-                          disabled={item.quantity <= 1 || isUpdating === item.id}
+                          onClick={() =>
+                            handleQuantityUpdate(item.id, item.quantity - 1)
+                          }
+                          disabled={
+                            item.quantity <= 1 || isUpdating === item.id
+                          }
                           className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-full"
                         >
                           <Minus className="w-4 h-4" />
@@ -222,7 +229,9 @@ export default function CartPage() {
                         </span>
 
                         <button
-                          onClick={() => handleQuantityUpdate(item.id, item.quantity + 1)}
+                          onClick={() =>
+                            handleQuantityUpdate(item.id, item.quantity + 1)
+                          }
                           disabled={isUpdating === item.id}
                           className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-full"
                         >
@@ -233,7 +242,9 @@ export default function CartPage() {
                       {/* Item Total */}
                       <div className="text-right">
                         <div className="font-semibold text-gray-900">
-                          {formatPrice(parseFloat(item.product.price) * item.quantity)}
+                          {formatPrice(
+                            parseFloat(item.product.price) * item.quantity
+                          )}
                         </div>
                       </div>
 
@@ -253,12 +264,15 @@ export default function CartPage() {
             {/* Cart Summary */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg shadow p-6 sticky top-8">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Захиалгын мэдээлэл</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                  Захиалгын мэдээлэл
+                </h2>
 
                 {(() => {
                   const subtotal = cart.cartItems.reduce(
-                    (total, item) => total + parseFloat(item.product.price) * item.quantity,
-                    0,
+                    (total, item) =>
+                      total + parseFloat(item.product.price) * item.quantity,
+                    0
                   );
                   const shippingCost = subtotal > 50000 ? 0 : 5000; // Free shipping over 50k
                   const totalAmount = subtotal + shippingCost;
@@ -268,12 +282,16 @@ export default function CartPage() {
                       <div className="space-y-3 border-b border-gray-200 pb-4 mb-4">
                         <div className="flex justify-between">
                           <span className="text-gray-600">Дэд нийт:</span>
-                          <span className="font-medium">{formatPrice(subtotal)}</span>
+                          <span className="font-medium">
+                            {formatPrice(subtotal)}
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-600">Хүргэлт:</span>
                           <span className="font-medium">
-                            {shippingCost > 0 ? formatPrice(shippingCost) : "Үнэгүй"}
+                            {shippingCost > 0
+                              ? formatPrice(shippingCost)
+                              : "Үнэгүй"}
                           </span>
                         </div>
                       </div>

@@ -43,7 +43,9 @@ export default function AdminLessonsPage() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState<"all" | "published" | "draft">("all");
+  const [filterStatus, setFilterStatus] = useState<
+    "all" | "published" | "draft"
+  >("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalLessons, setTotalLessons] = useState(0);
@@ -54,7 +56,8 @@ export default function AdminLessonsPage() {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
 
   // Form states
-  const [formData, setFormData] = useState<CreateLessonRequest>(defaultFormData);
+  const [formData, setFormData] =
+    useState<CreateLessonRequest>(defaultFormData);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -125,9 +128,14 @@ export default function AdminLessonsPage() {
     setIsSubmitting(true);
 
     try {
-      const updatedLesson = await apiService.updateLesson(selectedLesson.id, formData);
+      const updatedLesson = await apiService.updateLesson(
+        selectedLesson.id,
+        formData
+      );
       setLessons(
-        lessons.map((lesson) => (lesson.id === selectedLesson.id ? updatedLesson : lesson)),
+        lessons.map((lesson) =>
+          lesson.id === selectedLesson.id ? updatedLesson : lesson
+        )
       );
       setIsEditModalOpen(false);
       setSelectedLesson(null);
@@ -169,18 +177,22 @@ export default function AdminLessonsPage() {
           if (lesson.id === lessonId) {
             return {
               ...lesson,
-              comments: lesson.comments.filter((comment) => comment.id !== commentId),
+              comments: lesson.comments.filter(
+                (comment) => comment.id !== commentId
+              ),
             };
           }
           return lesson;
-        }),
+        })
       );
 
       // Update selected lesson if it's currently being viewed
       if (selectedLesson && selectedLesson.id === lessonId) {
         setSelectedLesson({
           ...selectedLesson,
-          comments: selectedLesson.comments.filter((comment) => comment.id !== commentId),
+          comments: selectedLesson.comments.filter(
+            (comment) => comment.id !== commentId
+          ),
         });
       }
 
@@ -201,7 +213,9 @@ export default function AdminLessonsPage() {
       const newVideo = await apiService.createLessonVideo({
         ...videoFormData,
         lessonId: selectedLesson.id,
-        order: selectedLesson.videos?.length ? selectedLesson.videos.length + 1 : 1,
+        order: selectedLesson.videos?.length
+          ? selectedLesson.videos.length + 1
+          : 1,
       });
 
       // Update the selected lesson with new video
@@ -213,7 +227,9 @@ export default function AdminLessonsPage() {
 
       // Update the lesson in the main list
       setLessons(
-        lessons.map((lesson) => (lesson.id === selectedLesson.id ? updatedLesson : lesson)),
+        lessons.map((lesson) =>
+          lesson.id === selectedLesson.id ? updatedLesson : lesson
+        )
       );
 
       // Reset form
@@ -266,7 +282,9 @@ export default function AdminLessonsPage() {
       {/* Page Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Хичээлийн удирдлага</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Хичээлийн удирдлага
+          </h2>
           <p className="text-gray-600">Онлайн хичээлүүдийг удирдах</p>
         </div>
         <button
@@ -285,7 +303,9 @@ export default function AdminLessonsPage() {
             <BookOpen className="w-8 h-8 text-blue-500" />
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-600">Нийт хичээл</p>
-              <p className="text-2xl font-semibold text-gray-900">{totalLessons}</p>
+              <p className="text-2xl font-semibold text-gray-900">
+                {totalLessons}
+              </p>
             </div>
           </div>
         </div>
@@ -345,7 +365,9 @@ export default function AdminLessonsPage() {
             <Filter className="w-5 h-5 text-gray-400" />
             <select
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
+              onChange={(e) =>
+                setFilterStatus(e.target.value as typeof filterStatus)
+              }
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mega-500 focus:border-mega-500"
             >
               <option value="all">Бүх хичээл</option>
@@ -392,14 +414,16 @@ export default function AdminLessonsPage() {
                           className="h-12 w-12 rounded-lg object-cover"
                           src={
                             lesson.image
-                              ? `http://129.212.228.96${lesson.image}`
+                              ? `https://api.cubingmongolia.mn${lesson.image}`
                               : "/imgs/placeholder-lesson.jpg"
                           }
                           alt={lesson.title}
                         />
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{lesson.title}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {lesson.title}
+                        </div>
                         <div className="text-sm text-gray-500 line-clamp-2">
                           {lesson.description}
                         </div>
@@ -511,31 +535,43 @@ export default function AdminLessonsPage() {
                   <input
                     type="text"
                     value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-mega-500 focus:border-mega-500"
                     required
                   />
                   {formErrors.title && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.title}</p>
+                    <p className="mt-1 text-sm text-red-600">
+                      {formErrors.title}
+                    </p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Тайлбар *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Тайлбар *
+                  </label>
                   <textarea
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
                     rows={4}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-mega-500 focus:border-mega-500"
                     required
                   />
                   {formErrors.description && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.description}</p>
+                    <p className="mt-1 text-sm text-red-600">
+                      {formErrors.description}
+                    </p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Зураг</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Зураг
+                  </label>
                   <input
                     type="file"
                     accept="image/*"
@@ -549,10 +585,18 @@ export default function AdminLessonsPage() {
                     type="checkbox"
                     id="isPublished"
                     checked={formData.isPublished}
-                    onChange={(e) => setFormData({ ...formData, isPublished: e.target.checked })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        isPublished: e.target.checked,
+                      })
+                    }
                     className="h-4 w-4 text-mega-600 focus:ring-mega-500 border-gray-300 rounded"
                   />
-                  <label htmlFor="isPublished" className="ml-2 block text-sm text-gray-900">
+                  <label
+                    htmlFor="isPublished"
+                    className="ml-2 block text-sm text-gray-900"
+                  >
                     Нийтлэх
                   </label>
                 </div>
@@ -613,7 +657,9 @@ export default function AdminLessonsPage() {
                       <input
                         type="text"
                         value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, title: e.target.value })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-mega-500 focus:border-mega-500"
                         required
                       />
@@ -625,7 +671,12 @@ export default function AdminLessonsPage() {
                       </label>
                       <textarea
                         value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            description: e.target.value,
+                          })
+                        }
                         rows={4}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-mega-500 focus:border-mega-500"
                         required
@@ -645,11 +696,13 @@ export default function AdminLessonsPage() {
                       {selectedLesson.image && (
                         <div className="mt-2">
                           <img
-                            src={`http://129.212.228.96${selectedLesson.image}`}
+                            src={`https://api.cubingmongolia.mn${selectedLesson.image}`}
                             alt="Current"
                             className="h-20 w-20 object-cover rounded-md"
                           />
-                          <p className="text-sm text-gray-500 mt-1">Одоогийн зураг</p>
+                          <p className="text-sm text-gray-500 mt-1">
+                            Одоогийн зураг
+                          </p>
                         </div>
                       )}
                     </div>
@@ -660,11 +713,17 @@ export default function AdminLessonsPage() {
                         id="editIsPublished"
                         checked={formData.isPublished}
                         onChange={(e) =>
-                          setFormData({ ...formData, isPublished: e.target.checked })
+                          setFormData({
+                            ...formData,
+                            isPublished: e.target.checked,
+                          })
                         }
                         className="h-4 w-4 text-mega-600 focus:ring-mega-500 border-gray-300 rounded"
                       />
-                      <label htmlFor="editIsPublished" className="ml-2 block text-sm text-gray-900">
+                      <label
+                        htmlFor="editIsPublished"
+                        className="ml-2 block text-sm text-gray-900"
+                      >
                         Нийтлэх
                       </label>
                     </div>
@@ -703,7 +762,10 @@ export default function AdminLessonsPage() {
                     </h4>
 
                     {/* Add Video Form */}
-                    <form onSubmit={handleAddVideo} className="mb-4 p-4 bg-gray-50 rounded-lg">
+                    <form
+                      onSubmit={handleAddVideo}
+                      className="mb-4 p-4 bg-gray-50 rounded-lg"
+                    >
                       <div className="space-y-3">
                         <div>
                           <input
@@ -711,7 +773,10 @@ export default function AdminLessonsPage() {
                             placeholder="Видео тайлбар..."
                             value={videoFormData.description}
                             onChange={(e) =>
-                              setVideoFormData({ ...videoFormData, description: e.target.value })
+                              setVideoFormData({
+                                ...videoFormData,
+                                description: e.target.value,
+                              })
                             }
                             className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-mega-500 focus:border-mega-500"
                             required
@@ -723,7 +788,10 @@ export default function AdminLessonsPage() {
                             placeholder="YouTube URL..."
                             value={videoFormData.videoUrl}
                             onChange={(e) =>
-                              setVideoFormData({ ...videoFormData, videoUrl: e.target.value })
+                              setVideoFormData({
+                                ...videoFormData,
+                                videoUrl: e.target.value,
+                              })
                             }
                             className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-mega-500 focus:border-mega-500"
                             required
@@ -746,7 +814,8 @@ export default function AdminLessonsPage() {
 
                     {/* Videos List */}
                     <div className="max-h-64 overflow-y-auto space-y-2">
-                      {selectedLesson.videos && selectedLesson.videos.length > 0 ? (
+                      {selectedLesson.videos &&
+                      selectedLesson.videos.length > 0 ? (
                         selectedLesson.videos.map((video, index) => (
                           <div
                             key={video.id}
@@ -760,7 +829,9 @@ export default function AdminLessonsPage() {
                                     Хичээл {index + 1}
                                   </span>
                                 </div>
-                                <p className="text-sm text-gray-700 mb-1">{video.description}</p>
+                                <p className="text-sm text-gray-700 mb-1">
+                                  {video.description}
+                                </p>
                                 <a
                                   href={video.videoUrl}
                                   target="_blank"
@@ -790,9 +861,13 @@ export default function AdminLessonsPage() {
                     </h4>
 
                     <div className="max-h-64 overflow-y-auto space-y-3">
-                      {selectedLesson.comments && selectedLesson.comments.length > 0 ? (
+                      {selectedLesson.comments &&
+                      selectedLesson.comments.length > 0 ? (
                         selectedLesson.comments.map((comment) => (
-                          <div key={comment.id} className="bg-gray-50 p-3 rounded-lg">
+                          <div
+                            key={comment.id}
+                            className="bg-gray-50 p-3 rounded-lg"
+                          >
                             <div className="flex justify-between items-start mb-2">
                               <div className="flex items-center space-x-2">
                                 <User className="w-4 h-4 text-gray-400" />
@@ -800,24 +875,35 @@ export default function AdminLessonsPage() {
                                   {comment.user?.name || "Хэрэглэгч"}
                                 </span>
                                 <span className="text-xs text-gray-500">
-                                  {new Date(comment.createdAt).toLocaleDateString("mn-MN")}
+                                  {new Date(
+                                    comment.createdAt
+                                  ).toLocaleDateString("mn-MN")}
                                 </span>
                               </div>
                               <button
-                                onClick={() => handleDeleteComment(comment.id, selectedLesson.id)}
+                                onClick={() =>
+                                  handleDeleteComment(
+                                    comment.id,
+                                    selectedLesson.id
+                                  )
+                                }
                                 className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded"
                                 title="Сэтгэгдэл устгах"
                               >
                                 <Trash2 className="w-3 h-3" />
                               </button>
                             </div>
-                            <p className="text-sm text-gray-700">{comment.comment}</p>
+                            <p className="text-sm text-gray-700">
+                              {comment.comment}
+                            </p>
                           </div>
                         ))
                       ) : (
                         <div className="text-center py-4">
                           <MessageSquare className="w-6 h-6 text-gray-400 mx-auto mb-2" />
-                          <p className="text-sm text-gray-500">Сэтгэгдэл байхгүй</p>
+                          <p className="text-sm text-gray-500">
+                            Сэтгэгдэл байхгүй
+                          </p>
                         </div>
                       )}
                     </div>

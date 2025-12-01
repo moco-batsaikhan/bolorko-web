@@ -3,7 +3,12 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useState, useEffect } from "react";
-import { apiService, NewsArticle, NewsCategory, NewsResponse } from "@/services/apiService";
+import {
+  apiService,
+  NewsArticle,
+  NewsCategory,
+  NewsResponse,
+} from "@/services/apiService";
 import Link from "next/link";
 import {
   Calendar,
@@ -111,7 +116,10 @@ export default function NewsPage() {
             {/* Subtitle */}
             <p className="text-xl md:text-2xl mb-8 opacity-90 max-w-3xl mx-auto leading-relaxed">
               MEGA клубын хамгийн сүүлийн үеийн мэдээ,
-              <span className="font-semibold"> төсөл болон үйл ажиллагааны талаарх </span>
+              <span className="font-semibold">
+                {" "}
+                төсөл болон үйл ажиллагааны талаарх{" "}
+              </span>
               мэдээлэл
             </p>
           </div>
@@ -180,7 +188,7 @@ export default function NewsPage() {
                           src={
                             article.imageUrl.startsWith("http")
                               ? article.imageUrl
-                              : `http://129.212.228.96${article.imageUrl}`
+                              : `https://api.cubingmongolia.mn${article.imageUrl}`
                           }
                           alt={article.title}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
@@ -210,7 +218,9 @@ export default function NewsPage() {
                         <h2 className="text-xl font-bold text-gray-900  group-hover:text-mega-600 transition-colors line-clamp-2">
                           {article.title}
                         </h2>
-                        <p className="text-gray-600 mb-4 line-clamp-2">{article.excerpt}</p>
+                        <p className="text-gray-600 mb-4 line-clamp-2">
+                          {article.excerpt}
+                        </p>
                       </div>
 
                       {/* Article Meta */}
@@ -246,8 +256,12 @@ export default function NewsPage() {
                 <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
                   📰
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Мэдээ олдсонгүй</h3>
-                <p className="text-gray-600">Энэ ангиллаар мэдээ байхгүй байна.</p>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  Мэдээ олдсонгүй
+                </h3>
+                <p className="text-gray-600">
+                  Энэ ангиллаар мэдээ байхгүй байна.
+                </p>
               </div>
             )}
 

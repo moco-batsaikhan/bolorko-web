@@ -6,7 +6,11 @@ import { Footer } from "@/components/Footer";
 import { useToast } from "@/contexts/ToastContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useParams } from "next/navigation";
-import { apiService, Lesson, CreateLessonCommentRequest } from "@/services/apiService";
+import {
+  apiService,
+  Lesson,
+  CreateLessonCommentRequest,
+} from "@/services/apiService";
 import {
   BookOpen,
   Play,
@@ -134,8 +138,12 @@ export default function LessonDetailPage() {
         <Header />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
           <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">Хичээл олдсонгүй</h1>
-          <p className="text-gray-600 mb-6">Уучлаарай, таны хайж байгаа хичээл олдсонгүй.</p>
+          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+            Хичээл олдсонгүй
+          </h1>
+          <p className="text-gray-600 mb-6">
+            Уучлаарай, таны хайж байгаа хичээл олдсонгүй.
+          </p>
           <Link
             href="/lessons"
             className="bg-mega-600 text-white px-6 py-3 rounded-md hover:bg-mega-700 transition-colors"
@@ -200,7 +208,7 @@ export default function LessonDetailPage() {
                 <img
                   src={
                     lesson.image
-                      ? `http://129.212.228.96${lesson.image}`
+                      ? `https://api.cubingmongolia.mn${lesson.image}`
                       : "/imgs/placeholder-lesson.jpg"
                   }
                   alt={lesson.title}
@@ -208,7 +216,9 @@ export default function LessonDetailPage() {
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
                   <button
-                    onClick={() => handleVideoSelect(lesson.videos[0].videoUrl, 0)}
+                    onClick={() =>
+                      handleVideoSelect(lesson.videos[0].videoUrl, 0)
+                    }
                     className="bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full p-4 transition-all"
                   >
                     <Play className="w-12 h-12 text-mega-600" />
@@ -220,7 +230,7 @@ export default function LessonDetailPage() {
                 <img
                   src={
                     lesson.image
-                      ? `http://129.212.228.96${lesson.image}`
+                      ? `https://api.cubingmongolia.mn${lesson.image}`
                       : "/imgs/placeholder-lesson.jpg"
                   }
                   alt={lesson.title}
@@ -238,8 +248,12 @@ export default function LessonDetailPage() {
           <div className="p-8">
             <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
               <div className="flex-1">
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">{lesson.title}</h1>
-                <p className="text-gray-600 text-lg mb-6">{lesson.description}</p>
+                <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                  {lesson.title}
+                </h1>
+                <p className="text-gray-600 text-lg mb-6">
+                  {lesson.description}
+                </p>
 
                 <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500 mb-6">
                   <div className="flex items-center">
@@ -269,7 +283,9 @@ export default function LessonDetailPage() {
           {/* Videos Section */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Хичээлийн агуулга</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Хичээлийн агуулга
+              </h2>
 
               {lesson.videos && lesson.videos.length > 0 ? (
                 <div className="space-y-3">
@@ -355,13 +371,17 @@ export default function LessonDetailPage() {
                       ) : (
                         <Send className="w-4 h-4 mr-2" />
                       )}
-                      {isSubmittingComment ? "Илгээж байна..." : "Сэтгэгдэл үлдээх"}
+                      {isSubmittingComment
+                        ? "Илгээж байна..."
+                        : "Сэтгэгдэл үлдээх"}
                     </button>
                   </div>
                 </form>
               ) : (
                 <div className="mb-8 p-4 bg-gray-50 rounded-lg text-center">
-                  <p className="text-gray-600 mb-3">Сэтгэгдэл үлдээхийн тулд нэвтэрнэ үү</p>
+                  <p className="text-gray-600 mb-3">
+                    Сэтгэгдэл үлдээхийн тулд нэвтэрнэ үү
+                  </p>
                   <Link
                     href="/"
                     className="bg-mega-600 text-white px-4 py-2 rounded-md hover:bg-mega-700 transition-colors inline-block"
@@ -375,7 +395,10 @@ export default function LessonDetailPage() {
               {lesson.comments && lesson.comments.length > 0 ? (
                 <div className="space-y-4">
                   {lesson.comments.map((comment) => (
-                    <div key={comment.id} className="border-b border-gray-100 pb-4 last:border-b-0">
+                    <div
+                      key={comment.id}
+                      className="border-b border-gray-100 pb-4 last:border-b-0"
+                    >
                       <div className="flex items-center space-x-3 mb-3">
                         <div className="bg-mega-100 rounded-full p-2">
                           <User className="w-4 h-4 text-mega-600" />
@@ -385,7 +408,9 @@ export default function LessonDetailPage() {
                             {comment.user?.name || "Хэрэглэгч"}
                           </h4>
                           <p className="text-sm text-gray-500">
-                            {new Date(comment.createdAt).toLocaleDateString("mn-MN")}
+                            {new Date(comment.createdAt).toLocaleDateString(
+                              "mn-MN"
+                            )}
                           </p>
                         </div>
                       </div>
@@ -397,7 +422,9 @@ export default function LessonDetailPage() {
                 <div className="text-center py-8">
                   <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                   <p className="text-gray-500 mb-2">Сэтгэгдэл байхгүй байна</p>
-                  <p className="text-sm text-gray-400">Анхны сэтгэгдэлийг та үлдээж болно</p>
+                  <p className="text-sm text-gray-400">
+                    Анхны сэтгэгдэлийг та үлдээж болно
+                  </p>
                 </div>
               )}
             </div>
@@ -407,7 +434,9 @@ export default function LessonDetailPage() {
           <div className="space-y-6">
             {/* Lesson Stats */}
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Хичээлийн мэдээлэл</h3>
+              <h3 className="font-semibold text-gray-900 mb-4">
+                Хичээлийн мэдээлэл
+              </h3>
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Үзсэн тоо:</span>
@@ -415,11 +444,15 @@ export default function LessonDetailPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Видео тоо:</span>
-                  <span className="font-medium">{lesson.videos?.length || 0}</span>
+                  <span className="font-medium">
+                    {lesson.videos?.length || 0}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Сэтгэгдэл:</span>
-                  <span className="font-medium">{lesson.comments?.length || 0}</span>
+                  <span className="font-medium">
+                    {lesson.comments?.length || 0}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Үүссэн:</span>

@@ -1,5 +1,6 @@
 // API Configuration
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://129.212.228.96";
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "https://api.cubingmongolia.mn";
 
 // API Endpoints
 export const API_ENDPOINTS = {
