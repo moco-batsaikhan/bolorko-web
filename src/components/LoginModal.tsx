@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { X, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
-import { apiService } from "@/services/apiService";
 import { useToast } from "../contexts/ToastContext";
 
 interface LoginModalProps {

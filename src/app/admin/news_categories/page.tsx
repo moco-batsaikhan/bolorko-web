@@ -2,8 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/contexts/ToastContext";
-import { apiService, NewsCategory, CreateCategoryRequest } from "@/services/apiService";
+import { apiService, NewsCategory } from "@/services/apiService";
 import { Tag, PlusCircle, Edit3, Trash2, Eye, Search, X, Save, Calendar } from "lucide-react";
+
+interface CategoryFormData {
+  name: string;
+  slug: string;
+  description?: string;
+  isActive?: boolean;
+}
 
 export default function AdminNewsCategoriesPage() {
   const { showToast } = useToast();
@@ -14,7 +21,7 @@ export default function AdminNewsCategoriesPage() {
 
   // Create Modal State
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [createForm, setCreateForm] = useState<CreateCategoryRequest>({
+  const [createForm, setCreateForm] = useState<CategoryFormData>({
     name: "",
     slug: "",
     description: "",
@@ -392,7 +399,7 @@ export default function AdminNewsCategoriesPage() {
                 </label>
                 <select
                   id="create-isActive"
-                  value={createForm.isActive.toString()}
+                  value={(createForm.isActive ?? true).toString()}
                   onChange={(e) =>
                     setCreateForm({ ...createForm, isActive: e.target.value === "true" })
                   }

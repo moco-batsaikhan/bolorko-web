@@ -47,7 +47,7 @@ export default function AdminCompetitionsPage() {
       setLoading(true);
       const response = await apiService.getCompetitions({ page: 1, limit: 50 });
       setCompetitions(response.data);
-    } catch (error) {
+    } catch {
       showToast("Тэмцээний жагсаалт ачааллахад алдаа гарлaa", "error");
     } finally {
       setLoading(false);
@@ -115,7 +115,7 @@ export default function AdminCompetitionsPage() {
       setShowCreateModal(false);
       resetForm();
       loadCompetitions();
-    } catch (error) {
+    } catch {
       showToast("Тэмцээн үүсгэхэд алдаа гарлaa", "error");
     }
   };
@@ -132,7 +132,7 @@ export default function AdminCompetitionsPage() {
       setSelectedCompetition(null);
       resetEditForm();
       loadCompetitions();
-    } catch (error) {
+    } catch {
       showToast("Тэмцээн засахад алдаа гарлaa", "error");
     }
   };
@@ -143,7 +143,7 @@ export default function AdminCompetitionsPage() {
         await apiService.deleteCompetition(competition.id);
         showToast("Тэмцээн амжилттай устгагдлаа", "success");
         loadCompetitions();
-      } catch (error) {
+      } catch {
         showToast("Тэмцээн устгахад алдаа гарлaa", "error");
       }
     }

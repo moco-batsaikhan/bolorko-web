@@ -49,9 +49,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(response.user);
       setIsLoading(false);
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Login error:", error);
-      setError(error.message || "Нэвтрэхэд алдаа гарлаа");
+      setError(error instanceof Error ? error.message : "Нэвтрэхэд алдаа гарлаа");
       setIsLoading(false);
       return false;
     }
@@ -66,9 +66,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(response.user);
       setIsLoading(false);
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Register error:", error);
-      setError(error.message || "Бүртгүүлэхэд алдаа гарлаа");
+      setError(error instanceof Error ? error.message : "Бүртгүүлэхэд алдаа гарлаа");
       setIsLoading(false);
       return false;
     }
