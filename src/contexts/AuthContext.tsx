@@ -24,7 +24,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { showToast } = useToast();
 
   useEffect(() => {
-    // Check if user is logged in from localStorage
     const savedUser = localStorage.getItem(STORAGE_KEYS.USER_DATA);
     const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
 

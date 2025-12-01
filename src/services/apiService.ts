@@ -93,8 +93,6 @@ export interface UpdateCompetitionRequest {
   registerLink: string;
   address: string;
 }
-
-// Cart interfaces
 export interface CartItem {
   id: number;
   cartId: number;
@@ -127,7 +125,6 @@ export interface UpdateCartItemRequest {
   quantity: number;
 }
 
-// Order interfaces
 export interface OrderItem {
   id: number;
   orderId: number;
@@ -409,7 +406,6 @@ class ApiService {
     return response.json();
   }
 
-  // Authentication API
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     const response = await fetch(`${this.baseURL}${API_ENDPOINTS.AUTH.LOGIN}`, {
       method: "POST",
@@ -423,7 +419,6 @@ class ApiService {
 
     console.log("data", data);
 
-    // Store tokens and user data
     localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.access_token);
     localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.refresh_token);
     localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(data.user));
@@ -434,7 +429,7 @@ class ApiService {
   async register(credentials: RegisterCredentials): Promise<LoginResponse> {
     const registerData = {
       ...credentials,
-      role: credentials.role || "USER", // Default role is USER
+      role: credentials.role || "USER",
     };
 
     const response = await fetch(`${this.baseURL}${API_ENDPOINTS.AUTH.REGISTER}`, {
@@ -447,7 +442,6 @@ class ApiService {
 
     const data = await this.handleResponse<LoginResponse>(response);
 
-    // Store tokens and user data after successful registration
     localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.access_token);
     localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.refresh_token);
     localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(data.user));
@@ -485,7 +479,6 @@ class ApiService {
       return data.access_token;
     } catch (error) {
       console.error("Token refresh error:", error);
-      // If refresh fails, clear all tokens
       this.logout();
       return null;
     }
@@ -501,7 +494,6 @@ class ApiService {
     return this.handleResponse<User>(response);
   }
 
-  // News API
   async getNews(params?: NewsQueryParams): Promise<NewsResponse> {
     const queryString = new URLSearchParams();
 
@@ -546,7 +538,6 @@ class ApiService {
     return this.handleResponse<NewsComment>(response);
   }
 
-  // Products Management (Admin)
   async getAllProducts(): Promise<Product[]> {
     const response = await fetch(`${this.baseURL}${API_ENDPOINTS.PRODUCTS.ALL}`, {
       method: "GET",
@@ -556,7 +547,6 @@ class ApiService {
     return this.handleResponse<Product[]>(response);
   }
 
-  // Public Product API
   async getProducts(): Promise<Product[]> {
     const response = await fetch(`${this.baseURL}${API_ENDPOINTS.SHOP.PRODUCTS}`, {
       method: "GET",
@@ -584,7 +574,6 @@ class ApiService {
     return this.handleResponse<Product[]>(response);
   }
 
-  // Admin Product Categories Management
   async getAdminProductCategories(): Promise<ProductCategory[]> {
     const response = await fetch(`${this.baseURL}${API_ENDPOINTS.PRODUCTS.CATEGORIES}`, {
       method: "GET",
@@ -666,7 +655,6 @@ class ApiService {
     }
 
     const authHeaders = this.getAuthHeaders();
-    // Remove Content-Type header to let browser set it with boundary for multipart/form-data
     delete authHeaders["Content-Type"];
 
     const response = await fetch(`${this.baseURL}${API_ENDPOINTS.NEWS.UPDATE}/${id}`, {
@@ -691,7 +679,6 @@ class ApiService {
     }
 
     const authHeaders = this.getAuthHeaders();
-    // Remove Content-Type header to let browser set it with boundary for multipart/form-data
     delete authHeaders["Content-Type"];
 
     const response = await fetch(`${this.baseURL}${API_ENDPOINTS.NEWS.CREATE}`, {
@@ -724,7 +711,6 @@ class ApiService {
     return this.handleResponse<NewsCategory>(response);
   }
 
-  // Lessons Management - Admin
   async getAdminLessons(
     page = 1,
     limit = 10,
@@ -759,7 +745,7 @@ class ApiService {
     }
 
     const authHeaders = this.getAuthHeaders();
-    delete authHeaders["Content-Type"]; // Let browser set it for FormData
+    delete authHeaders["Content-Type"];
 
     const response = await fetch(`${this.baseURL}${API_ENDPOINTS.LESSONS.CREATE}`, {
       method: "POST",
@@ -818,7 +804,6 @@ class ApiService {
     }
   }
 
-  // Lessons - Public/User
   async getPublicLessons(
     page = 1,
     limit = 10,
@@ -869,8 +854,6 @@ class ApiService {
     return this.handleResponse<Lesson>(response);
   }
 
-  // Products Management
-
   async createProduct(productData: CreateProductRequest): Promise<Product> {
     const formData = new FormData();
     formData.append("name", productData.name);
@@ -887,7 +870,7 @@ class ApiService {
     }
 
     const authHeaders = this.getAuthHeaders();
-    delete authHeaders["Content-Type"]; // Let browser set it for FormData
+    delete authHeaders["Content-Type"];
 
     const response = await fetch(`${this.baseURL}${API_ENDPOINTS.PRODUCTS.CREATE}`, {
       method: "POST",
@@ -987,7 +970,6 @@ class ApiService {
     }
   }
 
-  // Competition methods
   async getCompetitions(params?: {
     page?: number;
     limit?: number;
@@ -1026,7 +1008,7 @@ class ApiService {
 
     const response = await fetch(`${this.baseURL}/competitions`, {
       method: "POST",
-      headers: this.getAuthHeaders(true), // multipart request
+      headers: this.getAuthHeaders(true),
       body: formData,
     });
 
@@ -1052,7 +1034,7 @@ class ApiService {
 
     const response = await fetch(`${this.baseURL}/competitions/${id}`, {
       method: "PATCH",
-      headers: this.getAuthHeaders(true), // multipart request
+      headers: this.getAuthHeaders(true),
       body: formData,
     });
 
@@ -1070,7 +1052,6 @@ class ApiService {
     }
   }
 
-  // Competition comments methods
   async getCompetitionComments(competitionId: number): Promise<CompetitionComment[]> {
     const response = await fetch(`${this.baseURL}/competitions/${competitionId}/comments`);
     return this.handleResponse<CompetitionComment[]>(response);
@@ -1100,7 +1081,6 @@ class ApiService {
     }
   }
 
-  // Cart methods
   async addToCart(userId: number, productData: AddToCartRequest): Promise<Cart> {
     const response = await fetch(`${this.baseURL}/cart/${userId}/add`, {
       method: "POST",
@@ -1163,7 +1143,6 @@ class ApiService {
     }
   }
 
-  // Order methods
   async createOrder(orderData: CreateOrderRequest): Promise<Order> {
     const response = await fetch(`${this.baseURL}/orders`, {
       method: "POST",
