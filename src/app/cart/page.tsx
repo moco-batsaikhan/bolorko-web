@@ -11,12 +11,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { ShoppingCart, Plus, Minus, Trash2, ArrowRight } from "lucide-react";
 import Loading from "@/components/Loading";
+import { useRouter } from "next/navigation";
 
 export default function CartPage() {
   const { isAuthenticated, user } = useAuth();
   const { cart, loading, updateQuantity, removeItem, clearCart, refreshCart } =
     useCart();
   const { showToast } = useToast();
+  const router = useRouter();
   const [isUpdating, setIsUpdating] = useState<number | null>(null);
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
 
@@ -64,37 +66,15 @@ export default function CartPage() {
     }
   };
 
-  // Handle create order
+  // Navigate to checkout (collect address/payment there)
   const handleCreateOrder = async () => {
-    if (!user || !cart || cart.cartItems.length === 0) return;
-
-    setIsCreatingOrder(true);
-    try {
-      const orderItems = cart.cartItems.map((item) => ({
-        productId: item.productId,
-        quantity: item.quantity,
-      }));
-
-      const orderData = {
-        userId: user.id,
-        orderItems: orderItems,
-      };
-
-      await apiService.createOrder(orderData);
-
-      // Clear cart after successful order
-      await clearCart();
-
-      showToast("Захиалга амжилттай үүсгэгдлээ!", "success");
-
-      // Redirect to orders page
-      window.location.href = "/orders";
-    } catch (error) {
-      console.error("Order creation error:", error);
-      showToast("Захиалга үүсгэхэд алдаа гарлаа", "error");
-    } finally {
-      setIsCreatingOrder(false);
+    if (!user || !cart || cart.cartItems.length === 0) {
+      showToast("Сагс хоосон байна эсвэл хэрэглэгч олдсонгүй", "error");
+      return;
     }
+
+    // send user to checkout page where address + payment are collected
+    router.push("/checkout");
   };
 
   // Format price
@@ -179,10 +159,10 @@ export default function CartPage() {
                   {cart.cartItems.map((item: CartItem) => (
                     <div
                       key={item.id}
-                      className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg"
+                      className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 p-4 border border-gray-200 rounded-lg"
                     >
                       {/* Product Image */}
-                      <div className="w-20 h-20 flex-shrink-0 relative">
+                      <div className="w-full sm:w-20 h-44 sm:h-20 flex-shrink-0 relative">
                         <Image
                           src={
                             item.product.images?.[0]
@@ -192,69 +172,70 @@ export default function CartPage() {
                           alt={item.product.name}
                           fill
                           className="object-cover rounded-lg"
-                          sizes="80px"
+                          sizes="(max-width: 640px) 100vw, 80px"
                         />
                       </div>
 
-                      {/* Product Info */}
-                      <div className="flex-grow min-w-0">
-                        <h3 className="font-semibold text-gray-900 truncate">
-                          {item.product.name}
-                        </h3>
-                        <p className="text-sm text-gray-500 mt-1">
-                          {formatPrice(parseFloat(item.product.price))} / ш
-                        </p>
-                      </div>
+                      {/* Info + Controls */}
+                      <div className="flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between min-w-0">
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-gray-900 truncate">
+                            {item.product.name}
+                          </h3>
+                          <p className="text-sm text-gray-500 mt-1">
+                            {formatPrice(parseFloat(item.product.price))} / ш
+                          </p>
+                        </div>
 
-                      {/* Quantity Controls */}
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() =>
-                            handleQuantityUpdate(item.id, item.quantity - 1)
-                          }
-                          disabled={
-                            item.quantity <= 1 || isUpdating === item.id
-                          }
-                          className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-full"
-                        >
-                          <Minus className="w-4 h-4" />
-                        </button>
+                        <div className="mt-3 sm:mt-0 flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() =>
+                                handleQuantityUpdate(item.id, item.quantity - 1)
+                              }
+                              disabled={
+                                item.quantity <= 1 || isUpdating === item.id
+                              }
+                              className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-full"
+                            >
+                              <Minus className="w-4 h-4" />
+                            </button>
 
-                        <span className="w-12 text-center font-medium">
-                          {isUpdating === item.id ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-mega-600 mx-auto"></div>
-                          ) : (
-                            item.quantity
-                          )}
-                        </span>
+                            <span className="w-10 text-center font-medium">
+                              {isUpdating === item.id ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-mega-600 mx-auto"></div>
+                              ) : (
+                                item.quantity
+                              )}
+                            </span>
 
-                        <button
-                          onClick={() =>
-                            handleQuantityUpdate(item.id, item.quantity + 1)
-                          }
-                          disabled={isUpdating === item.id}
-                          className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-full"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                      </div>
+                            <button
+                              onClick={() =>
+                                handleQuantityUpdate(item.id, item.quantity + 1)
+                              }
+                              disabled={isUpdating === item.id}
+                              className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-full"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
+                          </div>
 
-                      {/* Item Total */}
-                      <div className="text-right">
-                        <div className="font-semibold text-gray-900">
-                          {formatPrice(
-                            parseFloat(item.product.price) * item.quantity
-                          )}
+                          <div className="text-right">
+                            <div className="font-semibold text-gray-900">
+                              {formatPrice(
+                                parseFloat(item.product.price) * item.quantity
+                              )}
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => handleRemoveItem(item.id)}
+                            className="text-red-600 hover:text-red-700 p-2"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
                         </div>
                       </div>
-
-                      {/* Remove Button */}
-                      <button
-                        onClick={() => handleRemoveItem(item.id)}
-                        className="text-red-600 hover:text-red-700 p-2"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
                     </div>
                   ))}
                 </div>
@@ -281,7 +262,7 @@ export default function CartPage() {
                     <>
                       <div className="space-y-3 border-b border-gray-200 pb-4 mb-4">
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Дэд нийт:</span>
+                          <span className="text-gray-600">Нийт:</span>
                           <span className="font-medium">
                             {formatPrice(subtotal)}
                           </span>

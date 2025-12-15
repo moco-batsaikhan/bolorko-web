@@ -130,7 +130,9 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLoginMode && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Нэр</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Нэр
+              </label>
               <input
                 type="text"
                 value={name}
@@ -143,7 +145,9 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">И-мэйл</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              И-мэйл
+            </label>
             <input
               type="email"
               value={email}
@@ -154,7 +158,9 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Нууц үг</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Нууц үг
+            </label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -168,7 +174,11 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>
@@ -193,17 +203,6 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
               : "Бүртгүүлэх"}
           </button>
         </form>
-
-        {/* Demo Credentials - Only show in login mode */}
-        {isLoginMode && (
-          <div className="mt-4 text-center border-t pt-4">
-            <p className="text-xs text-gray-500 mb-2">Демо хэрэглэгч:</p>
-            <p className="text-sm text-gray-600">
-              <span className="font-medium">admin@gmail.com</span> /{" "}
-              <span className="font-medium">admin123</span>
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

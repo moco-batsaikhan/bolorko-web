@@ -3,11 +3,16 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { apiService, Competition, CompetitionComment } from "@/services/apiService";
+import {
+  apiService,
+  Competition,
+  CompetitionComment,
+} from "@/services/apiService";
 import { API_BASE_URL } from "@/constants/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Trophy,
   Calendar,
@@ -26,10 +31,13 @@ interface CompetitionDetailPageProps {
   }>;
 }
 
-export default function CompetitionDetailPage({ params }: CompetitionDetailPageProps) {
+export default function CompetitionDetailPage({
+  params,
+}: CompetitionDetailPageProps) {
   const resolvedParams = React.use(params);
   const { user } = useAuth();
   const { showToast } = useToast();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [competition, setCompetition] = useState<Competition | null>(null);
   const [comments, setComments] = useState<CompetitionComment[]>([]);
@@ -39,11 +47,15 @@ export default function CompetitionDetailPage({ params }: CompetitionDetailPageP
   const loadCompetition = useCallback(async () => {
     try {
       setLoading(true);
-      const competitionData = await apiService.getCompetitionById(parseInt(resolvedParams.id));
+      const competitionData = await apiService.getCompetitionById(
+        parseInt(resolvedParams.id)
+      );
       setCompetition(competitionData);
 
       // Load comments
-      const commentsData = await apiService.getCompetitionComments(parseInt(resolvedParams.id));
+      const commentsData = await apiService.getCompetitionComments(
+        parseInt(resolvedParams.id)
+      );
       setComments(commentsData);
     } catch (error) {
       console.error("Failed to load competition:", error);
@@ -77,14 +89,26 @@ export default function CompetitionDetailPage({ params }: CompetitionDetailPageP
 
   const getStatusBadge = (status: string) => {
     const statusMap = {
-      UPCOMING: { label: "Удахгүй", color: "bg-blue-100 text-blue-800 border-blue-200" },
-      ONGOING: { label: "Явагдаж буй", color: "bg-green-100 text-green-800 border-green-200" },
-      COMPLETED: { label: "Дууссан", color: "bg-gray-100 text-gray-800 border-gray-200" },
+      UPCOMING: {
+        label: "Удахгүй",
+        color: "bg-blue-100 text-blue-800 border-blue-200",
+      },
+      ONGOING: {
+        label: "Явагдаж буй",
+        color: "bg-green-100 text-green-800 border-green-200",
+      },
+      COMPLETED: {
+        label: "Дууссан",
+        color: "bg-gray-100 text-gray-800 border-gray-200",
+      },
     };
 
-    const statusInfo = statusMap[status as keyof typeof statusMap] || statusMap.UPCOMING;
+    const statusInfo =
+      statusMap[status as keyof typeof statusMap] || statusMap.UPCOMING;
     return (
-      <span className={`px-4 py-2 text-sm font-medium rounded-full border ${statusInfo.color}`}>
+      <span
+        className={`px-4 py-2 text-sm font-medium rounded-full border ${statusInfo.color}`}
+      >
         {statusInfo.label}
       </span>
     );
@@ -96,11 +120,16 @@ export default function CompetitionDetailPage({ params }: CompetitionDetailPageP
 
     try {
       setSubmittingComment(true);
-      await apiService.createCompetitionComment(parseInt(resolvedParams.id), newComment.trim());
+      await apiService.createCompetitionComment(
+        parseInt(resolvedParams.id),
+        newComment.trim()
+      );
       setNewComment("");
 
       // Reload comments
-      const commentsData = await apiService.getCompetitionComments(parseInt(resolvedParams.id));
+      const commentsData = await apiService.getCompetitionComments(
+        parseInt(resolvedParams.id)
+      );
       setComments(commentsData);
 
       showToast("Сэтгэгдэл амжилттай нэмэгдлээ", "success");
@@ -119,7 +148,9 @@ export default function CompetitionDetailPage({ params }: CompetitionDetailPageP
       await apiService.deleteCompetitionComment(commentId);
 
       // Reload comments
-      const commentsData = await apiService.getCompetitionComments(parseInt(resolvedParams.id));
+      const commentsData = await apiService.getCompetitionComments(
+        parseInt(resolvedParams.id)
+      );
       setComments(commentsData);
 
       showToast("Сэтгэгдэл амжилттай устгагдлаа", "success");
@@ -148,8 +179,12 @@ export default function CompetitionDetailPage({ params }: CompetitionDetailPageP
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
             <Trophy className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Тэмцээн олдсонгүй</h1>
-            <p className="text-gray-600 mb-6">Хүссэн тэмцээн олдсонгүй эсвэл устгагдсан байна.</p>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Тэмцээн олдсонгүй
+            </h1>
+            <p className="text-gray-600 mb-6">
+              Хүссэн тэмцээн олдсонгүй эсвэл устгагдсан байна.
+            </p>
             <Link
               href="/competitions"
               className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
@@ -196,7 +231,9 @@ export default function CompetitionDetailPage({ params }: CompetitionDetailPageP
                   target.style.display = "none";
                 }}
               />
-              <div className="absolute top-6 right-6">{getStatusBadge(competition.status)}</div>
+              <div className="absolute top-6 right-6">
+                {getStatusBadge(competition.status)}
+              </div>
             </div>
           )}
 
@@ -205,16 +242,22 @@ export default function CompetitionDetailPage({ params }: CompetitionDetailPageP
             {/* Title and Status */}
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
               <div className="flex-1">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">{competition.title}</h1>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  {competition.title}
+                </h1>
                 {!competition.image && (
-                  <div className="mb-4">{getStatusBadge(competition.status)}</div>
+                  <div className="mb-4">
+                    {getStatusBadge(competition.status)}
+                  </div>
                 )}
               </div>
             </div>
 
             {/* Description */}
             <div className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">Тэмцээний тухай</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-3">
+                Тэмцээний тухай
+              </h2>
               <p className="text-gray-700 leading-relaxed whitespace-pre-line">
                 {competition.description}
               </p>
@@ -228,8 +271,12 @@ export default function CompetitionDetailPage({ params }: CompetitionDetailPageP
                 <div>
                   <h3 className="font-medium text-gray-900 mb-1">Огноо</h3>
                   <p className="text-gray-600">
-                    <span className="block">Эхлэх: {formatDate(competition.startDate)}</span>
-                    <span className="block">Дуусах: {formatDate(competition.endDate)}</span>
+                    <span className="block">
+                      Эхлэх: {formatDate(competition.startDate)}
+                    </span>
+                    <span className="block">
+                      Дуусах: {formatDate(competition.endDate)}
+                    </span>
                   </p>
                 </div>
               </div>
@@ -261,11 +308,24 @@ export default function CompetitionDetailPage({ params }: CompetitionDetailPageP
 
             {/* Status message for non-upcoming competitions */}
             {competition.status !== "UPCOMING" && (
-              <div className="border-t pt-6">
+              <div className="border-t pt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div className="inline-flex items-center gap-2 bg-gray-100 text-gray-600 px-6 py-3 rounded-lg text-lg font-medium">
                   <Trophy size={20} />
-                  {competition.status === "ONGOING" ? "Тэмцээн явагдаж байна" : "Тэмцээн дууссан"}
+                  {competition.status === "ONGOING"
+                    ? "Тэмцээн явагдаж байна"
+                    : "Тэмцээн дууссан"}
                 </div>
+                {user?.role === "ADMIN" && (
+                  <button
+                    className="text-blue-600 cursor-pointer"
+                    onClick={() => {
+                      if (competition)
+                        router.push(`/competitions/${competition.id}/result`);
+                    }}
+                  >
+                    Үр дүн харах
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -276,7 +336,9 @@ export default function CompetitionDetailPage({ params }: CompetitionDetailPageP
           <div className="p-6 border-b">
             <div className="flex items-center gap-2">
               <MessageCircle className="text-blue-600" size={20} />
-              <h2 className="text-xl font-semibold text-gray-900">Сэтгэгдэл ({comments.length})</h2>
+              <h2 className="text-xl font-semibold text-gray-900">
+                Сэтгэгдэл ({comments.length})
+              </h2>
             </div>
           </div>
 
@@ -314,7 +376,10 @@ export default function CompetitionDetailPage({ params }: CompetitionDetailPageP
             <div className="p-6 border-b bg-gray-50">
               <p className="text-gray-600 text-center">
                 Сэтгэгдэл бичихийн тулд{" "}
-                <Link href="/login" className="text-blue-600 hover:text-blue-700">
+                <Link
+                  href="/login"
+                  className="text-blue-600 hover:text-blue-700"
+                >
                   нэвтрэх
                 </Link>{" "}
                 хэрэгтэй.
@@ -336,22 +401,28 @@ export default function CompetitionDetailPage({ params }: CompetitionDetailPageP
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <div>
-                          <h4 className="font-medium text-gray-900">{comment.user.name}</h4>
+                          <h4 className="font-medium text-gray-900">
+                            {comment.user.name}
+                          </h4>
                           <p className="text-sm text-gray-500">
                             {formatDateTime(comment.createdAt)}
                           </p>
                         </div>
-                        {user && (user.id === comment.user.id || user.role === "ADMIN") && (
-                          <button
-                            onClick={() => handleDeleteComment(comment.id)}
-                            className="text-red-600 hover:text-red-700 p-1"
-                            title="Устгах"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        )}
+                        {user &&
+                          (user.id === comment.user.id ||
+                            user.role === "ADMIN") && (
+                            <button
+                              onClick={() => handleDeleteComment(comment.id)}
+                              className="text-red-600 hover:text-red-700 p-1"
+                              title="Устгах"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
                       </div>
-                      <p className="text-gray-700 whitespace-pre-line">{comment.comment}</p>
+                      <p className="text-gray-700 whitespace-pre-line">
+                        {comment.comment}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -359,8 +430,14 @@ export default function CompetitionDetailPage({ params }: CompetitionDetailPageP
             ) : (
               <div className="p-12 text-center">
                 <MessageCircle className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <p className="text-gray-600">Одоогоор сэтгэгдэл байхгүй байна.</p>
-                {user && <p className="text-gray-500 text-sm mt-1">Эхний сэтгэгдлээ үлдээрэй!</p>}
+                <p className="text-gray-600">
+                  Одоогоор сэтгэгдэл байхгүй байна.
+                </p>
+                {user && (
+                  <p className="text-gray-500 text-sm mt-1">
+                    Эхний сэтгэгдлээ үлдээрэй!
+                  </p>
+                )}
               </div>
             )}
           </div>

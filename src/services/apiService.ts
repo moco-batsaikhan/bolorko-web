@@ -1,4 +1,8 @@
-import { API_BASE_URL, API_ENDPOINTS, STORAGE_KEYS } from "../constants/constants";
+import {
+  API_BASE_URL,
+  API_ENDPOINTS,
+  STORAGE_KEYS,
+} from "../constants/constants";
 
 export interface User {
   id: number;
@@ -401,7 +405,9 @@ class ApiService {
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      throw new Error(
+        errorData.message || `HTTP error! status: ${response.status}`
+      );
     }
     return response.json();
   }
@@ -432,13 +438,16 @@ class ApiService {
       role: credentials.role || "USER",
     };
 
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.AUTH.REGISTER}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(registerData),
-    });
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.AUTH.REGISTER}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(registerData),
+      }
+    );
 
     const data = await this.handleResponse<LoginResponse>(response);
 
@@ -465,15 +474,20 @@ class ApiService {
       const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
       if (!refreshToken) return null;
 
-      const response = await fetch(`${this.baseURL}${API_ENDPOINTS.AUTH.REFRESH}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${refreshToken}`,
-        },
-      });
+      const response = await fetch(
+        `${this.baseURL}${API_ENDPOINTS.AUTH.REFRESH}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${refreshToken}`,
+          },
+        }
+      );
 
-      const data = await this.handleResponse<{ access_token: string }>(response);
+      const data = await this.handleResponse<{ access_token: string }>(
+        response
+      );
       localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.access_token);
 
       return data.access_token;
@@ -485,13 +499,56 @@ class ApiService {
   }
 
   async getCurrentUser(): Promise<User> {
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.AUTH.CURRENT_USER}`, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.AUTH.CURRENT_USER}`,
+      {
+        headers: this.getAuthHeaders(),
+      }
+    );
 
     console.log("getCurrentUser: ", response);
 
     return this.handleResponse<User>(response);
+  }
+
+  async updateProfile(payload: {
+    name: string;
+    email: string;
+    roleId?: number;
+  }): Promise<User> {
+    const response = await fetch(`${this.baseURL}/users/profile`, {
+      method: "PATCH",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+
+    const updated = await this.handleResponse<User>(response);
+
+    try {
+      localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(updated));
+    } catch (e) {
+      // ignore localStorage errors
+    }
+
+    return updated;
+  }
+
+  async changePassword(payload: {
+    oldPassword: string;
+    newPassword: string;
+  }): Promise<{ message?: string } | void> {
+    const response = await fetch(`${this.baseURL}/users/change-password`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json().catch(() => undefined);
   }
 
   async getNews(params?: NewsQueryParams): Promise<NewsResponse> {
@@ -499,7 +556,8 @@ class ApiService {
 
     if (params?.page) queryString.append("page", params.page.toString());
     if (params?.limit) queryString.append("limit", params.limit.toString());
-    if (params?.categoryId) queryString.append("categoryId", params.categoryId.toString());
+    if (params?.categoryId)
+      queryString.append("categoryId", params.categoryId.toString());
 
     const url = `${this.baseURL}${API_ENDPOINTS.NEWS.PUBLIC}${
       queryString.toString() ? "?" + queryString.toString() : ""
@@ -513,17 +571,23 @@ class ApiService {
   }
 
   async getNewsCategories(): Promise<NewsCategory[]> {
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.NEWS.CATEGORIES}`, {
-      method: "GET",
-    });
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.NEWS.CATEGORIES}`,
+      {
+        method: "GET",
+      }
+    );
 
     return this.handleResponse<NewsCategory[]>(response);
   }
 
   async getNewsDetail(id: number): Promise<NewsArticle> {
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.NEWS.PUBLIC}/${id}`, {
-      method: "GET",
-    });
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.NEWS.PUBLIC}/${id}`,
+      {
+        method: "GET",
+      }
+    );
 
     return this.handleResponse<NewsArticle>(response);
   }
@@ -539,26 +603,35 @@ class ApiService {
   }
 
   async getAllProducts(): Promise<Product[]> {
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.PRODUCTS.ALL}`, {
-      method: "GET",
-      headers: this.getAuthHeaders(),
-    });
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.PRODUCTS.ALL}`,
+      {
+        method: "GET",
+        headers: this.getAuthHeaders(),
+      }
+    );
 
     return this.handleResponse<Product[]>(response);
   }
 
   async getProducts(): Promise<Product[]> {
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.SHOP.PRODUCTS}`, {
-      method: "GET",
-    });
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.SHOP.PRODUCTS}`,
+      {
+        method: "GET",
+      }
+    );
 
     return this.handleResponse<Product[]>(response);
   }
 
   async getProductCategories(): Promise<ProductCategory[]> {
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.SHOP.PRODUCT_CATEGORIES}`, {
-      method: "GET",
-    });
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.SHOP.PRODUCT_CATEGORIES}`,
+      {
+        method: "GET",
+      }
+    );
 
     return this.handleResponse<ProductCategory[]>(response);
   }
@@ -568,52 +641,70 @@ class ApiService {
       `${this.baseURL}${API_ENDPOINTS.SHOP.PRODUCTS_BY_CATEGORY}/${categoryId}`,
       {
         method: "GET",
-      },
+      }
     );
 
     return this.handleResponse<Product[]>(response);
   }
 
   async getAdminProductCategories(): Promise<ProductCategory[]> {
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.PRODUCTS.CATEGORIES}`, {
-      method: "GET",
-      headers: this.getAuthHeaders(),
-    });
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.PRODUCTS.CATEGORIES}`,
+      {
+        method: "GET",
+        headers: this.getAuthHeaders(),
+      }
+    );
 
     return this.handleResponse<ProductCategory[]>(response);
   }
 
   async getUsers(): Promise<AdminUser[]> {
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.ADMIN.ALL_USERS}`, {
-      method: "GET",
-      headers: this.getAuthHeaders(),
-    });
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.ADMIN.ALL_USERS}`,
+      {
+        method: "GET",
+        headers: this.getAuthHeaders(),
+      }
+    );
 
     return this.handleResponse<AdminUser[]>(response);
   }
 
-  async updateUser(id: number, userData: UpdateUserRequest): Promise<AdminUser> {
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.ADMIN.UPDATE_USER}/${id}`, {
-      method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(userData),
-    });
+  async updateUser(
+    id: number,
+    userData: UpdateUserRequest
+  ): Promise<AdminUser> {
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.ADMIN.UPDATE_USER}/${id}`,
+      {
+        method: "POST",
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(userData),
+      }
+    );
 
     return this.handleResponse<AdminUser>(response);
   }
 
   async deleteUser(id: number): Promise<void> {
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.ADMIN.DELETE_USER}/${id}`, {
-      method: "DELETE",
-      headers: this.getAuthHeaders(),
-    });
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.ADMIN.DELETE_USER}/${id}`,
+      {
+        method: "DELETE",
+        headers: this.getAuthHeaders(),
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
   }
 
-  async getAdminNews(page: number = 1, limit: number = 10): Promise<NewsResponse> {
+  async getAdminNews(
+    page: number = 1,
+    limit: number = 10
+  ): Promise<NewsResponse> {
     const queryParams = new URLSearchParams();
     queryParams.append("page", page.toString());
     queryParams.append("limit", limit.toString());
@@ -623,17 +714,20 @@ class ApiService {
       {
         method: "GET",
         headers: this.getAuthHeaders(),
-      },
+      }
     );
 
     return this.handleResponse<NewsResponse>(response);
   }
 
   async deleteNews(id: number): Promise<void> {
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.NEWS.DELETE}/${id}`, {
-      method: "DELETE",
-      headers: this.getAuthHeaders(),
-    });
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.NEWS.DELETE}/${id}`,
+      {
+        method: "DELETE",
+        headers: this.getAuthHeaders(),
+      }
+    );
 
     console.log(response);
 
@@ -642,7 +736,10 @@ class ApiService {
     }
   }
 
-  async updateNews(id: number, newsData: UpdateNewsRequest): Promise<NewsArticle> {
+  async updateNews(
+    id: number,
+    newsData: UpdateNewsRequest
+  ): Promise<NewsArticle> {
     const formData = new FormData();
     formData.append("title", newsData.title);
     formData.append("content", newsData.content);
@@ -657,11 +754,14 @@ class ApiService {
     const authHeaders = this.getAuthHeaders();
     delete authHeaders["Content-Type"];
 
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.NEWS.UPDATE}/${id}`, {
-      method: "POST",
-      headers: authHeaders,
-      body: formData,
-    });
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.NEWS.UPDATE}/${id}`,
+      {
+        method: "POST",
+        headers: authHeaders,
+        body: formData,
+      }
+    );
 
     return this.handleResponse<NewsArticle>(response);
   }
@@ -681,39 +781,50 @@ class ApiService {
     const authHeaders = this.getAuthHeaders();
     delete authHeaders["Content-Type"];
 
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.NEWS.CREATE}`, {
-      method: "POST",
-      headers: authHeaders,
-      body: formData,
-    });
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.NEWS.CREATE}`,
+      {
+        method: "POST",
+        headers: authHeaders,
+        body: formData,
+      }
+    );
 
     return this.handleResponse<NewsArticle>(response);
   }
 
   async deleteComment(id: number): Promise<void> {
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.NEWS.DELETE_COMMENT}/${id}`, {
-      method: "DELETE",
-      headers: this.getAuthHeaders(),
-    });
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.NEWS.DELETE_COMMENT}/${id}`,
+      {
+        method: "DELETE",
+        headers: this.getAuthHeaders(),
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
   }
 
-  async createCategory(categoryData: CreateCategoryRequest): Promise<NewsCategory> {
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.NEWS.CREATE_CATEGORY}`, {
-      method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(categoryData),
-    });
+  async createCategory(
+    categoryData: CreateCategoryRequest
+  ): Promise<NewsCategory> {
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.NEWS.CREATE_CATEGORY}`,
+      {
+        method: "POST",
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(categoryData),
+      }
+    );
 
     return this.handleResponse<NewsCategory>(response);
   }
 
   async getAdminLessons(
     page = 1,
-    limit = 10,
+    limit = 10
   ): Promise<{
     data: Lesson[];
     total: number;
@@ -723,7 +834,7 @@ class ApiService {
       `${this.baseURL}${API_ENDPOINTS.LESSONS.ADMIN}?page=${page}&limit=${limit}`,
       {
         headers: this.getAuthHeaders(),
-      },
+      }
     );
 
     return this.handleResponse<{
@@ -747,16 +858,22 @@ class ApiService {
     const authHeaders = this.getAuthHeaders();
     delete authHeaders["Content-Type"];
 
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.LESSONS.CREATE}`, {
-      method: "POST",
-      headers: authHeaders,
-      body: formData,
-    });
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.LESSONS.CREATE}`,
+      {
+        method: "POST",
+        headers: authHeaders,
+        body: formData,
+      }
+    );
 
     return this.handleResponse<Lesson>(response);
   }
 
-  async updateLesson(id: number, lessonData: UpdateLessonRequest): Promise<Lesson> {
+  async updateLesson(
+    id: number,
+    lessonData: UpdateLessonRequest
+  ): Promise<Lesson> {
     const formData = new FormData();
     formData.append("title", lessonData.title);
     formData.append("description", lessonData.description);
@@ -770,20 +887,26 @@ class ApiService {
     const authHeaders = this.getAuthHeaders();
     delete authHeaders["Content-Type"];
 
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.LESSONS.UPDATE}/${id}`, {
-      method: "PATCH",
-      headers: authHeaders,
-      body: formData,
-    });
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.LESSONS.UPDATE}/${id}`,
+      {
+        method: "PATCH",
+        headers: authHeaders,
+        body: formData,
+      }
+    );
 
     return this.handleResponse<Lesson>(response);
   }
 
   async deleteLesson(id: number): Promise<void> {
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.LESSONS.DELETE}/${id}`, {
-      method: "DELETE",
-      headers: this.getAuthHeaders(),
-    });
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.LESSONS.DELETE}/${id}`,
+      {
+        method: "DELETE",
+        headers: this.getAuthHeaders(),
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -796,7 +919,7 @@ class ApiService {
       {
         method: "DELETE",
         headers: this.getAuthHeaders(),
-      },
+      }
     );
 
     if (!response.ok) {
@@ -806,7 +929,7 @@ class ApiService {
 
   async getPublicLessons(
     page = 1,
-    limit = 10,
+    limit = 10
   ): Promise<{
     data: Lesson[];
     total: number;
@@ -816,7 +939,7 @@ class ApiService {
       `${this.baseURL}${API_ENDPOINTS.LESSONS.PUBLIC}?page=${page}&limit=${limit}`,
       {
         method: "GET",
-      },
+      }
     );
 
     return this.handleResponse<{
@@ -826,30 +949,43 @@ class ApiService {
     }>(response);
   }
 
-  async createLessonComment(commentData: CreateLessonCommentRequest): Promise<LessonComment> {
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.LESSONS.COMMENTS_CREATE}`, {
-      method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(commentData),
-    });
+  async createLessonComment(
+    commentData: CreateLessonCommentRequest
+  ): Promise<LessonComment> {
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.LESSONS.COMMENTS_CREATE}`,
+      {
+        method: "POST",
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(commentData),
+      }
+    );
 
     return this.handleResponse<LessonComment>(response);
   }
 
-  async createLessonVideo(videoData: CreateLessonVideoRequest): Promise<LessonVideo> {
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.LESSONS.VIDEOS_CREATE}`, {
-      method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(videoData),
-    });
+  async createLessonVideo(
+    videoData: CreateLessonVideoRequest
+  ): Promise<LessonVideo> {
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.LESSONS.VIDEOS_CREATE}`,
+      {
+        method: "POST",
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(videoData),
+      }
+    );
 
     return this.handleResponse<LessonVideo>(response);
   }
 
   async getPublicLessonDetail(id: number): Promise<Lesson> {
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.LESSONS.PUBLIC_DETAIL}/${id}`, {
-      method: "GET",
-    });
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.LESSONS.PUBLIC_DETAIL}/${id}`,
+      {
+        method: "GET",
+      }
+    );
 
     return this.handleResponse<Lesson>(response);
   }
@@ -872,16 +1008,22 @@ class ApiService {
     const authHeaders = this.getAuthHeaders();
     delete authHeaders["Content-Type"];
 
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.PRODUCTS.CREATE}`, {
-      method: "POST",
-      headers: authHeaders,
-      body: formData,
-    });
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.PRODUCTS.CREATE}`,
+      {
+        method: "POST",
+        headers: authHeaders,
+        body: formData,
+      }
+    );
 
     return this.handleResponse<Product>(response);
   }
 
-  async updateProduct(id: number, productData: UpdateProductRequest): Promise<Product> {
+  async updateProduct(
+    id: number,
+    productData: UpdateProductRequest
+  ): Promise<Product> {
     const formData = new FormData();
     formData.append("name", productData.name);
     formData.append("description", productData.description);
@@ -899,34 +1041,43 @@ class ApiService {
     const authHeaders = this.getAuthHeaders();
     delete authHeaders["Content-Type"];
 
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.PRODUCTS.UPDATE}/${id}`, {
-      method: "PATCH",
-      headers: authHeaders,
-      body: formData,
-    });
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.PRODUCTS.UPDATE}/${id}`,
+      {
+        method: "PATCH",
+        headers: authHeaders,
+        body: formData,
+      }
+    );
 
     return this.handleResponse<Product>(response);
   }
 
   async deleteProduct(id: number): Promise<void> {
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.PRODUCTS.DELETE}/${id}`, {
-      method: "DELETE",
-      headers: this.getAuthHeaders(),
-    });
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.PRODUCTS.DELETE}/${id}`,
+      {
+        method: "DELETE",
+        headers: this.getAuthHeaders(),
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
   }
 
-  async applyDiscount(productId: number, discountData: ApplyDiscountRequest): Promise<Product> {
+  async applyDiscount(
+    productId: number,
+    discountData: ApplyDiscountRequest
+  ): Promise<Product> {
     const response = await fetch(
       `${this.baseURL}${API_ENDPOINTS.PRODUCTS.APPLY_DISCOUNT}/${productId}/discount`,
       {
         method: "PATCH",
         headers: this.getAuthHeaders(),
         body: JSON.stringify(discountData),
-      },
+      }
     );
 
     return this.handleResponse<Product>(response);
@@ -938,20 +1089,23 @@ class ApiService {
       {
         method: "DELETE",
         headers: this.getAuthHeaders(),
-      },
+      }
     );
 
     return this.handleResponse<Product>(response);
   }
 
   async createProductCategory(
-    categoryData: CreateProductCategoryRequest,
+    categoryData: CreateProductCategoryRequest
   ): Promise<ProductCategory> {
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.PRODUCTS.CATEGORIES_CREATE}`, {
-      method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(categoryData),
-    });
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.PRODUCTS.CATEGORIES_CREATE}`,
+      {
+        method: "POST",
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(categoryData),
+      }
+    );
 
     return this.handleResponse<ProductCategory>(response);
   }
@@ -962,7 +1116,7 @@ class ApiService {
       {
         method: "DELETE",
         headers: this.getAuthHeaders(),
-      },
+      }
     );
 
     if (!response.ok) {
@@ -981,10 +1135,16 @@ class ApiService {
     if (params?.status) searchParams.append("status", params.status);
 
     const response = await fetch(
-      `${this.baseURL}/competitions${searchParams.toString() ? `?${searchParams.toString()}` : ""}`,
+      `${this.baseURL}/competitions${
+        searchParams.toString() ? `?${searchParams.toString()}` : ""
+      }`
     );
 
-    return this.handleResponse<{ data: Competition[]; total: number; pages: number }>(response);
+    return this.handleResponse<{
+      data: Competition[];
+      total: number;
+      pages: number;
+    }>(response);
   }
 
   async getCompetitionById(id: number): Promise<Competition> {
@@ -992,7 +1152,9 @@ class ApiService {
     return this.handleResponse<Competition>(response);
   }
 
-  async createCompetition(competitionData: CreateCompetitionRequest): Promise<Competition> {
+  async createCompetition(
+    competitionData: CreateCompetitionRequest
+  ): Promise<Competition> {
     const formData = new FormData();
     formData.append("title", competitionData.title);
     formData.append("description", competitionData.description);
@@ -1017,7 +1179,7 @@ class ApiService {
 
   async updateCompetition(
     id: number,
-    competitionData: UpdateCompetitionRequest,
+    competitionData: UpdateCompetitionRequest
   ): Promise<Competition> {
     const formData = new FormData();
     formData.append("title", competitionData.title);
@@ -1052,36 +1214,49 @@ class ApiService {
     }
   }
 
-  async getCompetitionComments(competitionId: number): Promise<CompetitionComment[]> {
-    const response = await fetch(`${this.baseURL}/competitions/${competitionId}/comments`);
+  async getCompetitionComments(
+    competitionId: number
+  ): Promise<CompetitionComment[]> {
+    const response = await fetch(
+      `${this.baseURL}/competitions/${competitionId}/comments`
+    );
     return this.handleResponse<CompetitionComment[]>(response);
   }
 
   async createCompetitionComment(
     competitionId: number,
-    comment: string,
+    comment: string
   ): Promise<CompetitionComment> {
-    const response = await fetch(`${this.baseURL}/competitions/${competitionId}/comments`, {
-      method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify({ comment }),
-    });
+    const response = await fetch(
+      `${this.baseURL}/competitions/${competitionId}/comments`,
+      {
+        method: "POST",
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ comment }),
+      }
+    );
 
     return this.handleResponse<CompetitionComment>(response);
   }
 
   async deleteCompetitionComment(commentId: number): Promise<void> {
-    const response = await fetch(`${this.baseURL}/competitions/comments/${commentId}`, {
-      method: "DELETE",
-      headers: this.getAuthHeaders(),
-    });
+    const response = await fetch(
+      `${this.baseURL}/competitions/comments/${commentId}`,
+      {
+        method: "DELETE",
+        headers: this.getAuthHeaders(),
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
   }
 
-  async addToCart(userId: number, productData: AddToCartRequest): Promise<Cart> {
+  async addToCart(
+    userId: number,
+    productData: AddToCartRequest
+  ): Promise<Cart> {
     const response = await fetch(`${this.baseURL}/cart/${userId}/add`, {
       method: "POST",
       headers: this.getAuthHeaders(),
@@ -1110,22 +1285,28 @@ class ApiService {
   async updateCartItemQuantity(
     userId: number,
     itemId: number,
-    quantityData: UpdateCartItemRequest,
+    quantityData: UpdateCartItemRequest
   ): Promise<Cart> {
-    const response = await fetch(`${this.baseURL}/cart/${userId}/items/${itemId}`, {
-      method: "PATCH",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(quantityData),
-    });
+    const response = await fetch(
+      `${this.baseURL}/cart/${userId}/items/${itemId}`,
+      {
+        method: "PATCH",
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(quantityData),
+      }
+    );
 
     return this.handleResponse<Cart>(response);
   }
 
   async removeCartItem(userId: number, itemId: number): Promise<void> {
-    const response = await fetch(`${this.baseURL}/cart/${userId}/items/${itemId}`, {
-      method: "DELETE",
-      headers: this.getAuthHeaders(),
-    });
+    const response = await fetch(
+      `${this.baseURL}/cart/${userId}/items/${itemId}`,
+      {
+        method: "DELETE",
+        headers: this.getAuthHeaders(),
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -1169,7 +1350,10 @@ class ApiService {
     return this.handleResponse<Order[]>(response);
   }
 
-  async updateOrderStatus(orderId: number, statusData: UpdateOrderStatusRequest): Promise<Order> {
+  async updateOrderStatus(
+    orderId: number,
+    statusData: UpdateOrderStatusRequest
+  ): Promise<Order> {
     const response = await fetch(`${this.baseURL}/orders/${orderId}`, {
       method: "PATCH",
       headers: this.getAuthHeaders(),
@@ -1180,10 +1364,13 @@ class ApiService {
   }
 
   async markOrderAsPaid(orderId: number): Promise<Order> {
-    const response = await fetch(`${this.baseURL}/orders/${orderId}/mark-paid`, {
-      method: "PATCH",
-      headers: this.getAuthHeaders(),
-    });
+    const response = await fetch(
+      `${this.baseURL}/orders/${orderId}/mark-paid`,
+      {
+        method: "PATCH",
+        headers: this.getAuthHeaders(),
+      }
+    );
 
     return this.handleResponse<Order>(response);
   }

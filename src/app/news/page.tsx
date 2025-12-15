@@ -180,9 +180,9 @@ export default function NewsPage() {
                   href={`/news/${article.id}`}
                   className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 group block"
                 >
-                  <div className="flex">
+                  <div className="flex flex-col md:flex-row">
                     {/* Article Image */}
-                    <div className="relative overflow-hidden w-48 flex-shrink-0">
+                    <div className="relative overflow-hidden w-full md:w-48 flex-shrink-0 h-56 md:h-auto">
                       {article.imageUrl ? (
                         <img
                           src={
@@ -191,10 +191,10 @@ export default function NewsPage() {
                               : `https://api.cubingmongolia.mn${article.imageUrl}`
                           }
                           alt={article.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          className="w-full h-56 md:h-full object-cover group-hover:scale-110 transition-transform duration-300"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                        <div className="w-full h-56 md:h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
                           <div className="text-gray-400 text-center">
                             <div className="w-12 h-12 bg-gray-300 rounded-lg mx-auto mb-1 flex items-center justify-center">
                               📰
@@ -213,7 +213,7 @@ export default function NewsPage() {
                     </div>
 
                     {/* Article Content */}
-                    <div className="p-6 flex-1 flex flex-col justify-between">
+                    <div className="p-4 md:p-6 flex-1 flex flex-col justify-between">
                       <div>
                         <h2 className="text-xl font-bold text-gray-900  group-hover:text-mega-600 transition-colors line-clamp-2">
                           {article.title}
@@ -224,8 +224,8 @@ export default function NewsPage() {
                       </div>
 
                       {/* Article Meta */}
-                      <div className="flex items-center justify-between text-sm text-gray-500">
-                        <div className="flex items-center space-x-4">
+                      <div className="flex flex-col md:flex-row items-start md:items-center justify-between text-sm text-gray-500">
+                        <div className="flex items-center space-x-4 mb-2 md:mb-0">
                           <div className="flex items-center">
                             <User className="w-4 h-4 mr-1" />
                             {article.author.name}
@@ -239,7 +239,7 @@ export default function NewsPage() {
                             {article.comments.length}
                           </div>
                         </div>
-                        <div className="flex items-center">
+                        <div className="flex items-center text-gray-500">
                           <Calendar className="w-4 h-4 mr-1" />
                           {formatDate(article.createdAt)}
                         </div>

@@ -150,26 +150,26 @@ export default function NewsDetailPage() {
             </div>
           )}
 
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight break-words">
             {article!.title}
           </h1>
 
           <div className="flex flex-wrap items-center justify-between gap-4 text-gray-600">
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center">
-                <User className="w-4 h-4 mr-2" />
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2 text-sm">
+                <User className="w-4 h-4 text-gray-500" />
                 <span className="font-medium">{article!.author.name}</span>
               </div>
-              <div className="flex items-center">
-                <Calendar className="w-4 h-4 mr-2" />
+              <div className="flex items-center gap-2 text-sm">
+                <Calendar className="w-4 h-4 text-gray-500" />
                 <span>{formatDate(article!.createdAt)}</span>
               </div>
-              <div className="flex items-center">
-                <Eye className="w-4 h-4 mr-2" />
+              <div className="flex items-center gap-2 text-sm">
+                <Eye className="w-4 h-4 text-gray-500" />
                 <span>{article!.viewCount} үзсэн</span>
               </div>
-              <div className="flex items-center">
-                <MessageCircle className="w-4 h-4 mr-2" />
+              <div className="flex items-center gap-2 text-sm">
+                <MessageCircle className="w-4 h-4 text-gray-500" />
                 <span>{article!.comments.length} сэтгэгдэл</span>
               </div>
             </div>
@@ -178,7 +178,7 @@ export default function NewsDetailPage() {
 
         {/* Article Image */}
         {article!.imageUrl && (
-          <div className="mb-8 rounded-lg overflow-hidden shadow-lg">
+          <div className="mb-8 rounded-lg overflow-hidden shadow-lg h-56 md:h-auto">
             <img
               src={
                 article!.imageUrl.startsWith("http")
@@ -186,19 +186,19 @@ export default function NewsDetailPage() {
                   : `https://api.cubingmongolia.mn${article!.imageUrl}`
               }
               alt={article!.title}
-              className="w-full h-auto object-cover"
+              className="w-full h-56 md:h-auto object-cover"
             />
           </div>
         )}
 
         {/* Article Content */}
-        <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
+        <div className="bg-white rounded-lg shadow-sm p-6 md:p-8 mb-8 overflow-hidden">
           <div
-            className="prose prose-lg max-w-none text-gray-700 leading-relaxed"
-            style={{ lineHeight: "1.8" }}
+            className="prose prose-lg max-w-none text-gray-700 leading-relaxed break-words"
+            style={{ lineHeight: "1.8", wordBreak: "break-word" }}
           >
             {article!.content.split("\n").map((paragraph, index) => (
-              <p key={index} className="mb-4">
+              <p key={index} className="mb-4 break-words">
                 {paragraph}
               </p>
             ))}
@@ -220,7 +220,10 @@ export default function NewsDetailPage() {
           <div className="space-y-6">
             {article?.comments && article.comments.length > 0 ? (
               article.comments.map((comment) => (
-                <div key={comment.id} className="flex items-center space-x-4">
+                <div
+                  key={comment.id}
+                  className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4"
+                >
                   <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
                     <User className="w-5 h-5 text-gray-600" />
                   </div>

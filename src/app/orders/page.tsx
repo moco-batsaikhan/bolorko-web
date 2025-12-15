@@ -187,10 +187,10 @@ export default function OrdersPage() {
                 <div key={order.id} className="bg-white rounded-lg shadow p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      {/* <h3 className="text-lg font-semibold text-gray-900">
                         Захиалга #{order.id}
-                      </h3>
-                      <div className="flex items-center text-sm text-gray-500 mt-1">
+                      </h3> */}
+                      <div className="flex items-center text-sm text-gray-500">
                         <Calendar className="w-4 h-4 mr-1" />
                         {formatDate(order.createdAt)}
                       </div>

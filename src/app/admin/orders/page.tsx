@@ -23,11 +23,13 @@ export default function AdminOrdersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       const allOrders = await apiService.getAllOrders();
+      console.log("orders: ", allOrders);
       setOrders(allOrders);
     } catch (error) {
       console.error("Failed to fetch orders:", error);
@@ -42,7 +44,10 @@ export default function AdminOrdersPage() {
   }, [fetchOrders]);
 
   // Handle order status update
-  const handleStatusUpdate = async (orderId: number, newStatus: Order["status"]) => {
+  const handleStatusUpdate = async (
+    orderId: number,
+    newStatus: Order["status"]
+  ) => {
     setUpdatingOrderId(orderId);
     try {
       await apiService.updateOrderStatus(orderId, { status: newStatus });
@@ -144,7 +149,8 @@ export default function AdminOrdersPage() {
       order.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.user?.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === "ALL" || order.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "ALL" || order.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -161,7 +167,9 @@ export default function AdminOrdersPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Захиалгын удирдлага</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Захиалгын удирдлага
+        </h2>
         <p className="text-gray-600">
           Бүх захиалгыг хянах болон удирдах ({orders.length} захиалга)
         </p>
@@ -206,7 +214,9 @@ export default function AdminOrdersPage() {
         <div className="text-center py-12">
           <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            {searchTerm || statusFilter !== "ALL" ? "Хайлтын үр дүн олдсонгүй" : "Захиалга байхгүй"}
+            {searchTerm || statusFilter !== "ALL"
+              ? "Хайлтын үр дүн олдсонгүй"
+              : "Захиалга байхгүй"}
           </h3>
           <p className="text-gray-600">
             {searchTerm || statusFilter !== "ALL"
@@ -244,12 +254,18 @@ export default function AdminOrdersPage() {
                 {filteredOrders.map((order) => {
                   const statusInfo = getStatusInfo(order.status);
                   return (
-                    <tr key={order.id} className="hover:bg-gray-50">
+                    <tr
+                      key={order.id}
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => setSelectedOrder(order)}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <Package className="w-5 h-5 text-gray-400 mr-3" />
                           <div>
-                            <div className="text-sm font-medium text-gray-900">#{order.id}</div>
+                            <div className="text-sm font-medium text-gray-900">
+                              #{order.id}
+                            </div>
                             <div className="text-sm text-gray-500">
                               {order.orderItems.length} бүтээгдэхүүн
                             </div>
@@ -263,7 +279,9 @@ export default function AdminOrdersPage() {
                             <div className="text-sm font-medium text-gray-900">
                               {order.user?.name || "Тодорхойгүй"}
                             </div>
-                            <div className="text-sm text-gray-500">{order.user?.email || ""}</div>
+                            <div className="text-sm text-gray-500">
+                              {order.user?.email || ""}
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -286,7 +304,9 @@ export default function AdminOrdersPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <Calendar className="w-5 h-5 text-gray-400 mr-3" />
-                          <div className="text-sm text-gray-900">{formatDate(order.createdAt)}</div>
+                          <div className="text-sm text-gray-900">
+                            {formatDate(order.createdAt)}
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -295,10 +315,14 @@ export default function AdminOrdersPage() {
                           <select
                             value={order.status}
                             onChange={(e) =>
-                              handleStatusUpdate(order.id, e.target.value as Order["status"])
+                              handleStatusUpdate(
+                                order.id,
+                                e.target.value as Order["status"]
+                              )
                             }
                             disabled={updatingOrderId === order.id}
                             className="text-sm border border-gray-300 rounded px-2 py-1 bg-white disabled:opacity-50"
+                            onClick={(e) => e.stopPropagation()}
                           >
                             <option value="PENDING">Хүлээгдэж байна</option>
                             <option value="PAID">Төлөгдсөн</option>
@@ -313,6 +337,7 @@ export default function AdminOrdersPage() {
                               onClick={() => handleMarkAsPaid(order.id)}
                               disabled={updatingOrderId === order.id}
                               className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                              onClick={(e) => e.stopPropagation()}
                             >
                               {updatingOrderId === order.id ? (
                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -328,6 +353,195 @@ export default function AdminOrdersPage() {
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Order Details Modal / Drawer */}
+      {selectedOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white w-11/12 md:w-3/4 lg:w-2/3 max-h-[90vh] overflow-auto rounded-lg shadow-lg p-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Захиалгын дэлгэрэнгүй #{selectedOrder.id}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Огноо: {formatDate(selectedOrder.createdAt)}
+                </p>
+              </div>
+              <div className="ml-4 flex items-center space-x-3">
+                <button
+                  onClick={() => {
+                    const json = JSON.stringify(selectedOrder, null, 2);
+                    const blob = new Blob([json], { type: "application/json" });
+                    const url = URL.createObjectURL(blob);
+                    window.open(url, "_blank");
+                  }}
+                  className="text-sm text-mega-600 hover:underline"
+                >
+                  Raw JSON
+                </button>
+
+                <button
+                  onClick={() => setSelectedOrder(null)}
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  Хаах
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="border rounded p-4">
+                <h4 className="font-medium text-gray-800">Хэрэглэгч</h4>
+                <div className="text-sm text-gray-700 mt-2">
+                  <div>
+                    <strong>Нэр:</strong> {selectedOrder.user?.name || "-"}
+                  </div>
+                  <div>
+                    <strong>Имэйл:</strong> {selectedOrder.user?.email || "-"}
+                  </div>
+                  <div>
+                    <strong>Хэрэглэгчийн ID:</strong> {selectedOrder.userId}
+                  </div>
+                </div>
+              </div>
+
+              <div className="border rounded p-4">
+                <h4 className="font-medium text-gray-800">Хүргэлтийн хаяг</h4>
+                <div className="text-sm text-gray-700 mt-2">
+                  <div>
+                    <strong>Бүтэн нэр:</strong>{" "}
+                    {selectedOrder.shippingAddress?.fullName || "-"}
+                  </div>
+                  <div>
+                    <strong>Утас:</strong>{" "}
+                    {selectedOrder.shippingAddress?.phone || "-"}
+                  </div>
+                  <div>
+                    <strong>Хаяг:</strong>{" "}
+                    {selectedOrder.shippingAddress?.addressLine || "-"}
+                  </div>
+                  <div>
+                    <strong>Хот:</strong>{" "}
+                    {selectedOrder.shippingAddress?.city || "-"}
+                  </div>
+                  <div>
+                    <strong>Тайлбар:</strong>{" "}
+                    {selectedOrder.shippingAddress?.note || "-"}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <h4 className="font-medium text-gray-800">
+                Захиалгын бүтээгдэхүүнүүд
+              </h4>
+              <div className="mt-3 space-y-3">
+                {selectedOrder.orderItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="border rounded p-3 flex flex-col md:flex-row md:items-center md:justify-between"
+                  >
+                    <div className="flex items-start space-x-4">
+                      <div>
+                        {Array.isArray(item.product?.images) &&
+                        item.product?.images?.[0] ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={String(item.product.images[0])}
+                            alt={item.product?.name}
+                            className="w-20 h-20 object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-20 h-20 bg-gray-100 flex items-center justify-center rounded text-gray-400">
+                            No image
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold text-gray-900">
+                          {item.product?.name || "-"}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {item.product?.description || "-"}
+                        </div>
+                        <div className="text-sm text-gray-800 mt-1">
+                          Нэгж үнэ:{" "}
+                          {formatPrice(
+                            item.unitPrice ||
+                              (item.price as any) ||
+                              item.product?.price ||
+                              "0"
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-800">
+                          Тоо ширхэг: {item.quantity}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 md:mt-0 text-right">
+                      <div className="text-sm text-gray-700">
+                        Нийт:{" "}
+                        {formatPrice(
+                          (
+                            parseFloat(
+                              String(
+                                item.unitPrice ||
+                                  (item.price as any) ||
+                                  item.product?.price ||
+                                  0
+                              )
+                            ) * item.quantity
+                          ).toFixed(2)
+                        )}
+                      </div>
+                      <button
+                        onClick={() => {
+                          const productJson = JSON.stringify(
+                            item.product || {},
+                            null,
+                            2
+                          );
+                          const blob = new Blob([productJson], {
+                            type: "application/json",
+                          });
+                          const url = URL.createObjectURL(blob);
+                          window.open(url, "_blank");
+                        }}
+                        className="mt-2 inline-block text-sm text-mega-600 hover:underline"
+                      >
+                        Бүтээгдэхүүний дэлгэрэнгүй үзэх
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-between">
+              <div className="text-sm text-gray-700">
+                <div>
+                  <strong>Өгөгдсөн нийт дүн:</strong>{" "}
+                  {formatPrice(selectedOrder.total)}
+                </div>
+                <div>
+                  <strong>Төлөв:</strong>{" "}
+                  {getStatusInfo(selectedOrder.status).text}
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setSelectedOrder(null)}
+                  className="px-4 py-2 bg-gray-100 rounded"
+                >
+                  Хаах
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
