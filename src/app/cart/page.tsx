@@ -6,6 +6,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
 import { CartItem, apiService } from "@/services/apiService";
+import { API_BASE_URL } from "@/constants/constants";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -166,13 +167,16 @@ export default function CartPage() {
                         <Image
                           src={
                             item.product.images?.[0]
-                              ? `https://api.cubingmongolia.mn${item.product.images[0]}`
+                              ? item.product.images[0].startsWith("http")
+                                ? item.product.images[0]
+                                : `${API_BASE_URL}${item.product.images[0]}`
                               : "/imgs/placeholder.jpg"
                           }
                           alt={item.product.name}
                           fill
                           className="object-cover rounded-lg"
                           sizes="(max-width: 640px) 100vw, 80px"
+                          unoptimized={!!item.product.images?.[0]?.startsWith("http")}
                         />
                       </div>
 
@@ -183,7 +187,15 @@ export default function CartPage() {
                             {item.product.name}
                           </h3>
                           <p className="text-sm text-gray-500 mt-1">
-                            {formatPrice(parseFloat(item.product.price))} / ш
+                            {formatPrice(
+                              parseFloat(item.product.salePrice ?? item.product.price)
+                            )}{" "}
+                            / ш
+                            {item.product.discountPercentage && (
+                              <span className="ml-2 text-xs text-gray-400 line-through">
+                                {formatPrice(parseFloat(item.product.price))}
+                              </span>
+                            )}
                           </p>
                         </div>
 
@@ -223,7 +235,8 @@ export default function CartPage() {
                           <div className="text-right">
                             <div className="font-semibold text-gray-900">
                               {formatPrice(
-                                parseFloat(item.product.price) * item.quantity
+                                parseFloat(item.product.salePrice ?? item.product.price) *
+                                  item.quantity
                               )}
                             </div>
                           </div>
@@ -252,7 +265,9 @@ export default function CartPage() {
                 {(() => {
                   const subtotal = cart.cartItems.reduce(
                     (total, item) =>
-                      total + parseFloat(item.product.price) * item.quantity,
+                      total +
+                      parseFloat(item.product.salePrice ?? item.product.price) *
+                        item.quantity,
                     0
                   );
                   const shippingCost = subtotal > 50000 ? 0 : 5000; // Free shipping over 50k

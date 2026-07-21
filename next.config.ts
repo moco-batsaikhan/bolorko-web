@@ -16,6 +16,15 @@ const nextConfig: NextConfig = {
         port: "3000",
         pathname: "/uploads/**",
       },
+      // Facebook sync-ээр ирсэн барааны зургууд (scontent-*.xx.fbcdn.net гэх мэт)
+      {
+        protocol: "https",
+        hostname: "**.fbcdn.net",
+      },
+      {
+        protocol: "https",
+        hostname: "**.cdninstagram.com",
+      },
     ],
   },
 };

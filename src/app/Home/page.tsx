@@ -3,266 +3,603 @@
 import { useState, useEffect } from "react";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
-import { apiService } from "@/services/apiService";
+import { apiService, Product, ProductCategory, Banner } from "@/services/apiService";
+import { API_BASE_URL } from "@/constants/constants";
+import Loading from "@/components/Loading";
 import Link from "next/link";
-import {
-  ShoppingBag,
-  Newspaper,
-  BookOpen,
-  Trophy,
-  ArrowRight,
-  Star,
-  Users,
-  Target,
-  Award,
-} from "lucide-react";
+import { ShoppingBag, ShoppingCart, Star, Package, ChevronLeft, ChevronRight } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
+
+const FACEBOOK_URL = "https://www.facebook.com/momsoonshop";
+
+function getBannerImageUrl(banner: Banner): string | null {
+  if (!banner.image) return null;
+  return banner.image.startsWith("http") ? banner.image : `${API_BASE_URL}${banner.image}`;
+}
+
+function getProductImageUrl(images: string[] | string | null): string | null {
+  if (!images) return null;
+
+  if (typeof images === "string") {
+    if (images === "string") return null;
+    return images.startsWith("http") ? images : `${API_BASE_URL}${images}`;
+  }
+
+  if (Array.isArray(images) && images.length > 0) {
+    const firstImage = images[0];
+    return firstImage.startsWith("http") ? firstImage : `${API_BASE_URL}${firstImage}`;
+  }
+
+  return null;
+}
+
+function formatPrice(price: string | number) {
+  const numPrice = typeof price === "string" ? parseFloat(price) : price;
+  if (!numPrice) return "Үнэ асууна уу";
+  return new Intl.NumberFormat("mn-MN").format(numPrice) + "₮";
+}
+
+interface CategoryCard {
+  category: ProductCategory;
+  image: string | null;
+}
+
+interface CategorySection {
+  category: ProductCategory;
+  products: Product[];
+}
+
+function ProductCard({
+  product,
+  addingProductId,
+  onQuickAdd,
+}: {
+  product: Product;
+  addingProductId: number | null;
+  onQuickAdd: (e: React.MouseEvent, productId: number) => void;
+}) {
+  const imageUrl = getProductImageUrl(product.images);
+  const outOfStock = product.stock <= 0;
+
+  return (
+    <Link href={`/shop/${product.id}`} className="group block h-full">
+      <div className="card-3d bg-white h-full flex flex-col">
+        <div className="relative aspect-[3/4] bg-gray-100 overflow-hidden">
+          {imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={imageUrl}
+              alt={product.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <Package size={48} className="text-gray-300" />
+            </div>
+          )}
+
+          {product.discountPercentage && (
+            <span className="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1">
+              -{product.discountPercentage}%
+            </span>
+          )}
+          {outOfStock && (
+            <span className="absolute top-3 right-3 bg-gray-800 text-white text-xs font-medium px-2 py-1 uppercase tracking-wider">
+              Дууссан
+            </span>
+          )}
+        </div>
+
+        <div className="pt-4 pb-5 px-3 flex flex-col items-center text-center flex-1">
+          <h3 className="text-xs md:text-sm font-medium uppercase tracking-wider text-gray-900 line-clamp-2 mb-2 group-hover:text-red-600 transition-colors">
+            {product.name}
+          </h3>
+
+          {product.ratingCount > 0 && (
+            <div className="flex items-center gap-1 mb-1.5">
+              <Star size={12} className="text-yellow-400 fill-current" />
+              <span className="text-xs text-gray-400">
+                {parseFloat(product.averageRating).toFixed(1)} ({product.ratingCount})
+              </span>
+            </div>
+          )}
+
+          <div className="flex items-baseline justify-center gap-2 mb-3">
+            <span
+              className={`text-sm md:text-base font-semibold ${
+                product.discountPercentage ? "text-red-600" : "text-gray-900"
+              }`}
+            >
+              {formatPrice(product.salePrice ?? product.price)}
+            </span>
+            {product.discountPercentage && (
+              <span className="text-xs text-gray-400 line-through">
+                {formatPrice(product.price)}
+              </span>
+            )}
+          </div>
+
+          <button
+            onClick={e => onQuickAdd(e, product.id)}
+            disabled={outOfStock || addingProductId === product.id}
+            className="mt-auto w-full max-w-[180px] flex items-center justify-center gap-2 px-4 py-2 border border-red-600 text-red-600 text-xs font-medium uppercase tracking-widest hover:bg-red-600 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-red-600"
+          >
+            {addingProductId === product.id ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+            ) : (
+              <>
+                <ShoppingCart size={14} />
+                {outOfStock ? "Дууссан" : "Сагслах"}
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 export default function HomePage() {
-  const [stats, setStats] = useState({
-    products: 0,
-    news: 0,
-    lessons: 0,
-    competitions: 0,
-  });
+  const { addToCart } = useCart();
+  const [infoPosts, setInfoPosts] = useState<Product[]>([]);
+  const [categoryCards, setCategoryCards] = useState<CategoryCard[]>([]);
+  const [categorySections, setCategorySections] = useState<CategorySection[]>([]);
+  const [newArrivals, setNewArrivals] = useState<Product[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [currentBanner, setCurrentBanner] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [addingProductId, setAddingProductId] = useState<number | null>(null);
 
   useEffect(() => {
-    // Load statistics
-    const loadStats = async () => {
+    const loadData = async () => {
       try {
-        const [products, news, lessons, competitions] = await Promise.all([
-          apiService
-            .getProducts()
-            .then((data) => ({ total: data.length }))
-            .catch(() => ({ total: 0 })),
-          apiService.getNews({ page: 1, limit: 1 }).catch(() => ({ total: 0 })),
-          apiService.getPublicLessons(1, 1).catch(() => ({ total: 0 })),
-          apiService.getCompetitions({ page: 1, limit: 1 }).catch(() => ({ total: 0 })),
+        const [infoData, featuredCategories, bannersData, allProducts] = await Promise.all([
+          apiService.getProducts({ type: "INFO" }).catch(() => [] as Product[]),
+          apiService.getFeaturedCategories().catch(() => [] as ProductCategory[]),
+          apiService.getActiveBanners().catch(() => [] as Banner[]),
+          apiService.getProducts({ type: "PRODUCT" }).catch(() => [] as Product[]),
         ]);
 
-        setStats({
-          products: products.total || 0,
-          news: news.total || 0,
-          lessons: lessons.total || 0,
-          competitions: competitions.total || 0,
+        // Онцолсон категори байхгүй бол бүх үндсэн категориор fallback хийнэ
+        const mainCategories =
+          featuredCategories.length > 0
+            ? featuredCategories
+            : await apiService.getMainCategories().catch(() => [] as ProductCategory[]);
+
+        // INFO постуудыг шинээс хуучин руу эрэмбэлнэ
+        infoData.sort((a, b) => {
+          const dateA = new Date(a.postedAt || a.createdAt).getTime();
+          const dateB = new Date(b.postedAt || b.createdAt).getTime();
+          return dateB - dateA;
         });
+        setInfoPosts(infoData);
+        setBanners(bannersData.filter(b => getBannerImageUrl(b)));
+
+        // Шинэ бараа: идэвхтэйг шинээс хуучин руу
+        const activeProducts = allProducts.filter(p => p.status === "ACTIVE");
+        const arrivals = [...activeProducts].sort(
+          (a, b) =>
+            new Date(b.postedAt || b.createdAt).getTime() -
+            new Date(a.postedAt || a.createdAt).getTime(),
+        );
+        setNewArrivals(arrivals.slice(0, 4));
+
+        // Ангилал бүрийн бараануудыг татна: дугуй картын зураг болон
+        // ангиллын барааны хэсгүүдэд хоёуланд нь ашиглагдана
+        const sectionResults = await Promise.all(
+          mainCategories.map(async category => {
+            const products = await apiService
+              .getProducts({ type: "PRODUCT", categoryId: category.id })
+              .catch(() => [] as Product[]);
+            const active = products.filter(p => p.status === "ACTIVE");
+
+            // Картын зураг: категорийн өөрийн зураг, байхгүй бол эхний барааных
+            let image: string | null = null;
+            if (category.image) {
+              image = category.image.startsWith("http")
+                ? category.image
+                : `${API_BASE_URL}${category.image}`;
+            } else {
+              const withImage = active.find(p => getProductImageUrl(p.images));
+              image = withImage ? getProductImageUrl(withImage.images) : null;
+            }
+
+            return { category, image, products: active.slice(0, 4) };
+          }),
+        );
+        setCategoryCards(sectionResults.map(({ category, image }) => ({ category, image })));
+        setCategorySections(
+          sectionResults
+            .filter(s => s.products.length > 0)
+            .map(({ category, products }) => ({ category, products })),
+        );
       } catch (error) {
-        console.error("Failed to load stats:", error);
+        console.error("Failed to load home data:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    loadStats();
+    loadData();
   }, []);
 
-  const modules = [
-    {
-      title: "Дэлгүүр",
-      description: "Рубик шоо болон холбогдох бүтээгдэхүүнүүд",
-      icon: ShoppingBag,
-      href: "/shop",
-      color: "bg-gradient-to-br from-blue-500 to-blue-600",
-      iconColor: "text-blue-100",
-      count: stats.products,
-      features: ["Янз бүрийн рубик шоо", "Хурдны шоо", "хэрэгсэл"],
-    },
-    {
-      title: "Мэдээ",
-      description: "Клубын болон дэлхийн speedcubing мэдээ",
-      icon: Newspaper,
-      href: "/news",
-      color: "bg-gradient-to-br from-green-500 to-green-600",
-      iconColor: "text-green-100",
-      count: stats.news,
-      features: ["Шинэ мэдээ", "Уралдааны үр дүн", "Дэлхийн рекорд"],
-    },
-    {
-      title: "Хичээл",
-      description: "Рубик шооны алгоритм болон техник сурах",
-      icon: BookOpen,
-      href: "/lessons",
-      color: "bg-gradient-to-br from-purple-500 to-purple-600",
-      iconColor: "text-purple-100",
-      count: stats.lessons,
-      features: ["Видео хичээл", "Алгоритм", "Практик дасгал"],
-    },
-    {
-      title: "Тэмцээн",
-      description: "Клубын болон олон улсын тэмцээнүүд",
-      icon: Trophy,
-      href: "/competitions",
-      color: "bg-gradient-to-br from-orange-500 to-orange-600",
-      iconColor: "text-orange-100",
-      count: stats.competitions,
-      features: ["Уралдаан", "Бүртгэл"],
-    },
-  ];
+  // Banner auto-rotate every 5 seconds
+  useEffect(() => {
+    if (banners.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentBanner(prev => (prev + 1) % banners.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [banners.length]);
+
+  const handleQuickAdd = async (e: React.MouseEvent, productId: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setAddingProductId(productId);
+    try {
+      await addToCart(productId, 1);
+    } finally {
+      setAddingProductId(null);
+    }
+  };
+
+  // Follow grid: бараа болон мэдээллийн зургуудаас 6-г цуглуулна
+  const followImages = [...newArrivals, ...infoPosts]
+    .map(p => getProductImageUrl(p.images))
+    .filter((url): url is string => !!url)
+    .slice(0, 6);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <Header />
 
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-gray-900 via-blue-900 to-blue-800 text-white overflow-hidden">
-        <div className="absolute inset-0 bg-black opacity-10"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-          <div className="text-center">
-            <h1 className="mb-6">
-              <span className="block text-4xl md:text-6xl font-bold">MEGA</span>
-              <span className="block text-3xl md:text-3xl font-bold">
-                Рубик шооны клубт тавтай морил
-              </span>
-            </h1>
-            <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto">
-              Рубик шооны спортыг хөгжүүлэх, түгээх зорилготой клуб
-            </p>
-          </div>
-        </div>
+      {/* Hero — Banner Carousel */}
+      {banners.length > 0 ? (
+        <section className="relative bg-red-950 overflow-hidden">
+          <div className="relative aspect-[16/10] sm:aspect-[21/9] lg:aspect-[3/1] max-h-[560px] w-full">
+            {banners.map((banner, index) => {
+              const slideInner = (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={getBannerImageUrl(banner)!}
+                    alt={banner.title || `Banner ${index + 1}`}
+                    className="relative w-full h-full object-cover"
+                  />
 
-        {/* Decorative elements */}
-        <div className="absolute top-10 left-10 w-20 h-20 bg-yellow-400 opacity-10 rounded-full"></div>
-        <div className="absolute top-32 right-20 w-16 h-16 bg-blue-400 opacity-10 rounded-full"></div>
-        <div className="absolute bottom-20 left-32 w-12 h-12 bg-green-400 opacity-10 rounded-full"></div>
-      </section>
-
-      {/* Statistics Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Клубын статистик</h2>
-            <p className="text-xl text-gray-600">Манай клубын үйл ажиллагааны тоо баримт</p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="text-center p-6 bg-gray-50 rounded-lg">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mb-4">
-                <ShoppingBag className="text-blue-600" size={24} />
-              </div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">{stats.products}</div>
-              <div className="text-sm text-gray-600">Бүтээгдэхүүн</div>
-            </div>
-
-            <div className="text-center p-6 bg-gray-50 rounded-lg">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mb-4">
-                <Newspaper className="text-green-600" size={24} />
-              </div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">{stats.news}</div>
-              <div className="text-sm text-gray-600">Мэдээ</div>
-            </div>
-
-            <div className="text-center p-6 bg-gray-50 rounded-lg">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 rounded-lg mb-4">
-                <BookOpen className="text-purple-600" size={24} />
-              </div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">{stats.lessons}</div>
-              <div className="text-sm text-gray-600">Хичээл</div>
-            </div>
-
-            <div className="text-center p-6 bg-gray-50 rounded-lg">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-orange-100 rounded-lg mb-4">
-                <Trophy className="text-orange-600" size={24} />
-              </div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">{stats.competitions}</div>
-              <div className="text-sm text-gray-600">Тэмцээн</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Main Modules Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Үндсэн модулиуд</h2>
-            <p className="text-xl text-gray-600">Клубын үйл ажиллагааны бүх хэсэгтэй танилцаарай</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
-            {modules.map((module) => {
-              const IconComponent = module.icon;
-              return (
-                <Link key={module.title} href={module.href} className="group block">
-                  <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 group-hover:-translate-y-1">
-                    <div className={`${module.color} p-8 text-white relative overflow-hidden`}>
-                      <div className="relative z-10">
-                        <div className="flex items-center justify-between mb-4">
-                          <IconComponent size={48} className={module.iconColor} />
-                          <div className="text-right">
-                            <div className="text-2xl font-bold">{module.count}</div>
-                            <div className="text-sm opacity-80">Нийт</div>
-                          </div>
-                        </div>
-                        <h3 className="text-2xl font-bold mb-2">{module.title}</h3>
-                        <p className="text-lg opacity-90">{module.description}</p>
-                      </div>
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full transform translate-x-8 -translate-y-8"></div>
-                    </div>
-
-                    <div className="p-6">
-                      <ul className="space-y-2 mb-6">
-                        {module.features.map((feature, index) => (
-                          <li key={index} className="flex items-center gap-2 text-gray-600">
-                            <Star size={16} className="text-yellow-500 fill-current" />
-                            {feature}
-                          </li>
-                        ))}
-                      </ul>
-
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-500">Дэлгэрэнгүй үзэх</span>
-                        <ArrowRight
-                          size={20}
-                          className="text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all"
-                        />
+                  {/* Overlay text */}
+                  {/* {banner.title && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent flex items-end justify-center pb-10 md:pb-14">
+                      <div className="text-center text-white px-4">
+                        {banner.description && (
+                          <p className="text-xs md:text-sm uppercase tracking-[0.25em] mb-2 opacity-90">
+                            {banner.description}
+                          </p>
+                        )}
+                        <h2 className="font-display text-2xl md:text-4xl lg:text-5xl font-bold uppercase mb-4">
+                          {banner.title}
+                        </h2>
+                        <span className="inline-block bg-red-600 text-white text-xs uppercase tracking-widest px-6 py-3 hover:bg-red-700 transition-colors">
+                          Дэлгүүр үзэх
+                        </span>
                       </div>
                     </div>
-                  </div>
+                  )} */}
+                </>
+              );
+
+              const slideClass = `absolute inset-0 transition-opacity duration-700 ${
+                index === currentBanner ? "opacity-100" : "opacity-0 pointer-events-none"
+              }`;
+
+              const href = banner.link || "/shop";
+              return href.startsWith("/") ? (
+                <Link key={banner.id} href={href} className={`${slideClass} block`}>
+                  {slideInner}
                 </Link>
+              ) : (
+                <a
+                  key={banner.id}
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`${slideClass} block`}
+                >
+                  {slideInner}
+                </a>
               );
             })}
+
+            {banners.length > 1 && (
+              <>
+                <button
+                  onClick={() =>
+                    setCurrentBanner(prev => (prev - 1 + banners.length) % banners.length)
+                  }
+                  className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-white/70 hover:bg-white text-gray-900 transition-colors"
+                  aria-label="Өмнөх баннер"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <button
+                  onClick={() => setCurrentBanner(prev => (prev + 1) % banners.length)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-white/70 hover:bg-white text-gray-900 transition-colors"
+                  aria-label="Дараагийн баннер"
+                >
+                  <ChevronRight size={20} />
+                </button>
+
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
+                  {banners.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentBanner(index)}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        index === currentBanner ? "w-6 bg-white" : "w-1.5 bg-white/50"
+                      }`}
+                      aria-label={`Баннер ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
+        </section>
+      ) : (
+        /* Hero fallback — banner байхгүй үед */
+        <section className="relative bg-gradient-to-br from-red-800 via-red-700 to-red-600 text-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32 text-center">
+            <p className="text-xs md:text-sm uppercase tracking-[0.3em] text-red-200 mb-4">
+              Bolorko Collection
+            </p>
+            <h1 className="font-display text-4xl md:text-6xl font-bold uppercase mb-6">
+              Хувцас, аяллын
+              <br />
+              хэрэгсэл
+            </h1>
+            <Link
+              href="/shop"
+              className="inline-flex items-center gap-2 bg-white text-red-600 text-xs font-medium uppercase tracking-widest px-8 py-4 hover:bg-red-100 transition-colors"
+            >
+              <ShoppingBag size={16} />
+              Дэлгүүр үзэх
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {loading ? (
+        <div className="py-20">
+          <Loading />
         </div>
-      </section>
+      ) : (
+        <>
+          {/* Ангиллын зурагт картууд */}
+          {categoryCards.length > 0 && (
+            <section className="py-10 md:py-14 bg-white">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 className="font-display text-2xl md:text-4xl font-bold uppercase text-center text-gray-900 mb-8 md:mb-10">
+                  Ангилал
+                </h2>
 
-      {/* Features Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Яагаад биднийг сонгох вэ?</h2>
-            <p className="text-xl text-gray-600">Манай клубын давуу талууд</p>
-          </div>
+                <div className="flex flex-wrap justify-center gap-x-6 gap-y-8 md:gap-x-10">
+                  {categoryCards.map(card => (
+                    <div key={card.category.id} className="flex flex-col items-center w-32 md:w-40">
+                      {/* Дугуй зураг */}
+                      <Link href={`/shop?category=${card.category.id}`} className="group block">
+                        <div className="relative w-28 h-28 md:w-36 md:h-36 rounded-full overflow-hidden bg-gray-100 ring-2 ring-gray-200 ring-offset-4 group-hover:ring-red-600 transition-all duration-300 shadow-md group-hover:shadow-xl">
+                          {card.image ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={card.image}
+                              alt={card.category.name}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                              <Package size={32} className="text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+                        <h3 className="mt-3 text-sm md:text-base font-semibold text-center text-gray-900 group-hover:text-red-600 transition-colors">
+                          {card.category.name}
+                        </h3>
+                      </Link>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center p-6">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-6">
-                <Users className="text-blue-600" size={32} />
+                      {/* Дэд ангиллын задаргаа */}
+                      {/* {card.category.children && card.category.children.length > 0 && (
+                        <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+                          {card.category.children.map(sub => (
+                            <Link
+                              key={sub.id}
+                              href={`/shop?category=${sub.id}`}
+                              className="px-2.5 py-1 text-[11px] text-gray-500 bg-gray-50 border border-gray-200 rounded-full hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors"
+                            >
+                              {sub.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )} */}
+                    </div>
+                  ))}
+                </div>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Найрсаг хамт олон</h3>
-              <p className="text-gray-600">
-                Ижил сонирхолтой найз нөхөдтэй танилцаж, хамтдаа дээшлэх боломж
-              </p>
-            </div>
+            </section>
+          )}
 
-            <div className="text-center p-6">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-6">
-                <Target className="text-green-600" size={32} />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Цогц сургалт</h3>
-              <p className="text-gray-600">
-                Анхан шатнаас дээд түвшин хүртэл системтэй хичээл, алгоритм сургалт
-              </p>
-            </div>
+          {/* Шинэ бараа */}
+          {newArrivals.length > 0 && (
+            <section className="py-10 md:py-14 bg-white">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 className="font-display text-2xl md:text-4xl font-bold uppercase text-center text-gray-900 mb-8 md:mb-10">
+                  Шинэ бараа
+                </h2>
 
-            <div className="text-center p-6">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mb-6">
-                <Award className="text-yellow-600" size={32} />
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                  {newArrivals.map(product => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      addingProductId={addingProductId}
+                      onQuickAdd={handleQuickAdd}
+                    />
+                  ))}
+                </div>
+
+                <div className="text-center mt-10">
+                  <Link
+                    href="/shop"
+                    className="inline-block border border-red-600 text-red-600 text-xs font-medium uppercase tracking-widest px-10 py-3.5 hover:bg-red-600 hover:text-white transition-colors"
+                  >
+                    Бүх барааг үзэх
+                  </Link>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Тэмцээний боломж</h3>
-              <p className="text-gray-600">
-                Дотоод болон олон улсын тэмцээнд оролцох, шагнал хүртэх боломж
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+            </section>
+          )}
+
+          {/* Ангилал бүрийн бараанууд */}
+          {categorySections.map((section, index) => (
+            <section
+              key={section.category.id}
+              className={`py-10 md:py-14 ${index % 2 === 0 ? "bg-gray-50" : "bg-white"}`}
+            >
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                {/* Хоёр талдаа нарийн зураастай elegant гарчиг */}
+                <div className="flex items-center gap-4 md:gap-8 mb-8 md:mb-10">
+                  <span className="flex-1 h-px bg-gray-300"></span>
+                  <h2 className="font-display text-xl md:text-3xl font-bold uppercase text-gray-900 text-center">
+                    {section.category.name}
+                  </h2>
+                  <span className="flex-1 h-px bg-gray-300"></span>
+                </div>
+
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                  {section.products.map(product => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      addingProductId={addingProductId}
+                      onQuickAdd={handleQuickAdd}
+                    />
+                  ))}
+                </div>
+
+                <div className="text-center mt-8">
+                  <Link
+                    href={`/shop?category=${section.category.id}`}
+                    className="inline-block text-xs font-medium uppercase tracking-widest text-red-600 border-b border-red-600 pb-0.5 hover:text-red-800 hover:border-red-800 transition-colors"
+                  >
+                    {section.category.name} — бүгдийг үзэх
+                  </Link>
+                </div>
+              </div>
+            </section>
+          ))}
+
+          {/* Мэдээлэл — сэтгүүлийн (editorial) загвар */}
+          {infoPosts.length > 0 && (
+            <section className="py-12 md:py-16 bg-white border-t border-gray-100">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <p className="text-center text-xs uppercase tracking-[0.3em] text-gray-400 mb-2">
+                  Bolorko
+                </p>
+                <h2 className="font-display text-2xl md:text-4xl font-bold uppercase text-center text-gray-900 mb-8 md:mb-12">
+                  Мэдээлэл
+                </h2>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
+                  {infoPosts.slice(0, 3).map(post => {
+                    const imageUrl = getProductImageUrl(post.images);
+                    return (
+                      <Link key={post.id} href="/info" className="group block">
+                        {imageUrl && (
+                          <div className="aspect-[4/3] bg-gray-100 overflow-hidden mb-4">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={imageUrl}
+                              alt={post.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                              loading="lazy"
+                            />
+                          </div>
+                        )}
+                        {post.postedAt && (
+                          <p className="text-[11px] uppercase tracking-[0.2em] text-gray-400 mb-2">
+                            {new Date(post.postedAt).toLocaleDateString("mn-MN")}
+                          </p>
+                        )}
+                        <h3 className="font-display text-lg md:text-xl font-bold text-gray-900 line-clamp-2 group-hover:text-red-600 transition-colors">
+                          {post.name}
+                        </h3>
+                        <p className="text-sm text-gray-500 line-clamp-3 mt-2 leading-relaxed">
+                          {post.description}
+                        </p>
+                        <span className="inline-block mt-3 text-xs font-medium uppercase tracking-widest text-red-600 border-b border-red-600 pb-0.5 group-hover:text-red-800 group-hover:border-red-800 transition-colors">
+                          Цааш унших
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+
+                <div className="text-center mt-10">
+                  <Link
+                    href="/info"
+                    className="inline-block border border-gray-300 text-gray-700 text-xs font-medium uppercase tracking-widest px-10 py-3.5 hover:border-red-600 hover:text-red-600 transition-colors"
+                  >
+                    Бүх мэдээллийг үзэх
+                  </Link>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Биднийг дагаарай */}
+          {followImages.length > 0 && (
+            <section className="py-10 md:py-12 bg-gray-50">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h3 className="font-display text-lg md:text-2xl font-bold uppercase text-center text-gray-900 mb-2">
+                  Биднийг дагаарай
+                </h3>
+                <p className="text-center mb-6">
+                  <a
+                    href={FACEBOOK_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs uppercase tracking-widest text-gray-500 hover:text-red-600 transition-colors"
+                  >
+                    Facebook хуудас руу очих →
+                  </a>
+                </p>
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                  {followImages.map((url, i) => (
+                    <a
+                      key={i}
+                      href={FACEBOOK_URL}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block aspect-square bg-gray-200 overflow-hidden group"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={url}
+                        alt={`Bolorko ${i + 1}`}
+                        className="w-full h-full object-cover group-hover:scale-105 group-hover:opacity-80 transition-all duration-500"
+                        loading="lazy"
+                      />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+        </>
+      )}
 
       <Footer />
     </div>

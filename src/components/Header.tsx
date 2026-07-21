@@ -1,36 +1,63 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { ShoppingCart, User, Menu, X, LogOut, LogIn } from "lucide-react";
+import {
+  ShoppingCart,
+  User,
+  Menu,
+  X,
+  LogOut,
+  LogIn,
+  Search,
+  LayoutGrid,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useCart } from "../contexts/CartContext";
 import { LoginModal } from "./LoginModal";
 import { UserRole } from "@/constants/roles";
+import { apiService, ProductCategory } from "@/services/apiService";
 
 export function Header() {
-  const pathname = usePathname();
+  const router = useRouter();
   const { isAuthenticated, user, logout } = useAuth();
   const { itemCount } = useCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const profileRef = useRef<HTMLDivElement>(null);
   const mobileProfileRef = useRef<HTMLDivElement>(null);
+  const categoryRef = useRef<HTMLDivElement>(null);
+
+  // Ангиллуудыг татна (үндсэн + дэд nested)
+  useEffect(() => {
+    apiService
+      .getMainCategories()
+      .then(setCategories)
+      .catch((err) => console.error("Failed to load categories:", err));
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (!isProfileOpen) return;
-
       const target = event.target as Node;
 
-      const isOutsideDesktop = profileRef.current && !profileRef.current.contains(target);
-      const isOutsideMobile =
-        mobileProfileRef.current && !mobileProfileRef.current.contains(target);
+      if (isProfileOpen) {
+        const isOutsideDesktop = profileRef.current && !profileRef.current.contains(target);
+        const isOutsideMobile =
+          mobileProfileRef.current && !mobileProfileRef.current.contains(target);
+        if (isOutsideDesktop && isOutsideMobile) {
+          setIsProfileOpen(false);
+        }
+      }
 
-      if (isOutsideDesktop && isOutsideMobile) {
-        setIsProfileOpen(false);
+      if (isCategoryOpen && categoryRef.current && !categoryRef.current.contains(target)) {
+        setIsCategoryOpen(false);
       }
     }
 
@@ -38,103 +65,123 @@ export function Header() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isProfileOpen]);
+  }, [isProfileOpen, isCategoryOpen]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    router.push(q ? `/shop?search=${encodeURIComponent(q)}` : "/shop");
+    setIsMenuOpen(false);
+  };
+
+  const goToCategory = (categoryId: number) => {
+    setIsCategoryOpen(false);
+    setIsMenuOpen(false);
+    router.push(`/shop?category=${categoryId}`);
+  };
 
   return (
-    <header className="bg-white shadow-sm border-b">
+    <header className="bg-white shadow-sm border-b sticky top-0 z-40">
+      {/* Зарын мөр */}
+      <div className="bg-red-600 text-white py-2 text-center text-xs tracking-widest uppercase">
+        50,000₮-с дээш захиалгад хот дотор үнэгүй хүргэлт
+      </div>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex items-center gap-3 md:gap-6 h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center space-x-2 group">
-              <div className="w-10 h-10 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-200 ">
+              <div className="w-10 h-10 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-200">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/imgs/mega-logo.png"
-                  alt="MEGA Logo"
-                  className="w-10 h-10 object-contain transform group-hover:rotate-180 transition-transform duration-300"
+                  src="/imgs/icon.png"
+                  alt="Bolorko Logo"
+                  className="w-10 h-10 object-contain"
                 />
               </div>
-              <span className="text-xl font-bold text-gray-900 group-hover:text-mega-600 transition-colors duration-200">
-                MEGA{" "}
+              <span className="font-display text-2xl font-bold tracking-wide text-gray-900 group-hover:text-red-600 transition-colors duration-200">
+                BOLORKO
               </span>
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8">
-            <Link
-              href="/"
-              className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 group ${
-                pathname === "/" ? "text-mega-600" : "text-gray-700 hover:text-mega-600"
+          {/* Ангилал (задардаг) — desktop */}
+          <div className="hidden md:block relative" ref={categoryRef}>
+            <button
+              onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium uppercase tracking-wider transition-colors border ${
+                isCategoryOpen
+                  ? "bg-red-600 text-white border-red-600"
+                  : "bg-white text-gray-900 border-gray-300 hover:border-red-600 hover:text-red-600"
               }`}
             >
-              Нүүр
-              <span
-                className={`absolute bottom-0 left-0 h-0.5 bg-mega-600 transition-all duration-300 ${
-                  pathname === "/" ? "w-full" : "w-0 group-hover:w-full"
+              <LayoutGrid size={18} />
+              Ангилал
+              <ChevronDown
+                size={16}
+                className={`transition-transform duration-200 ${
+                  isCategoryOpen ? "rotate-180" : ""
                 }`}
-              ></span>
-            </Link>
-            <Link
-              href="/news"
-              className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 group ${
-                pathname === "/news" ? "text-mega-600" : "text-gray-700 hover:text-mega-600"
-              }`}
-            >
-              Мэдээ
-              <span
-                className={`absolute bottom-0 left-0 h-0.5 bg-mega-600 transition-all duration-300 ${
-                  pathname === "/news" ? "w-full" : "w-0 group-hover:w-full"
-                }`}
-              ></span>
-            </Link>
-            <Link
-              href="/shop"
-              className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 group ${
-                pathname === "/shop" ? "text-mega-600" : "text-gray-700 hover:text-mega-600"
-              }`}
-            >
-              Дэлгүүр
-              <span
-                className={`absolute bottom-0 left-0 h-0.5 bg-mega-600 transition-all duration-300 ${
-                  pathname === "/shop" ? "w-full" : "w-0 group-hover:w-full"
-                }`}
-              ></span>
-            </Link>
-            <Link
-              href="/lessons"
-              className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 group ${
-                pathname === "/lessons" ? "text-mega-600" : "text-gray-700 hover:text-mega-600"
-              }`}
-            >
-              Хичээл
-              <span
-                className={`absolute bottom-0 left-0 h-0.5 bg-mega-600 transition-all duration-300 ${
-                  pathname === "/lessons" ? "w-full" : "w-0 group-hover:w-full"
-                }`}
-              ></span>
-            </Link>
-            <Link
-              href="/competitions"
-              className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 group ${
-                pathname === "/competitions" ? "text-mega-600" : "text-gray-700 hover:text-mega-600"
-              }`}
-            >
-              Тэмцээн
-              <span
-                className={`absolute bottom-0 left-0 h-0.5 bg-mega-600 transition-all duration-300 ${
-                  pathname === "/competitions" ? "w-full" : "w-0 group-hover:w-full"
-                }`}
-              ></span>
-            </Link>
-          </nav>
+              />
+            </button>
+
+            {/* Задардаг панель */}
+            {isCategoryOpen && (
+              <div className="dropdown-3d absolute left-0 top-full mt-2 w-80 bg-white rounded-xl border border-gray-100 py-3 z-50 max-h-[70vh] overflow-y-auto">
+                {categories.length === 0 ? (
+                  <p className="px-5 py-3 text-sm text-gray-500">Ангилал байхгүй байна</p>
+                ) : (
+                  categories.map((main) => (
+                    <div key={main.id} className="px-2">
+                      <button
+                        onClick={() => goToCategory(main.id)}
+                        className="w-full flex items-center justify-between px-3 py-2.5 text-left font-semibold text-gray-900 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
+                      >
+                        {main.name}
+                        <ChevronRight size={16} className="text-gray-300" />
+                      </button>
+                      {main.children && main.children.length > 0 && (
+                        <div className="ml-3 pl-3 border-l-2 border-red-100 mb-1">
+                          {main.children.map((sub) => (
+                            <button
+                              key={sub.id}
+                              onClick={() => goToCategory(sub.id)}
+                              className="w-full px-3 py-2 text-left text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
+                            >
+                              {sub.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Хайлт — desktop */}
+          <form onSubmit={handleSearch} className="hidden md:block flex-1 max-w-xl">
+            <div className="relative">
+              <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Бараа хайх..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-mega-500 focus:bg-white transition-colors"
+              />
+            </div>
+          </form>
+
+          <div className="flex-1 md:hidden"></div>
 
           {/* Right side icons */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="flex items-center space-x-2 md:space-x-4">
             <Link
               href="/cart"
               className="relative p-2 text-gray-700 hover:text-mega-600 transition-all duration-300 hover:bg-mega-50 rounded-lg transform hover:scale-110"
-              onClick={() => setIsMenuOpen(false)}
             >
               <ShoppingCart className="w-5 h-5" />
               {itemCount > 0 && (
@@ -143,7 +190,8 @@ export function Header() {
                 </span>
               )}
             </Link>
-            <div className="relative" ref={profileRef}>
+
+            <div className="relative hidden md:block" ref={profileRef}>
               <button
                 className="p-2 text-gray-700 hover:text-mega-600 transition-all duration-300 hover:bg-mega-50 rounded-lg transform hover:scale-110"
                 onClick={() =>
@@ -155,9 +203,9 @@ export function Header() {
 
               {/* Profile Dropdown */}
               {isProfileOpen && isAuthenticated && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50 transform opacity-100 scale-100 animate-in slide-in-from-top-2 fade-in duration-200">
+                <div className="dropdown-3d absolute right-0 top-full mt-2 w-48 bg-white rounded-lg border border-gray-200 py-2 z-50">
                   <div className="px-4 py-2 border-b border-gray-100">
-                    <div className="font-semibold text-gray-900 animate-in slide-in-from-left-4 duration-300">
+                    <div className="font-semibold text-gray-900">
                       {user?.name || "Хэрэглэгч"}
                     </div>
                     <div className="text-sm text-gray-500">{user?.email}</div>
@@ -198,102 +246,111 @@ export function Header() {
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Mobile menu button */}
-          <button
-            className="md:hidden p-2 text-gray-700 hover:text-mega-600 hover:bg-mega-50 rounded-lg transition-all duration-300 transform hover:scale-110"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            <div className="transform transition-transform duration-300">
-              {isMenuOpen ? (
-                <X className="w-5 h-5 transform rotate-90 transition-transform duration-300" />
-              ) : (
-                <Menu className="w-5 h-5" />
-              )}
-            </div>
-          </button>
+            {/* Mobile menu button */}
+            <button
+              className="md:hidden p-2 text-gray-700 hover:text-mega-600 hover:bg-mega-50 rounded-lg transition-all duration-300"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="Цэс"
+            >
+              {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Mobile menu */}
       {isMenuOpen && (
         <div className="md:hidden animate-in slide-in-from-top-4 duration-300">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t shadow-lg">
+          <div className="px-4 pt-3 pb-4 space-y-3 bg-white border-t shadow-lg">
+            {/* Хайлт — mobile */}
+            <form onSubmit={handleSearch}>
+              <div className="relative">
+                <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Бараа хайх..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-mega-500"
+                />
+              </div>
+            </form>
+
+            {/* Ангиллууд — mobile */}
+            <div>
+              <div className="flex items-center gap-2 px-1 mb-2 text-sm font-semibold text-gray-900">
+                <LayoutGrid size={16} className="text-red-600" />
+                Ангилал
+              </div>
+              <div className="space-y-1">
+                {categories.map((main) => (
+                  <div key={main.id}>
+                    <button
+                      onClick={() => goToCategory(main.id)}
+                      className="w-full px-3 py-2 text-left font-medium text-gray-800 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
+                    >
+                      {main.name}
+                    </button>
+                    {main.children && main.children.length > 0 && (
+                      <div className="ml-4 pl-3 border-l-2 border-red-100">
+                        {main.children.map((sub) => (
+                          <button
+                            key={sub.id}
+                            onClick={() => goToCategory(sub.id)}
+                            className="w-full px-3 py-1.5 text-left text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
+                          >
+                            {sub.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <Link
-              href="/"
-              className="block px-3 py-2 text-gray-900 font-medium hover:bg-mega-50 hover:text-mega-600 rounded-lg transition-all duration-200 hover:translate-x-1"
+              href="/info"
+              className="block px-3 py-2 text-gray-700 font-medium hover:bg-mega-50 hover:text-mega-600 rounded-lg transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
-              Нүүр
-            </Link>
-            <Link
-              href="/news"
-              className="block px-3 py-2 text-gray-700 hover:bg-mega-50 hover:text-mega-600 rounded-lg transition-all duration-200 hover:translate-x-1"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Мэдээ
-            </Link>
-            <Link
-              href="/shop"
-              className="block px-3 py-2 text-gray-700 hover:bg-mega-50 hover:text-mega-600 rounded-lg transition-all duration-200 hover:translate-x-1"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Дэлгүүр
-            </Link>
-            <Link
-              href="/lessons"
-              className="block px-3 py-2 text-gray-700 hover:bg-mega-50 hover:text-mega-600 rounded-lg transition-all duration-200 hover:translate-x-1"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Хичээл
-            </Link>
-            <Link
-              href="/competitions"
-              className="block px-3 py-2 text-gray-700 hover:bg-mega-50 hover:text-mega-600 rounded-lg transition-all duration-200 hover:translate-x-1"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Тэмцээн
+              Мэдээлэл
             </Link>
 
-            {/* Mobile cart and profile */}
-            <div className="border-t border-gray-200 mt-2 pt-2">
-              <Link
-                href="/cart"
-                className="flex items-center justify-between px-3 py-2 text-gray-700 hover:bg-mega-50 hover:text-mega-600 rounded-lg transition-all duration-200 hover:translate-x-1"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <div className="flex items-center">
-                  <ShoppingCart className="w-4 h-4 mr-3" />
-                  Сагс
-                </div>
-                {itemCount > 0 && (
-                  <span className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
-                    {itemCount > 99 ? "99+" : itemCount}
-                  </span>
-                )}
-              </Link>
-
-              {/* Mobile Profile Dropdown */}
+            {/* Mobile profile */}
+            <div className="border-t border-gray-200 pt-2">
               <div className="relative" ref={mobileProfileRef}>
                 <button
-                  className="flex items-center w-full px-3 py-2 text-gray-700 hover:bg-mega-50 hover:text-mega-600 rounded-lg transition-all duration-200 hover:translate-x-1"
+                  className="flex items-center w-full px-3 py-2 text-gray-700 hover:bg-mega-50 hover:text-mega-600 rounded-lg transition-all duration-200"
                   onClick={() =>
                     isAuthenticated ? setIsProfileOpen(!isProfileOpen) : setShowLoginModal(true)
                   }
                 >
-                  <User className="w-4 h-4 mr-3 transform transition-transform duration-200" />
+                  <User className="w-4 h-4 mr-3" />
                   {isAuthenticated ? "Профайл" : "Нэвтрэх"}
                 </button>
 
                 {isProfileOpen && isAuthenticated && (
-                  <div className="ml-7 mt-1 space-y-1 animate-in slide-in-from-left-4 duration-300">
+                  <div className="ml-7 mt-1 space-y-1">
                     <div className="px-3 py-1 text-sm font-medium text-gray-900 border-b border-gray-100">
                       {user?.name || "Хэрэглэгч"}
                     </div>
+                    {user?.role === UserRole.ADMIN && (
+                      <Link
+                        href="/admin-dashboard"
+                        className="block px-3 py-2 text-sm text-gray-600 hover:bg-mega-50 hover:text-mega-600 rounded transition-colors"
+                        onClick={() => {
+                          setIsProfileOpen(false);
+                          setIsMenuOpen(false);
+                        }}
+                      >
+                        Админ панель
+                      </Link>
+                    )}
                     <Link
                       href="/profile"
-                      className="block px-3 py-2 text-sm text-gray-600 hover:bg-mega-50 hover:text-mega-600 rounded transition-all duration-200 hover:translate-x-1"
+                      className="block px-3 py-2 text-sm text-gray-600 hover:bg-mega-50 hover:text-mega-600 rounded transition-colors"
                       onClick={() => {
                         setIsProfileOpen(false);
                         setIsMenuOpen(false);
@@ -303,7 +360,7 @@ export function Header() {
                     </Link>
                     <Link
                       href="/orders"
-                      className="block px-3 py-2 text-sm text-gray-600 hover:bg-mega-50 hover:text-mega-600 rounded transition-all duration-200 hover:translate-x-1"
+                      className="block px-3 py-2 text-sm text-gray-600 hover:bg-mega-50 hover:text-mega-600 rounded transition-colors"
                       onClick={() => {
                         setIsProfileOpen(false);
                         setIsMenuOpen(false);
@@ -312,7 +369,7 @@ export function Header() {
                       Захиалга
                     </Link>
                     <button
-                      className="flex items-center w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 rounded transition-all duration-200 hover:translate-x-1"
+                      className="flex items-center w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 rounded transition-colors"
                       onClick={() => {
                         logout();
                         setIsProfileOpen(false);

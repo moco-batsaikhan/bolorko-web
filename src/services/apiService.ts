@@ -31,72 +31,6 @@ export interface UpdateUserRequest {
   role: string;
 }
 
-export interface UpdateNewsRequest {
-  title: string;
-  content: string;
-  excerpt: string;
-  isPublished: boolean;
-  categoryId: number;
-  image?: File;
-}
-
-export interface CreateNewsRequest {
-  title: string;
-  content: string;
-  excerpt: string;
-  isPublished: boolean;
-  categoryId: number;
-  image?: File;
-}
-
-export interface Competition {
-  id: number;
-  title: string;
-  description: string;
-  image: string;
-  status: "UPCOMING" | "ONGOING" | "COMPLETED";
-  startDate: string;
-  endDate: string;
-  registerLink: string;
-  address: string;
-  comments: CompetitionComment[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CompetitionComment {
-  id: number;
-  comment: string;
-  user: {
-    id: number;
-    name: string;
-    email: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateCompetitionRequest {
-  title: string;
-  description: string;
-  image?: File;
-  status: "UPCOMING" | "ONGOING" | "COMPLETED";
-  startDate: string;
-  endDate: string;
-  registerLink: string;
-  address: string;
-}
-
-export interface UpdateCompetitionRequest {
-  title: string;
-  description: string;
-  image?: File;
-  status: "UPCOMING" | "ONGOING" | "COMPLETED";
-  startDate: string;
-  endDate: string;
-  registerLink: string;
-  address: string;
-}
 export interface CartItem {
   id: number;
   cartId: number;
@@ -135,8 +69,17 @@ export interface OrderItem {
   productId: number;
   quantity: number;
   price: string;
+  unitPrice?: string;
   createdAt: string;
   product: Product;
+}
+
+export interface ShippingAddress {
+  fullName?: string;
+  phone?: string;
+  addressLine?: string;
+  city?: string;
+  note?: string;
 }
 
 export interface Order {
@@ -153,97 +96,38 @@ export interface Order {
     createdAt: string;
   };
   orderItems: OrderItem[];
+  shippingAddress?: ShippingAddress;
 }
 
+// userId илгээхгүй — сервер нэвтэрсэн хэрэглэгчийг token-оос уншина,
+// token-гүй бол зочны захиалга (userId=null) болно
 export interface CreateOrderRequest {
-  userId: number;
   orderItems: {
     productId: number;
     quantity: number;
   }[];
+  shippingAddress: {
+    fullName: string;
+    phone: string;
+    city: string;
+    addressLine: string;
+    note?: string;
+  };
 }
 
 export interface UpdateOrderStatusRequest {
   status: "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED";
 }
 
-export interface CreateCategoryRequest {
-  name: string;
-  slug: string;
-}
-
-export interface LessonVideo {
-  id: number;
-  lessonId: number;
-  description: string;
-  videoUrl: string;
-  order: number;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface LessonComment {
-  id: number;
-  lessonId: number;
-  userId: number;
-  comment: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  user?: {
-    id: number;
-    name: string;
-    email: string;
-  };
-}
-
-export interface Lesson {
-  id: number;
-  title: string;
-  description: string;
-  image: string;
-  price: string;
-  isPublished: boolean;
-  viewCount: number;
-  videos: LessonVideo[];
-  comments: LessonComment[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateLessonRequest {
-  title: string;
-  description: string;
-  price: number;
-  isPublished: boolean;
-  image?: File;
-}
-
-export interface UpdateLessonRequest {
-  title: string;
-  description: string;
-  price: number;
-  isPublished: boolean;
-  image?: File;
-}
-
-export interface CreateLessonCommentRequest {
-  lessonId: number;
-  comment: string;
-}
-
-export interface CreateLessonVideoRequest {
-  lessonId: number;
-  description: string;
-  videoUrl: string;
-  order: number;
-}
-
 export interface ProductCategory {
   id: number;
   name: string;
   description: string;
+  parentId?: number | null;
+  parent?: ProductCategory | null;
+  children?: ProductCategory[];
+  image?: string | null;
+  isFeatured?: boolean;
   createdAt: string;
   products?: Product[];
 }
@@ -262,17 +146,26 @@ export interface Product {
   name: string;
   description: string;
   price: string;
-  originalPrice?: string;
-  discountPercentage?: string;
+  // Хямдарсан үнэ (null бол хямдралгүй); price нь үндсэн үнэ хэвээрээ
+  salePrice?: string | null;
+  // Virtual талбар: salePrice тавигдсан үед хэдэн хувь хямдарсныг бүхэл тоогоор буцаана
+  discountPercentage?: number | null;
   stock: number;
-  categoryId?: number;
+  categoryId?: number | null;
   status: "ACTIVE" | "INACTIVE";
+  type?: "PRODUCT" | "INFO";
+  isFeatured?: boolean;
   images: string[] | string | null;
   averageRating: string;
   ratingCount: number;
+  // Facebook sync талбарууд
+  facebookPostId?: string | null;
+  permalinkUrl?: string | null;
+  postedAt?: string | null;
+  lastSyncedAt?: string | null;
   createdAt: string;
   updatedAt?: string;
-  category?: ProductCategory;
+  category?: ProductCategory | null;
   ratings?: ProductRating[];
 }
 
@@ -281,7 +174,7 @@ export interface CreateProductRequest {
   description: string;
   price: number;
   stock: number;
-  categoryId: number;
+  categoryId?: number;
   status: "ACTIVE" | "INACTIVE";
   images?: File[];
 }
@@ -291,18 +184,54 @@ export interface UpdateProductRequest {
   description: string;
   price: number;
   stock: number;
-  categoryId: number;
+  categoryId?: number;
   status: "ACTIVE" | "INACTIVE";
   images?: File[];
 }
 
-export interface ApplyDiscountRequest {
-  discountPercentage: number;
+export interface FacebookSyncResult {
+  total: number;
+  created: number;
+  updated: number;
+  skipped: number;
 }
 
 export interface CreateProductCategoryRequest {
   name: string;
   description: string;
+  parentId?: number;
+  image?: File;
+  isFeatured?: boolean;
+}
+
+export interface Banner {
+  id: number;
+  title: string;
+  description: string | null;
+  image: string | null;
+  link: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateBannerRequest {
+  title: string;
+  description?: string;
+  link?: string;
+  image: File;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface UpdateBannerRequest {
+  title: string;
+  description?: string;
+  link?: string;
+  image?: File;
+  sortOrder: number;
+  isActive: boolean;
 }
 
 export interface LoginResponse {
@@ -321,63 +250,6 @@ export interface RegisterCredentials {
   email: string;
   password: string;
   role?: string;
-}
-
-export interface NewsCategory {
-  id: number;
-  name: string;
-  description: string;
-  slug: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface NewsComment {
-  id: number;
-  content: string;
-  newsId: number;
-  author: NewsAuthor;
-  authorId: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface NewsAuthor {
-  id: number;
-  name: string;
-  email: string;
-  roleId: number;
-  createdAt: string;
-}
-
-export interface NewsArticle {
-  id: number;
-  title: string;
-  content: string;
-  excerpt: string;
-  imageUrl: string | null;
-  isPublished: boolean;
-  viewCount: number;
-  author: NewsAuthor;
-  authorId: number;
-  category: NewsCategory | null;
-  categoryId: number | null;
-  comments: NewsComment[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface NewsResponse {
-  data: NewsArticle[];
-  total: number;
-  pages: number;
-}
-
-export interface NewsQueryParams {
-  page?: number;
-  limit?: number;
-  categoryId?: number;
 }
 
 class ApiService {
@@ -456,6 +328,35 @@ class ApiService {
     localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(data.user));
 
     return data;
+  }
+
+  /**
+   * Token-г backend дээр баталгаажуулна.
+   * - Хүчинтэй бол шинэ хэрэглэгчийн мэдээлэл буцаана
+   * - 401/403 (хуучирсан, өөр backend-ийн token) бол null буцаана
+   * - Сүлжээ/серверийн бусад алдаанд exception шиднэ
+   */
+  async validateSession(): Promise<User | null> {
+    const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+    if (!token) return null;
+
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.AUTH.CURRENT_USER}`,
+      {
+        method: "GET",
+        headers: this.getAuthHeaders(),
+      }
+    );
+
+    if (response.status === 401 || response.status === 403) {
+      return null;
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
   }
 
   async logout(): Promise<void> {
@@ -551,57 +452,6 @@ class ApiService {
     return response.json().catch(() => undefined);
   }
 
-  async getNews(params?: NewsQueryParams): Promise<NewsResponse> {
-    const queryString = new URLSearchParams();
-
-    if (params?.page) queryString.append("page", params.page.toString());
-    if (params?.limit) queryString.append("limit", params.limit.toString());
-    if (params?.categoryId)
-      queryString.append("categoryId", params.categoryId.toString());
-
-    const url = `${this.baseURL}${API_ENDPOINTS.NEWS.PUBLIC}${
-      queryString.toString() ? "?" + queryString.toString() : ""
-    }`;
-
-    const response = await fetch(url, {
-      method: "GET",
-    });
-
-    return this.handleResponse<NewsResponse>(response);
-  }
-
-  async getNewsCategories(): Promise<NewsCategory[]> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.NEWS.CATEGORIES}`,
-      {
-        method: "GET",
-      }
-    );
-
-    return this.handleResponse<NewsCategory[]>(response);
-  }
-
-  async getNewsDetail(id: number): Promise<NewsArticle> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.NEWS.PUBLIC}/${id}`,
-      {
-        method: "GET",
-      }
-    );
-
-    return this.handleResponse<NewsArticle>(response);
-  }
-
-  async addNewsComment(newsId: number, content: string): Promise<NewsComment> {
-    const response = await fetch(`${this.baseURL}/news/${newsId}/comments`, {
-      method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify({ content }),
-    });
-
-    return this.handleResponse<NewsComment>(response);
-  }
-
   async getAllProducts(): Promise<Product[]> {
     const response = await fetch(
       `${this.baseURL}${API_ENDPOINTS.PRODUCTS.ALL}`,
@@ -614,15 +464,62 @@ class ApiService {
     return this.handleResponse<Product[]>(response);
   }
 
-  async getProducts(): Promise<Product[]> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.SHOP.PRODUCTS}`,
-      {
-        method: "GET",
-      }
-    );
+  // search/categoryId/type шүүлтүүрүүд хослож болно.
+  // Үндсэн категори өгвөл дэд категориудын бараа автоматаар хамрагдана.
+  async getProducts(params?: {
+    type?: "PRODUCT" | "INFO";
+    categoryId?: number;
+    search?: string;
+  }): Promise<Product[]> {
+    const query = new URLSearchParams();
+    if (params?.type) query.append("type", params.type);
+    if (params?.categoryId) query.append("categoryId", params.categoryId.toString());
+    if (params?.search?.trim()) query.append("search", params.search.trim());
+
+    const url = `${this.baseURL}${API_ENDPOINTS.SHOP.PRODUCTS}${
+      query.toString() ? `?${query.toString()}` : ""
+    }`;
+
+    const response = await fetch(url, {
+      method: "GET",
+    });
 
     return this.handleResponse<Product[]>(response);
+  }
+
+  async getFeaturedProducts(): Promise<Product[]> {
+    const response = await fetch(`${this.baseURL}/products/featured`, {
+      method: "GET",
+    });
+
+    return this.handleResponse<Product[]>(response);
+  }
+
+  async featureProduct(id: number): Promise<Product> {
+    const response = await fetch(`${this.baseURL}/products/${id}/feature`, {
+      method: "PATCH",
+      headers: this.getAuthHeaders(),
+    });
+
+    return this.handleResponse<Product>(response);
+  }
+
+  async unfeatureProduct(id: number): Promise<Product> {
+    const response = await fetch(`${this.baseURL}/products/${id}/feature`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
+
+    return this.handleResponse<Product>(response);
+  }
+
+  // Үндсэн категориудыг дэд категориудтай нь nested байдлаар буцаана
+  async getMainCategories(): Promise<ProductCategory[]> {
+    const response = await fetch(`${this.baseURL}/products/categories/main`, {
+      method: "GET",
+    });
+
+    return this.handleResponse<ProductCategory[]>(response);
   }
 
   async getProductCategories(): Promise<ProductCategory[]> {
@@ -701,302 +598,15 @@ class ApiService {
     }
   }
 
-  async getAdminNews(
-    page: number = 1,
-    limit: number = 10
-  ): Promise<NewsResponse> {
-    const queryParams = new URLSearchParams();
-    queryParams.append("page", page.toString());
-    queryParams.append("limit", limit.toString());
-
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.NEWS.ADMIN}?${queryParams.toString()}`,
-      {
-        method: "GET",
-        headers: this.getAuthHeaders(),
-      }
-    );
-
-    return this.handleResponse<NewsResponse>(response);
-  }
-
-  async deleteNews(id: number): Promise<void> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.NEWS.DELETE}/${id}`,
-      {
-        method: "DELETE",
-        headers: this.getAuthHeaders(),
-      }
-    );
-
-    console.log(response);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-  }
-
-  async updateNews(
-    id: number,
-    newsData: UpdateNewsRequest
-  ): Promise<NewsArticle> {
-    const formData = new FormData();
-    formData.append("title", newsData.title);
-    formData.append("content", newsData.content);
-    formData.append("excerpt", newsData.excerpt);
-    formData.append("isPublished", newsData.isPublished.toString());
-    formData.append("categoryId", newsData.categoryId.toString());
-
-    if (newsData.image) {
-      formData.append("image", newsData.image);
-    }
-
-    const authHeaders = this.getAuthHeaders();
-    delete authHeaders["Content-Type"];
-
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.NEWS.UPDATE}/${id}`,
-      {
-        method: "POST",
-        headers: authHeaders,
-        body: formData,
-      }
-    );
-
-    return this.handleResponse<NewsArticle>(response);
-  }
-
-  async createNews(newsData: CreateNewsRequest): Promise<NewsArticle> {
-    const formData = new FormData();
-    formData.append("title", newsData.title);
-    formData.append("content", newsData.content);
-    formData.append("excerpt", newsData.excerpt);
-    formData.append("isPublished", newsData.isPublished.toString());
-    formData.append("categoryId", newsData.categoryId.toString());
-
-    if (newsData.image) {
-      formData.append("image", newsData.image);
-    }
-
-    const authHeaders = this.getAuthHeaders();
-    delete authHeaders["Content-Type"];
-
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.NEWS.CREATE}`,
-      {
-        method: "POST",
-        headers: authHeaders,
-        body: formData,
-      }
-    );
-
-    return this.handleResponse<NewsArticle>(response);
-  }
-
-  async deleteComment(id: number): Promise<void> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.NEWS.DELETE_COMMENT}/${id}`,
-      {
-        method: "DELETE",
-        headers: this.getAuthHeaders(),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-  }
-
-  async createCategory(
-    categoryData: CreateCategoryRequest
-  ): Promise<NewsCategory> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.NEWS.CREATE_CATEGORY}`,
-      {
-        method: "POST",
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(categoryData),
-      }
-    );
-
-    return this.handleResponse<NewsCategory>(response);
-  }
-
-  async getAdminLessons(
-    page = 1,
-    limit = 10
-  ): Promise<{
-    data: Lesson[];
-    total: number;
-    pages: number;
-  }> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.LESSONS.ADMIN}?page=${page}&limit=${limit}`,
-      {
-        headers: this.getAuthHeaders(),
-      }
-    );
-
-    return this.handleResponse<{
-      data: Lesson[];
-      total: number;
-      pages: number;
-    }>(response);
-  }
-
-  async createLesson(lessonData: CreateLessonRequest): Promise<Lesson> {
-    const formData = new FormData();
-    formData.append("title", lessonData.title);
-    formData.append("description", lessonData.description);
-    formData.append("price", lessonData.price.toString());
-    formData.append("isPublished", lessonData.isPublished.toString());
-
-    if (lessonData.image) {
-      formData.append("image", lessonData.image);
-    }
-
-    const authHeaders = this.getAuthHeaders();
-    delete authHeaders["Content-Type"];
-
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.LESSONS.CREATE}`,
-      {
-        method: "POST",
-        headers: authHeaders,
-        body: formData,
-      }
-    );
-
-    return this.handleResponse<Lesson>(response);
-  }
-
-  async updateLesson(
-    id: number,
-    lessonData: UpdateLessonRequest
-  ): Promise<Lesson> {
-    const formData = new FormData();
-    formData.append("title", lessonData.title);
-    formData.append("description", lessonData.description);
-    formData.append("price", lessonData.price.toString());
-    formData.append("isPublished", lessonData.isPublished.toString());
-
-    if (lessonData.image) {
-      formData.append("image", lessonData.image);
-    }
-
-    const authHeaders = this.getAuthHeaders();
-    delete authHeaders["Content-Type"];
-
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.LESSONS.UPDATE}/${id}`,
-      {
-        method: "PATCH",
-        headers: authHeaders,
-        body: formData,
-      }
-    );
-
-    return this.handleResponse<Lesson>(response);
-  }
-
-  async deleteLesson(id: number): Promise<void> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.LESSONS.DELETE}/${id}`,
-      {
-        method: "DELETE",
-        headers: this.getAuthHeaders(),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-  }
-
-  async deleteLessonComment(commentId: number): Promise<void> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.LESSONS.COMMENTS_DELETE}/${commentId}`,
-      {
-        method: "DELETE",
-        headers: this.getAuthHeaders(),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-  }
-
-  async getPublicLessons(
-    page = 1,
-    limit = 10
-  ): Promise<{
-    data: Lesson[];
-    total: number;
-    pages: number;
-  }> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.LESSONS.PUBLIC}?page=${page}&limit=${limit}`,
-      {
-        method: "GET",
-      }
-    );
-
-    return this.handleResponse<{
-      data: Lesson[];
-      total: number;
-      pages: number;
-    }>(response);
-  }
-
-  async createLessonComment(
-    commentData: CreateLessonCommentRequest
-  ): Promise<LessonComment> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.LESSONS.COMMENTS_CREATE}`,
-      {
-        method: "POST",
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(commentData),
-      }
-    );
-
-    return this.handleResponse<LessonComment>(response);
-  }
-
-  async createLessonVideo(
-    videoData: CreateLessonVideoRequest
-  ): Promise<LessonVideo> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.LESSONS.VIDEOS_CREATE}`,
-      {
-        method: "POST",
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(videoData),
-      }
-    );
-
-    return this.handleResponse<LessonVideo>(response);
-  }
-
-  async getPublicLessonDetail(id: number): Promise<Lesson> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.LESSONS.PUBLIC_DETAIL}/${id}`,
-      {
-        method: "GET",
-      }
-    );
-
-    return this.handleResponse<Lesson>(response);
-  }
-
   async createProduct(productData: CreateProductRequest): Promise<Product> {
     const formData = new FormData();
     formData.append("name", productData.name);
     formData.append("description", productData.description);
     formData.append("price", productData.price.toString());
     formData.append("stock", productData.stock.toString());
-    formData.append("categoryId", productData.categoryId.toString());
+    if (productData.categoryId) {
+      formData.append("categoryId", productData.categoryId.toString());
+    }
     formData.append("status", productData.status);
 
     if (productData.images && productData.images.length > 0) {
@@ -1029,7 +639,9 @@ class ApiService {
     formData.append("description", productData.description);
     formData.append("price", productData.price.toString());
     formData.append("stock", productData.stock.toString());
-    formData.append("categoryId", productData.categoryId.toString());
+    if (productData.categoryId) {
+      formData.append("categoryId", productData.categoryId.toString());
+    }
     formData.append("status", productData.status);
 
     if (productData.images && productData.images.length > 0) {
@@ -1067,32 +679,72 @@ class ApiService {
     }
   }
 
-  async applyDiscount(
-    productId: number,
-    discountData: ApplyDiscountRequest
+  // Барааны зарим талбарыг JSON-оор хэсэгчлэн шинэчилнэ (inline засварт зориулсан)
+  async patchProduct(
+    id: number,
+    data: Partial<{
+      name: string;
+      description: string;
+      price: number;
+      stock: number;
+      categoryId: number | null;
+      status: "ACTIVE" | "INACTIVE";
+      salePrice: number | null;
+    }>
   ): Promise<Product> {
     const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.PRODUCTS.APPLY_DISCOUNT}/${productId}/discount`,
+      `${this.baseURL}${API_ENDPOINTS.PRODUCTS.UPDATE}/${id}`,
       {
         method: "PATCH",
         headers: this.getAuthHeaders(),
-        body: JSON.stringify(discountData),
+        body: JSON.stringify(data),
       }
     );
 
     return this.handleResponse<Product>(response);
   }
 
-  async removeDiscount(productId: number): Promise<Product> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.PRODUCTS.REMOVE_DISCOUNT}/${productId}/discount`,
-      {
-        method: "DELETE",
-        headers: this.getAuthHeaders(),
-      }
-    );
+  // Хямдрал тавих (salePrice: тоо) эсвэл болиулах (salePrice: null)
+  async setSalePrice(id: number, salePrice: number | null): Promise<Product> {
+    return this.patchProduct(id, { salePrice });
+  }
 
-    return this.handleResponse<Product>(response);
+  async syncFacebookProducts(): Promise<FacebookSyncResult> {
+    const response = await fetch(`${this.baseURL}/products/sync-facebook`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+    });
+
+    return this.handleResponse<FacebookSyncResult>(response);
+  }
+
+  // Онцолсон категориуд (дэд категориудтайгаа) — нүүрний "Онцлох ангилал" хэсэгт
+  async getFeaturedCategories(): Promise<ProductCategory[]> {
+    const response = await fetch(`${this.baseURL}/products/categories/featured`, {
+      method: "GET",
+    });
+
+    return this.handleResponse<ProductCategory[]>(response);
+  }
+
+  private buildCategoryFormData(
+    categoryData: Partial<CreateProductCategoryRequest>
+  ): FormData {
+    const formData = new FormData();
+    if (categoryData.name !== undefined) formData.append("name", categoryData.name);
+    if (categoryData.description !== undefined) {
+      formData.append("description", categoryData.description);
+    }
+    if (categoryData.parentId) {
+      formData.append("parentId", categoryData.parentId.toString());
+    }
+    if (categoryData.isFeatured !== undefined) {
+      formData.append("isFeatured", categoryData.isFeatured.toString());
+    }
+    if (categoryData.image) {
+      formData.append("image", categoryData.image);
+    }
+    return formData;
   }
 
   async createProductCategory(
@@ -1102,8 +754,24 @@ class ApiService {
       `${this.baseURL}${API_ENDPOINTS.PRODUCTS.CATEGORIES_CREATE}`,
       {
         method: "POST",
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(categoryData),
+        headers: this.getAuthHeaders(true),
+        body: this.buildCategoryFormData(categoryData),
+      }
+    );
+
+    return this.handleResponse<ProductCategory>(response);
+  }
+
+  async updateProductCategory(
+    id: number,
+    categoryData: Partial<CreateProductCategoryRequest>
+  ): Promise<ProductCategory> {
+    const response = await fetch(
+      `${this.baseURL}${API_ENDPOINTS.PRODUCTS.CATEGORIES}/${id}`,
+      {
+        method: "PATCH",
+        headers: this.getAuthHeaders(true),
+        body: this.buildCategoryFormData(categoryData),
       }
     );
 
@@ -1113,135 +781,6 @@ class ApiService {
   async deleteProductCategory(id: number): Promise<void> {
     const response = await fetch(
       `${this.baseURL}${API_ENDPOINTS.PRODUCTS.CATEGORIES_DELETE}/${id}`,
-      {
-        method: "DELETE",
-        headers: this.getAuthHeaders(),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-  }
-
-  async getCompetitions(params?: {
-    page?: number;
-    limit?: number;
-    status?: string;
-  }): Promise<{ data: Competition[]; total: number; pages: number }> {
-    const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.append("page", params.page.toString());
-    if (params?.limit) searchParams.append("limit", params.limit.toString());
-    if (params?.status) searchParams.append("status", params.status);
-
-    const response = await fetch(
-      `${this.baseURL}/competitions${
-        searchParams.toString() ? `?${searchParams.toString()}` : ""
-      }`
-    );
-
-    return this.handleResponse<{
-      data: Competition[];
-      total: number;
-      pages: number;
-    }>(response);
-  }
-
-  async getCompetitionById(id: number): Promise<Competition> {
-    const response = await fetch(`${this.baseURL}/competitions/${id}`);
-    return this.handleResponse<Competition>(response);
-  }
-
-  async createCompetition(
-    competitionData: CreateCompetitionRequest
-  ): Promise<Competition> {
-    const formData = new FormData();
-    formData.append("title", competitionData.title);
-    formData.append("description", competitionData.description);
-    formData.append("status", competitionData.status);
-    formData.append("startDate", competitionData.startDate);
-    formData.append("endDate", competitionData.endDate);
-    formData.append("registerLink", competitionData.registerLink);
-    formData.append("address", competitionData.address);
-
-    if (competitionData.image) {
-      formData.append("image", competitionData.image);
-    }
-
-    const response = await fetch(`${this.baseURL}/competitions`, {
-      method: "POST",
-      headers: this.getAuthHeaders(true),
-      body: formData,
-    });
-
-    return this.handleResponse<Competition>(response);
-  }
-
-  async updateCompetition(
-    id: number,
-    competitionData: UpdateCompetitionRequest
-  ): Promise<Competition> {
-    const formData = new FormData();
-    formData.append("title", competitionData.title);
-    formData.append("description", competitionData.description);
-    formData.append("status", competitionData.status);
-    formData.append("startDate", competitionData.startDate);
-    formData.append("endDate", competitionData.endDate);
-    formData.append("registerLink", competitionData.registerLink);
-    formData.append("address", competitionData.address);
-
-    if (competitionData.image) {
-      formData.append("image", competitionData.image);
-    }
-
-    const response = await fetch(`${this.baseURL}/competitions/${id}`, {
-      method: "PATCH",
-      headers: this.getAuthHeaders(true),
-      body: formData,
-    });
-
-    return this.handleResponse<Competition>(response);
-  }
-
-  async deleteCompetition(id: number): Promise<void> {
-    const response = await fetch(`${this.baseURL}/competitions/${id}`, {
-      method: "DELETE",
-      headers: this.getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-  }
-
-  async getCompetitionComments(
-    competitionId: number
-  ): Promise<CompetitionComment[]> {
-    const response = await fetch(
-      `${this.baseURL}/competitions/${competitionId}/comments`
-    );
-    return this.handleResponse<CompetitionComment[]>(response);
-  }
-
-  async createCompetitionComment(
-    competitionId: number,
-    comment: string
-  ): Promise<CompetitionComment> {
-    const response = await fetch(
-      `${this.baseURL}/competitions/${competitionId}/comments`,
-      {
-        method: "POST",
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify({ comment }),
-      }
-    );
-
-    return this.handleResponse<CompetitionComment>(response);
-  }
-
-  async deleteCompetitionComment(commentId: number): Promise<void> {
-    const response = await fetch(
-      `${this.baseURL}/competitions/comments/${commentId}`,
       {
         method: "DELETE",
         headers: this.getAuthHeaders(),
@@ -1374,6 +913,137 @@ class ApiService {
 
     return this.handleResponse<Order>(response);
   }
+
+  async getBanners(): Promise<Banner[]> {
+    const response = await fetch(`${this.baseURL}/banners`, {
+      method: "GET",
+    });
+
+    return this.handleResponse<Banner[]>(response);
+  }
+
+  async getActiveBanners(): Promise<Banner[]> {
+    const response = await fetch(`${this.baseURL}/banners/active`, {
+      method: "GET",
+    });
+
+    return this.handleResponse<Banner[]>(response);
+  }
+
+  private async patchBannerJson(
+    id: number,
+    bannerData: UpdateBannerRequest
+  ): Promise<Banner> {
+    const response = await fetch(`${this.baseURL}/banners/${id}`, {
+      method: "PATCH",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({
+        title: bannerData.title,
+        description: bannerData.description ?? undefined,
+        link: bannerData.link ?? undefined,
+        sortOrder: bannerData.sortOrder,
+        isActive: bannerData.isActive,
+      }),
+    });
+
+    return this.handleResponse<Banner>(response);
+  }
+
+  async createBanner(bannerData: CreateBannerRequest): Promise<Banner> {
+    const formData = new FormData();
+    formData.append("title", bannerData.title);
+    if (bannerData.description) formData.append("description", bannerData.description);
+    if (bannerData.link) formData.append("link", bannerData.link);
+    formData.append("sortOrder", bannerData.sortOrder.toString());
+    formData.append("isActive", bannerData.isActive.toString());
+    formData.append("image", bannerData.image);
+
+    const response = await fetch(`${this.baseURL}/banners`, {
+      method: "POST",
+      headers: this.getAuthHeaders(true),
+      body: formData,
+    });
+
+    // Fallback: parse-form-data pipe ажиллаагүй хуучин backend дээр
+    // sortOrder/isActive нь multipart-аар string очиж 400 буцаадаг —
+    // тэдгээргүйгээр үүсгээд JSON PATCH-аар нөхөж тохируулна
+    if (response.status === 400) {
+      const fallbackForm = new FormData();
+      fallbackForm.append("title", bannerData.title);
+      if (bannerData.description) fallbackForm.append("description", bannerData.description);
+      if (bannerData.link) fallbackForm.append("link", bannerData.link);
+      fallbackForm.append("image", bannerData.image);
+
+      const fallbackResponse = await fetch(`${this.baseURL}/banners`, {
+        method: "POST",
+        headers: this.getAuthHeaders(true),
+        body: fallbackForm,
+      });
+
+      const created = await this.handleResponse<Banner>(fallbackResponse);
+      return this.patchBannerJson(created.id, bannerData);
+    }
+
+    return this.handleResponse<Banner>(response);
+  }
+
+  async updateBanner(
+    id: number,
+    bannerData: UpdateBannerRequest
+  ): Promise<Banner> {
+    if (bannerData.image) {
+      const formData = new FormData();
+      formData.append("title", bannerData.title);
+      if (bannerData.description) formData.append("description", bannerData.description);
+      if (bannerData.link) formData.append("link", bannerData.link);
+      formData.append("sortOrder", bannerData.sortOrder.toString());
+      formData.append("isActive", bannerData.isActive.toString());
+      formData.append("image", bannerData.image);
+
+      const response = await fetch(`${this.baseURL}/banners/${id}`, {
+        method: "PATCH",
+        headers: this.getAuthHeaders(true),
+        body: formData,
+      });
+
+      if (response.status !== 400) {
+        return this.handleResponse<Banner>(response);
+      }
+
+      // Fallback: хуучин backend — зөвхөн зургийг multipart-аар солиод
+      // үлдсэнийг JSON-оор явуулна
+      const imageForm = new FormData();
+      imageForm.append("image", bannerData.image);
+
+      const imageResponse = await fetch(`${this.baseURL}/banners/${id}`, {
+        method: "PATCH",
+        headers: this.getAuthHeaders(true),
+        body: imageForm,
+      });
+
+      await this.handleResponse<Banner>(imageResponse);
+    }
+
+    return this.patchBannerJson(id, bannerData);
+  }
+
+  async deleteBanner(id: number): Promise<void> {
+    const response = await fetch(`${this.baseURL}/banners/${id}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  }
+}
+
+// Backend-ийн "Insufficient stock" (400) алдааг таних helper
+export function isInsufficientStockError(error: unknown): boolean {
+  return (
+    error instanceof Error && /insufficient stock|нөөц/i.test(error.message)
+  );
 }
 
 export const apiService = new ApiService();

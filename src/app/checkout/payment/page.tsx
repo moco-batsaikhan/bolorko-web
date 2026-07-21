@@ -8,7 +8,33 @@ import { API_BASE_URL } from "@/constants/constants";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { apiService } from "@/services/apiService";
+import {
+  apiService,
+  CreateOrderRequest,
+  isInsufficientStockError,
+} from "@/services/apiService";
+
+interface PendingOrder extends CreateOrderRequest {
+  totalAmount: number;
+  email?: string;
+}
+
+interface QPayUrl {
+  name: string;
+  description?: string;
+  logo?: string;
+  link: string;
+}
+
+interface InvoiceResponse {
+  invoiceId?: string;
+  invoice_id?: string;
+  id?: string;
+  qpayData?: {
+    qr_image?: string;
+    urls?: QPayUrl[];
+  };
+}
 
 export default function PaymentPage() {
   const { clearCart } = useCart();
@@ -16,9 +42,9 @@ export default function PaymentPage() {
   const { showToast } = useToast();
   const router = useRouter();
 
-  const [pendingOrder, setPendingOrder] = useState<any | null>(null);
+  const [pendingOrder, setPendingOrder] = useState<PendingOrder | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [invoiceResponse, setInvoiceResponse] = useState<any | null>(null);
+  const [invoiceResponse, setInvoiceResponse] = useState<InvoiceResponse | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const checkPayment = useCallback(async () => {
@@ -75,25 +101,34 @@ export default function PaymentPage() {
           await clearCart();
         } catch (e) {
           console.error("Order creation failed", e);
-          // still treat as success for payment check, but inform user
-          showToast("Төлбөр амжилттай, захиалга үүсэхэд алдаа гарлаа", "error");
-          router.push("/orders");
+          // Backend транзакцтай тул захиалга огт үүсээгүй — нөөц зөрчил үлдэхгүй
+          if (isInsufficientStockError(e)) {
+            showToast(
+              "Уучлаарай, зарим барааны нөөц дуссан тул захиалга үүсгэж чадсангүй. Бидэнтэй холбогдоно уу.",
+              "error"
+            );
+          } else {
+            showToast("Төлбөр амжилттай, захиалга үүсэхэд алдаа гарлаа", "error");
+          }
+          router.push(user ? "/orders" : "/");
           return;
         }
 
         showToast("Төлбөр амжилттай төлөгдсөн", "success");
-        router.push("/orders");
+        router.push(user ? "/orders" : "/");
       } else {
         showToast(`Төлбөрийн төлөв: ${data.status || "UNKNOWN"}`, "error");
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setErrorMsg(err.message || "Төлбөр шалгах явцад алдаа гарлаа");
-      showToast(err.message || "Төлбөр шалгах явцад алдаа гарлаа", "error");
+      const message =
+        err instanceof Error ? err.message : "Төлбөр шалгах явцад алдаа гарлаа";
+      setErrorMsg(message);
+      showToast(message, "error");
     } finally {
       setIsProcessing(false);
     }
-  }, [invoiceResponse, pendingOrder, showToast, router, clearCart]);
+  }, [invoiceResponse, pendingOrder, showToast, router, clearCart, user]);
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem("pending_order");
@@ -123,9 +158,10 @@ export default function PaymentPage() {
     return () => clearInterval(interval);
   }, [invoiceResponse, checkPayment, isProcessing]);
 
-  // Auto-trigger invoice creation when pendingOrder and user are ready
+  // Auto-trigger invoice creation when pendingOrder is ready
+  // (зочны захиалга дэмжигддэг тул нэвтрэлт шаардахгүй)
   useEffect(() => {
-    if (!pendingOrder || !user) return;
+    if (!pendingOrder) return;
     if (invoiceResponse) return; // already have response
     if (isProcessing) return;
 
@@ -140,8 +176,8 @@ export default function PaymentPage() {
     new Intl.NumberFormat("mn-MN").format(price) + "₮";
 
   const handlePayment = async () => {
-    if (!pendingOrder || !user) {
-      showToast("Захиалга олдсонгүй эсвэл нэвтрээгүй байна", "error");
+    if (!pendingOrder) {
+      showToast("Захиалга олдсонгүй", "error");
       return;
     }
     setIsProcessing(true);
@@ -151,11 +187,12 @@ export default function PaymentPage() {
     try {
       // Build request body expected by the payments API
       const body = {
-        amount: 10,
-        // amount: pendingOrder.totalAmount,
+        // Анхаар: туршилтын үед энд түр 10 гэж тавьж байсан —
+        // одоо захиалгын жинхэнэ нийт дүнг илгээнэ
+        amount: pendingOrder.totalAmount,
         redirectUrl: `${API_BASE_URL}/payments/webhook/qpay`,
-        email: user.email || pendingOrder.email || "",
-        productName: `MEGA Захиалга`,
+        email: user?.email || pendingOrder.email || "",
+        productName: `Bolorko Захиалга`,
       };
 
       const token = localStorage.getItem("access_token");
@@ -187,13 +224,12 @@ export default function PaymentPage() {
       //     // ignore order creation errors for now
       //     console.error("Order creation error", e);
       //   }
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setErrorMsg(err.message || "Төлбөр амжилтгүй боллоо");
-      showToast(
-        err.message || "Төлбөр эсвэл захиалга амжилтгүй боллоо",
-        "error"
-      );
+      const message =
+        err instanceof Error ? err.message : "Төлбөр амжилтгүй боллоо";
+      setErrorMsg(message);
+      showToast(message, "error");
     } finally {
       setIsProcessing(false);
     }
@@ -241,7 +277,7 @@ export default function PaymentPage() {
                       <div className="mt-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {invoiceResponse.qpayData.urls.map(
-                            (u: any, i: number) => (
+                            (u: QPayUrl, i: number) => (
                               <a
                                 key={i}
                                 href={u.link}

@@ -14,7 +14,7 @@ export default function SettingsPage() {
                 <span className="text-sm font-medium text-yellow-600">Хүлээгдэж буй</span>
               </div>
               <div className="mt-2">
-                <p className="text-sm text-gray-900">GAN 356 X</p>
+                <p className="text-sm text-gray-900">Аяллын үүргэвч</p>
                 <p className="text-sm font-medium text-gray-900">85,000₮</p>
               </div>
             </div>
@@ -27,7 +27,7 @@ export default function SettingsPage() {
                 <span className="text-sm font-medium text-blue-600">Хүргэлтэнд</span>
               </div>
               <div className="mt-2">
-                <p className="text-sm text-gray-900">Cube Timer</p>
+                <p className="text-sm text-gray-900">Подволк</p>
                 <p className="text-sm font-medium text-gray-900">15,000₮</p>
               </div>
             </div>

@@ -24,21 +24,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { showToast } = useToast();
 
   useEffect(() => {
-    const savedUser = localStorage.getItem(STORAGE_KEYS.USER_DATA);
-    const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+    const clearSession = () => {
+      localStorage.removeItem(STORAGE_KEYS.USER_DATA);
+      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+      setUser(null);
+    };
 
-    if (savedUser && token) {
+    const initAuth = async () => {
+      const savedUser = localStorage.getItem(STORAGE_KEYS.USER_DATA);
+      const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+
+      if (!savedUser || !token) {
+        setIsLoading(false);
+        return;
+      }
+
+      let parsedUser: User | null = null;
       try {
-        setUser(JSON.parse(savedUser));
+        parsedUser = JSON.parse(savedUser);
       } catch (error) {
         console.error("Error parsing saved user data:", error);
-        localStorage.removeItem(STORAGE_KEYS.USER_DATA);
-        localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-        localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+        clearSession();
+        setIsLoading(false);
+        return;
       }
-    }
-    setIsLoading(false);
+
+      // localStorage-д хадгалсан мэдээлэл хуучирсан байж болзошгүй тул
+      // token-г backend дээр баталгаажуулж, хэрэглэгчийн мэдээллийг шинэчилнэ
+      try {
+        const freshUser = await apiService.validateSession();
+        if (freshUser) {
+          const mergedUser = { ...parsedUser, ...freshUser };
+          setUser(mergedUser);
+          localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(mergedUser));
+        } else {
+          // Token хүчингүй (хуучирсан эсвэл өөр backend-ийнх) — session-г цэвэрлэнэ
+          clearSession();
+        }
+      } catch (error) {
+        // Сүлжээ/серверийн түр зуурын алдаа — хадгалсан мэдээллээр үргэлжлүүлнэ
+        console.error("Session validation failed, using saved user:", error);
+        setUser(parsedUser);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initAuth();
   }, []);
+
+  // Backend-ийн алдааны мессежийг хэрэглэгчид ойлгомжтой монгол хэл рүү хөрвүүлнэ
+  const translateAuthError = (error: unknown): string => {
+    if (!(error instanceof Error)) return "Нэвтрэхэд алдаа гарлаа";
+    if (/invalid credentials/i.test(error.message)) {
+      return "И-мэйл эсвэл нууц үг буруу байна";
+    }
+    if (/failed to fetch|network/i.test(error.message)) {
+      return "Сервертэй холбогдож чадсангүй. Дахин оролдоно уу.";
+    }
+    return error.message;
+  };
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
@@ -50,8 +96,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       return true;
     } catch (error: unknown) {
-      console.error("Login error:", error);
-      setError(error instanceof Error ? error.message : "Нэвтрэхэд алдаа гарлаа");
+      // console.error ашиглахгүй — Next dev overlay-г crash шиг харуулдаг
+      console.warn("Login failed:", error instanceof Error ? error.message : error);
+      setError(translateAuthError(error));
       setIsLoading(false);
       return false;
     }
@@ -67,8 +114,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       return true;
     } catch (error: unknown) {
-      console.error("Register error:", error);
-      setError(error instanceof Error ? error.message : "Бүртгүүлэхэд алдаа гарлаа");
+      console.warn("Register failed:", error instanceof Error ? error.message : error);
+      setError(
+        error instanceof Error && /already exists|давхардсан/i.test(error.message)
+          ? "Энэ и-мэйл хаягаар аль хэдийн бүртгүүлсэн байна"
+          : translateAuthError(error)
+      );
       setIsLoading(false);
       return false;
     }

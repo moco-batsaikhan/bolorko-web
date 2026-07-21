@@ -334,10 +334,12 @@ export default function AdminOrdersPage() {
                           {/* Mark as Paid Button */}
                           {order.status === "PENDING" && (
                             <button
-                              onClick={() => handleMarkAsPaid(order.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleMarkAsPaid(order.id);
+                              }}
                               disabled={updatingOrderId === order.id}
                               className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                              onClick={(e) => e.stopPropagation()}
                             >
                               {updatingOrderId === order.id ? (
                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -472,7 +474,7 @@ export default function AdminOrdersPage() {
                           Нэгж үнэ:{" "}
                           {formatPrice(
                             item.unitPrice ||
-                              (item.price as any) ||
+                              item.price ||
                               item.product?.price ||
                               "0"
                           )}
@@ -491,7 +493,7 @@ export default function AdminOrdersPage() {
                             parseFloat(
                               String(
                                 item.unitPrice ||
-                                  (item.price as any) ||
+                                  item.price ||
                                   item.product?.price ||
                                   0
                               )

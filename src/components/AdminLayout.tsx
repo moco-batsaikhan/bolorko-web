@@ -7,44 +7,39 @@ import { useToast } from "@/contexts/ToastContext";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import Link from "next/link";
-import {
-  BarChart3,
-  Users,
-  ShoppingCart,
-  Package,
-  FileText,
-  TrendingUp,
-  Calendar,
-  Settings,
-  Tag,
-} from "lucide-react";
+import { Users, ShoppingCart, Package, Image as ImageIcon } from "lucide-react";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
   const pathname = usePathname();
 
   // Check admin access
   useEffect(() => {
+    // Auth localStorage-оос ачаалж дуусахаас өмнө шийдвэр гаргахгүй
+    if (isLoading) return;
+
+    // Нэвтрээгүй эсвэл эрхгүй бол админ login хуудас руу чиглүүлнэ
     if (!isAuthenticated) {
-      router.push("/");
+      router.replace("/admin-dashboard");
       return;
     }
 
     if (user?.role !== "ADMIN") {
       showToast("Админ эрхээр нэвтэрнэ үү", "error");
-      router.push("/");
+      router.replace("/admin-dashboard");
       return;
     }
-  }, [user, isAuthenticated]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, isAuthenticated, isLoading]);
 
   // If not authenticated or not admin, show loading or redirect
-  if (!isAuthenticated || user?.role !== "ADMIN") {
+  if (isLoading || !isAuthenticated || user?.role !== "ADMIN") {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -60,10 +55,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { id: "users", name: "Хэрэглэгчид", icon: Users, href: "/admin/users" },
     { id: "orders", name: "Захиалга", icon: ShoppingCart, href: "/admin/orders" },
     { id: "products", name: "Бүтээгдэхүүн", icon: Package, href: "/admin/products" },
-    { id: "news", name: "Мэдээ", icon: FileText, href: "/admin/news" },
-    { id: "news_categories", name: "Мэдээний ангилал", icon: Tag, href: "/admin/news_categories" },
-    { id: "competitions", name: "Тэмцээн", icon: TrendingUp, href: "/admin/competitions" },
-    { id: "lessons", name: "Хичээл", icon: Calendar, href: "/admin/lessons" },
+    { id: "banners", name: "Баннер", icon: ImageIcon, href: "/admin/banners" },
   ];
 
   return (

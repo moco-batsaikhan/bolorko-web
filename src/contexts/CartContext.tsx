@@ -8,7 +8,12 @@ import React, {
   useCallback,
   ReactNode,
 } from "react";
-import { apiService, Cart, CartTotal } from "@/services/apiService";
+import {
+  apiService,
+  Cart,
+  CartTotal,
+  isInsufficientStockError,
+} from "@/services/apiService";
 import { useAuth } from "./AuthContext";
 import { useToast } from "./ToastContext";
 
@@ -71,7 +76,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       showToast("Бүтээгдэхүүн сагсанд нэмэгдлээ", "success");
     } catch (error) {
       console.error("Failed to add to cart:", error);
-      showToast("Сагсанд нэмэхэд алдаа гарлаа", "error");
+      if (isInsufficientStockError(error)) {
+        showToast("Уучлаарай, энэ барааны нөөц хүрэлцэхгүй байна", "error");
+      } else {
+        showToast("Сагсанд нэмэхэд алдаа гарлаа", "error");
+      }
     } finally {
       setLoading(false);
     }
@@ -87,7 +96,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       showToast("Тоо ширхэг шинэчлэгдлээ", "success");
     } catch (error) {
       console.error("Failed to update quantity:", error);
-      showToast("Тоо ширхэг шинэчлэхэд алдаа гарлаа", "error");
+      if (isInsufficientStockError(error)) {
+        showToast("Уучлаарай, энэ барааны нөөц хүрэлцэхгүй байна", "error");
+      } else {
+        showToast("Тоо ширхэг шинэчлэхэд алдаа гарлаа", "error");
+      }
     } finally {
       setLoading(false);
     }

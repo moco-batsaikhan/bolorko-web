@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
 import { useState, useEffect, useCallback } from "react";
 import { apiService, Order } from "@/services/apiService";
+import { API_BASE_URL } from "@/constants/constants";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -224,10 +225,15 @@ export default function OrdersPage() {
                               {item.product.images && item.product.images[0] ? (
                                 <Image
                                   className="object-cover rounded-lg"
-                                  src={`https://api.cubingmongolia.mn${item.product.images[0]}`}
+                                  src={
+                                    item.product.images[0].startsWith("http")
+                                      ? item.product.images[0]
+                                      : `${API_BASE_URL}${item.product.images[0]}`
+                                  }
                                   alt={item.product?.name || "Бүтээгдэхүүн"}
                                   fill
                                   sizes="48px"
+                                  unoptimized={item.product.images[0].startsWith("http")}
                                 />
                               ) : (
                                 <Package className="w-6 h-6 text-gray-400" />

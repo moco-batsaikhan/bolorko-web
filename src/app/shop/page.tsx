@@ -2,41 +2,39 @@
 
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { apiService, Product, ProductCategory } from "@/services/apiService";
+import { API_BASE_URL } from "@/constants/constants";
 import Link from "next/link";
 import Image from "next/image";
-import {
-  ShoppingCart,
-  Star,
-  Filter,
-  ChevronDown,
-  Package,
-  Tag,
-  Eye,
-  Heart,
-} from "lucide-react";
+import { ShoppingCart, Star, Filter, Package, Tag, Eye, Heart, Search, X } from "lucide-react";
 import Loading from "@/components/Loading";
 
-export default function ShopPage() {
+function ShopContent() {
+  const searchParams = useSearchParams();
+  const initialCategory = searchParams.get("category");
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [mainCategories, setMainCategories] = useState<ProductCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  // Хоёр шатлалт сонголт: үндсэн болон дэд ангилал
+  const [selectedMain, setSelectedMain] = useState<number | null>(
+    initialCategory ? Number(initialCategory) : null
+  );
+  const [selectedSub, setSelectedSub] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch products data
-  const fetchProducts = async (categoryId?: number) => {
+  // Fetch products data (search/categoryId/type нэг query-гээр хослоно)
+  const fetchProducts = async (categoryId?: number, search?: string) => {
     try {
       setLoading(true);
-      let productsData;
-
-      if (categoryId) {
-        productsData = await apiService.getProductsByCategory(categoryId);
-      } else {
-        productsData = await apiService.getProducts();
-      }
+      const productsData = await apiService.getProducts({
+        type: "PRODUCT",
+        categoryId,
+        search,
+      });
 
       setProducts(productsData);
       setError(null);
@@ -48,43 +46,91 @@ export default function ShopPage() {
     }
   };
 
-  // Fetch categories
+  // Хайлтын оролтыг 400ms хойшлуулж backend руу илгээнэ
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const effectiveCategory = selectedSub ?? selectedMain;
+
+  // Ангилал эсвэл хайлт өөрчлөгдөх бүрд шинээр татна
+  useEffect(() => {
+    fetchProducts(effectiveCategory ?? undefined, debouncedSearch || undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveCategory, debouncedSearch]);
+
+  // Fetch categories (nested: main + children)
   const fetchCategories = async () => {
     try {
-      const categoriesData = await apiService.getProductCategories();
-      setCategories(categoriesData);
+      const categoriesData = await apiService.getMainCategories();
+      setMainCategories(categoriesData);
     } catch (err) {
       console.error("Error fetching categories:", err);
     }
   };
 
+  // URL параметр өөрчлөгдөхөд (header-ийн хайлт/ангиллаас) төлөвийг синк хийнэ
+  useEffect(() => {
+    const catParam = searchParams.get("category");
+    const searchParam = searchParams.get("search") || "";
+
+    setSearchQuery(searchParam);
+    setDebouncedSearch(searchParam);
+
+    const catId = catParam ? Number(catParam) : null;
+    if (!catId) {
+      setSelectedMain(null);
+      setSelectedSub(null);
+      return;
+    }
+
+    if (mainCategories.length === 0) {
+      // Ангиллууд ачаалагдаагүй байхад id-г шууд ашиглана
+      setSelectedMain(catId);
+      setSelectedSub(null);
+      return;
+    }
+
+    const main = mainCategories.find((c) => c.id === catId);
+    if (main) {
+      setSelectedMain(catId);
+      setSelectedSub(null);
+    } else {
+      const parent = mainCategories.find((c) =>
+        c.children?.some((child) => child.id === catId)
+      );
+      if (parent) {
+        setSelectedMain(parent.id);
+        setSelectedSub(catId);
+      }
+    }
+  }, [searchParams, mainCategories]);
+
   // Initial data fetch
   useEffect(() => {
     fetchCategories();
-    fetchProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Handle category filter
-  const handleCategoryFilter = (categoryId: number | null) => {
-    setSelectedCategory(categoryId);
-    setShowCategoryDropdown(false);
-    fetchProducts(categoryId || undefined);
+  // Үндсэн ангилал солиход дэд ангилал шинээр эхэлнэ
+  const handleMainChange = (mainId: number | null) => {
+    setSelectedMain(mainId);
+    setSelectedSub(null);
   };
+
+  const handleSubChange = (subId: number | null) => {
+    setSelectedSub(subId);
+  };
+
+  const selectedMainCategory = mainCategories.find((c) => c.id === selectedMain);
+  const subCategories = selectedMainCategory?.children || [];
 
   // Format price
   const formatPrice = (price: string) => {
     const numPrice = parseFloat(price);
+    if (!numPrice) return "Үнэ асууна уу";
     return new Intl.NumberFormat("mn-MN").format(numPrice) + "₮";
-  };
-
-  // Calculate discount price
-  const getDiscountedPrice = (
-    originalPrice: string,
-    discountPercentage: string
-  ) => {
-    const original = parseFloat(originalPrice);
-    const discount = parseFloat(discountPercentage);
-    return original - (original * discount) / 100;
   };
 
   // Render star rating
@@ -110,16 +156,14 @@ export default function ShopPage() {
 
     if (typeof images === "string") {
       if (images === "string") return null; // Invalid data
-      return images.startsWith("https")
-        ? images
-        : `https://api.cubingmongolia.mn${images}`;
+      return images.startsWith("http") ? images : `${API_BASE_URL}${images}`;
     }
 
     if (Array.isArray(images) && images.length > 0) {
       const firstImage = images[0];
-      return firstImage.startsWith("https")
+      return firstImage.startsWith("http")
         ? firstImage
-        : `https://api.cubingmongolia.mn${firstImage}`;
+        : `${API_BASE_URL}${firstImage}`;
     }
 
     return null;
@@ -130,7 +174,7 @@ export default function ShopPage() {
       <Header />
 
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 text-white py-20 overflow-hidden">
+      <div className="relative bg-gradient-to-br from-red-700 via-red-600 to-red-500 text-white py-20 overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full -translate-x-48 -translate-y-48 blur-3xl"></div>
@@ -139,17 +183,17 @@ export default function ShopPage() {
 
         {/* Floating Elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-10 w-4 h-4 bg-blue-400 rounded-full opacity-40 animate-pulse"></div>
-          <div className="absolute top-32 right-20 w-3 h-3 bg-purple-400 rounded-full opacity-50 animate-pulse delay-1000"></div>
-          <div className="absolute bottom-20 left-1/4 w-2 h-2 bg-indigo-400 rounded-full opacity-45 animate-pulse delay-500"></div>
+          <div className="absolute top-20 left-10 w-4 h-4 bg-white rounded-full opacity-40 animate-pulse"></div>
+          <div className="absolute top-32 right-20 w-3 h-3 bg-white rounded-full opacity-50 animate-pulse delay-1000"></div>
+          <div className="absolute bottom-20 left-1/4 w-2 h-2 bg-white rounded-full opacity-45 animate-pulse delay-500"></div>
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             {/* Icon */}
             <div className="mb-6">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-4 shadow-xl">
-                <ShoppingCart className="w-10 h-10 text-white" />
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-full mb-4 shadow-xl">
+                <ShoppingCart className="w-10 h-10 text-red-600" />
               </div>
             </div>
 
@@ -160,10 +204,10 @@ export default function ShopPage() {
 
             {/* Subtitle */}
             <p className="text-xl md:text-2xl mb-8 opacity-90 max-w-3xl mx-auto leading-relaxed">
-              MEGA клубын албан ёсны дэлгүүр.
+              Bolorko албан ёсны дэлгүүр.
               <span className="font-semibold">
                 {" "}
-                Рубикийн шоо болон хэрэгсэл
+                Хувцас болон аяллын хэрэгсэл
               </span>
             </p>
 
@@ -191,58 +235,62 @@ export default function ShopPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Category Filter */}
+        {/* Search + Category Filter: үндсэн → дэд ангилал */}
         <div className="mb-8">
-          <div className="flex items-center mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            {/* Хайлт */}
+            <div className="relative flex-1 sm:max-w-md">
+              <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Бараа хайх..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-10 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label="Хайлт цэвэрлэх"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
             <div className="flex items-center">
               <Filter className="w-5 h-5 mr-2 text-mega-600" />
               <h3 className="text-lg font-semibold text-gray-900">Ангилал</h3>
             </div>
-            <div className="relative ml-4">
-              <button
-                onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <span className="mr-2">
-                  {selectedCategory
-                    ? categories.find((c) => c.id === selectedCategory)?.name
-                    : "Бүх ангилал"}
-                </span>
-                <ChevronDown
-                  className={`w-4 h-4 transition-transform ${
-                    showCategoryDropdown ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
 
-              {showCategoryDropdown && (
-                <div className="absolute top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                  <button
-                    onClick={() => handleCategoryFilter(null)}
-                    className={`w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors ${
-                      selectedCategory === null
-                        ? "bg-mega-50 text-mega-600"
-                        : ""
-                    }`}
-                  >
-                    Бүх ангилал
-                  </button>
-                  {categories.map((category) => (
-                    <button
-                      key={category.id}
-                      onClick={() => handleCategoryFilter(category.id)}
-                      className={`w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors ${
-                        selectedCategory === category.id
-                          ? "bg-mega-50 text-mega-600"
-                          : ""
-                      }`}
-                    >
-                      {category.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <select
+              value={selectedMain ?? ""}
+              onChange={(e) => handleMainChange(e.target.value ? Number(e.target.value) : null)}
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500 cursor-pointer"
+            >
+              <option value="">Бүх ангилал</option>
+              {mainCategories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+
+            {subCategories.length > 0 && (
+              <select
+                value={selectedSub ?? ""}
+                onChange={(e) => handleSubChange(e.target.value ? Number(e.target.value) : null)}
+                className="px-4 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500 cursor-pointer"
+              >
+                <option value="">Бүх дэд ангилал</option>
+                {subCategories.map((sub) => (
+                  <option key={sub.id} value={sub.id}>
+                    {sub.name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         </div>
 
@@ -262,20 +310,12 @@ export default function ShopPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
               {products.map((product) => {
                 const imageUrl = getProductImageUrl(product.images);
-                const hasDiscount =
-                  product.originalPrice && product.discountPercentage;
-                const discountedPrice = hasDiscount
-                  ? getDiscountedPrice(
-                      product.originalPrice!,
-                      product.discountPercentage!
-                    )
-                  : null;
 
                 return (
                   <Link
                     href={`/shop/${product.id}`}
                     key={product.id}
-                    className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 group block"
+                    className="card-3d bg-white rounded-lg overflow-hidden group block"
                   >
                     {/* Product Image */}
                     <div className="relative h-48 overflow-hidden">
@@ -286,6 +326,7 @@ export default function ShopPage() {
                           fill
                           className="object-cover group-hover:scale-110 transition-transform duration-300"
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          unoptimized={!imageUrl.startsWith(API_BASE_URL)}
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
@@ -294,9 +335,9 @@ export default function ShopPage() {
                       )}
 
                       {/* Discount Badge */}
-                      {hasDiscount && (
+                      {product.discountPercentage && (
                         <div className="absolute top-2 left-2">
-                          <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-medium">
+                          <span className="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">
                             -{product.discountPercentage}%
                           </span>
                         </div>
@@ -338,7 +379,7 @@ export default function ShopPage() {
                       <div className="flex items-center mb-2">
                         <Tag className="w-3 h-3 mr-1 text-gray-400" />
                         <span className="text-xs text-gray-500">
-                          {product.category?.name || "Категори"}
+                          {product.category?.name || "Ангилалгүй"}
                         </span>
                       </div>
 
@@ -363,23 +404,19 @@ export default function ShopPage() {
                       </div>
 
                       {/* Price */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          {hasDiscount ? (
-                            <div>
-                              <span className="text-lg font-bold text-red-600">
-                                {formatPrice(discountedPrice!.toString())}
-                              </span>
-                              <span className="text-sm text-gray-500 line-through ml-2">
-                                {formatPrice(product.originalPrice!)}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-lg font-bold text-gray-900">
-                              {formatPrice(product.price)}
-                            </span>
-                          )}
-                        </div>
+                      <div className="flex items-baseline gap-2 mb-4">
+                        <span
+                          className={`text-lg font-bold ${
+                            product.discountPercentage ? "text-red-600" : "text-gray-900"
+                          }`}
+                        >
+                          {formatPrice(product.salePrice ?? product.price)}
+                        </span>
+                        {product.discountPercentage && (
+                          <span className="text-sm text-gray-400 line-through">
+                            {formatPrice(product.price)}
+                          </span>
+                        )}
                       </div>
 
                       {/* Add to Cart Button */}
@@ -416,5 +453,19 @@ export default function ShopPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function ShopPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <Loading />
+        </div>
+      }
+    >
+      <ShopContent />
+    </Suspense>
   );
 }

@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { apiService, Product } from "@/services/apiService";
+import { API_BASE_URL } from "@/constants/constants";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -85,17 +86,36 @@ export default function ProductDetailPage() {
   // Format price
   const formatPrice = (price: string) => {
     const numPrice = parseFloat(price);
+    if (!numPrice) return "Үнэ асууна уу";
     return new Intl.NumberFormat("mn-MN").format(numPrice) + "₮";
   };
 
-  // Calculate discount price
-  const getDiscountedPrice = (
-    originalPrice: string,
-    discountPercentage: string
-  ) => {
-    const original = parseFloat(originalPrice);
-    const discount = parseFloat(discountPercentage);
-    return original - (original * discount) / 100;
+  // FB постын текст доторх URL болон утасны дугаарыг дарж болдог линк болгоно
+  const renderDescription = (text: string) => {
+    const parts = text.split(/(https?:\/\/[^\s]+|\b\d{8}\b)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith("http")) {
+        return (
+          <a
+            key={i}
+            href={part}
+            target="_blank"
+            rel="noreferrer"
+            className="text-red-600 hover:underline break-all"
+          >
+            {part}
+          </a>
+        );
+      }
+      if (/^\d{8}$/.test(part)) {
+        return (
+          <a key={i} href={`tel:${part}`} className="text-red-600 hover:underline">
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
   };
 
   // Get product images
@@ -104,15 +124,13 @@ export default function ProductDetailPage() {
 
     if (typeof images === "string") {
       if (images === "string") return []; // Invalid data
-      const url = images.startsWith("http")
-        ? images
-        : `https://api.cubingmongolia.mn${images}`;
+      const url = images.startsWith("http") ? images : `${API_BASE_URL}${images}`;
       return [url];
     }
 
     if (Array.isArray(images)) {
       return images.map((img) =>
-        img.startsWith("http") ? img : `https://api.cubingmongolia.mn${img}`
+        img.startsWith("http") ? img : `${API_BASE_URL}${img}`
       );
     }
 
@@ -162,7 +180,7 @@ export default function ProductDetailPage() {
       setSubmittingRating(true);
 
       const response = await fetch(
-        `https://api.cubingmongolia.mn/products/${product!.id}/ratings`,
+        `${API_BASE_URL}/products/${product!.id}/ratings`,
         {
           method: "POST",
           headers: {
@@ -305,10 +323,6 @@ export default function ProductDetailPage() {
   }
 
   const images = getProductImages(product.images);
-  const hasDiscount = product.originalPrice && product.discountPercentage;
-  const discountedPrice = hasDiscount
-    ? getDiscountedPrice(product.originalPrice!, product.discountPercentage!)
-    : null;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -338,6 +352,7 @@ export default function ProductDetailPage() {
                     className="object-cover"
                     sizes="(max-width: 1024px) 100vw, 50vw"
                     priority
+                    unoptimized={!images[selectedImageIndex].startsWith(API_BASE_URL)}
                   />
                 </div>
 
@@ -360,6 +375,7 @@ export default function ProductDetailPage() {
                           fill
                           className="object-cover"
                           sizes="120px"
+                          unoptimized={!image.startsWith(API_BASE_URL)}
                         />
                       </button>
                     ))}
@@ -379,7 +395,7 @@ export default function ProductDetailPage() {
             <div className="flex items-center">
               <Tag className="w-4 h-4 mr-2 text-gray-400" />
               <span className="text-sm text-gray-600">
-                {product.category?.name || "Категори"}
+                {product.category?.name || "Ангилалгүй"}
               </span>
             </div>
 
@@ -398,18 +414,18 @@ export default function ProductDetailPage() {
 
             {/* Price */}
             <div className="space-y-2">
-              {hasDiscount ? (
+              {product.discountPercentage ? (
                 <>
                   <div className="flex items-center space-x-3">
                     <span className="text-3xl font-bold text-red-600">
-                      {formatPrice(discountedPrice!.toString())}
+                      {formatPrice(product.salePrice!)}
                     </span>
-                    <span className="bg-red-500 text-white px-2 py-1 rounded text-sm font-medium">
+                    <span className="bg-red-600 text-white px-2 py-1 rounded text-sm font-bold">
                       -{product.discountPercentage}%
                     </span>
                   </div>
-                  <span className="text-lg text-gray-500 line-through">
-                    {formatPrice(product.originalPrice!)}
+                  <span className="text-lg text-gray-400 line-through">
+                    {formatPrice(product.price)}
                   </span>
                 </>
               ) : (
@@ -438,8 +454,9 @@ export default function ProductDetailPage() {
             {/* Description */}
             <div className="space-y-2">
               <h3 className="text-lg font-semibold text-gray-900">Тайлбар</h3>
-              <p className="text-gray-600 leading-relaxed">
-                {product.description}
+              {/* whitespace-pre-line: FB постын догол мөр, хоосон мөрийг хэвээр харуулна */}
+              <p className="text-gray-600 leading-relaxed whitespace-pre-line break-words">
+                {renderDescription(product.description)}
               </p>
             </div>
 

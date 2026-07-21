@@ -2,45 +2,168 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom MEGA theme colors */
+/* Custom MEGA theme colors (red & white) */
 .text-mega-600 {
-  color: #2f4276;
+  color: #dc2626;
+}
+
+.text-mega-700 {
+  color: #b91c1c;
 }
 
 .bg-mega-600 {
-  background-color: #2f4276;
+  background-color: #dc2626;
+}
+
+.bg-mega-50 {
+  background-color: #fef2f2;
 }
 
 .hover\:text-mega-600:hover {
-  color: #2f4276;
+  color: #dc2626;
+}
+
+.hover\:text-mega-700:hover {
+  color: #b91c1c;
 }
 
 .hover\:bg-mega-700:hover {
-  background-color: #253654;
+  background-color: #b91c1c;
 }
 
 .hover\:bg-mega-50:hover {
-  background-color: #f8f9fb;
+  background-color: #fef2f2;
 }
 
 .border-mega-600 {
-  border-color: #2f4276;
+  border-color: #dc2626;
+}
+
+.border-mega-200 {
+  border-color: #fecaca;
 }
 
 .focus\:ring-mega-500:focus {
-  --tw-ring-color: #3d5194;
+  --tw-ring-color: #ef4444;
 }
 
 .focus\:ring-mega-600:focus {
-  --tw-ring-color: #2f4276;
+  --tw-ring-color: #dc2626;
 }
 
 .bg-mega-100 {
-  background-color: #f0f2f8;
+  background-color: #fee2e2;
 }
 
 .text-mega-800 {
-  color: #1e2a4a;
+  color: #991b1b;
+}
+
+/* Announcement marquee */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 25s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
+  }
+}
+
+/* ===== Luxury typography ===== */
+.font-display {
+  font-family: "Playfair Display", Georgia, "Times New Roman", "Noto Serif", serif;
+}
+
+/* ===== 3D UI utilities ===== */
+
+/* Хөвдөг 3D карт: hover дээр өргөгдөж, бага зэрэг хазайна */
+.card-3d {
+  transform-style: preserve-3d;
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow:
+    0 1px 2px rgba(16, 24, 40, 0.06),
+    0 4px 12px rgba(16, 24, 40, 0.08);
+}
+
+.card-3d:hover {
+  transform: perspective(900px) translateY(-8px) rotateX(2.5deg) scale(1.01);
+  box-shadow:
+    0 12px 24px -8px rgba(220, 38, 38, 0.18),
+    0 24px 48px -16px rgba(16, 24, 40, 0.22);
+}
+
+/* Дарагддаг 3D товч */
+.btn-3d {
+  box-shadow:
+    0 4px 0 #991b1b,
+    0 8px 16px -4px rgba(220, 38, 38, 0.4);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.btn-3d:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 5px 0 #991b1b,
+    0 12px 20px -4px rgba(220, 38, 38, 0.45);
+}
+
+.btn-3d:active {
+  transform: translateY(3px);
+  box-shadow:
+    0 1px 0 #991b1b,
+    0 4px 8px -2px rgba(220, 38, 38, 0.3);
+}
+
+/* Гүнзгий сүүдэртэй хэсэг (section depth) */
+.section-3d {
+  box-shadow:
+    0 2px 4px rgba(16, 24, 40, 0.04),
+    0 12px 32px -12px rgba(16, 24, 40, 0.12);
+}
+
+/* Дээрээс унжсан dropdown панель */
+.dropdown-3d {
+  box-shadow:
+    0 8px 16px -6px rgba(16, 24, 40, 0.14),
+    0 20px 48px -12px rgba(16, 24, 40, 0.24);
+  animation: dropdown-in 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: top center;
+}
+
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: perspective(800px) rotateX(-8deg) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(800px) rotateX(0) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-3d,
+  .card-3d:hover,
+  .btn-3d,
+  .dropdown-3d {
+    transform: none;
+    animation: none;
+    transition: none;
+  }
 }
 
 /* Text truncation utilities */
