@@ -189,11 +189,10 @@ export interface UpdateProductRequest {
   images?: File[];
 }
 
+// Backend endpoint нь одоо sync-ийг background-д ажиллуулаад 202-той шууд
+// буцдаг тул created/updated/skipped тоог шууд авахгүй, зөвхөн мессеж ирнэ
 export interface FacebookSyncResult {
-  total: number;
-  created: number;
-  updated: number;
-  skipped: number;
+  message: string;
 }
 
 export interface CreateProductCategoryRequest {
@@ -252,6 +251,134 @@ export interface RegisterCredentials {
   role?: string;
 }
 
+export interface StorePayLoan {
+  id: number;
+  loanId: number;
+  requestId: string;
+  orderId: number;
+  amount: string;
+  status: string;
+  createdAt: string;
+  confirmedAt: string | null;
+}
+
+export interface CreateStorePayLoanRequest {
+  mobileNumber: string;
+  description: string;
+  amount: number;
+  orderId: number;
+}
+
+export interface StorePayCheckData {
+  loanId: number;
+  status: "pending" | "confirmed" | string;
+  amount: string;
+  isExist: boolean;
+  isConfirmed: boolean;
+}
+
+export interface StorePayCheckResponse {
+  value: boolean;
+  data: StorePayCheckData;
+  status: string;
+}
+
+export interface StorePayChangeRequest {
+  changeTypeId: 1 | 2;
+  loanId: number;
+  reason: string;
+  amount?: number;
+}
+
+export interface CreatePocketInvoiceRequest {
+  amount: number;
+  orderId: number;
+  info: string;
+}
+
+// amount нь decimal багана тул string ирдэг — харуулахын өмнө Number()-ээр хөрвүүлнэ
+export interface PocketInvoice {
+  id: number;
+  invoiceId: string | null;
+  orderNumber: string;
+  orderId: number;
+  userId: number;
+  terminalId: string;
+  amount: string;
+  info: string;
+  invoiceType: string;
+  channel: string;
+  qr: string;
+  deeplink: string;
+  state: string;
+  createdAt: string;
+  paidAt: string | null;
+}
+
+export type PocketInvoiceState =
+  | "pending"
+  | "processing"
+  | "processed"
+  | "paid"
+  | "cancelled"
+  | "rejected"
+  | "unsuccess";
+
+export interface PocketInvoiceStatus {
+  state: PocketInvoiceState;
+  description: string;
+  senderName: string | null;
+  receiverName: string | null;
+  amount: number;
+  info: string;
+  holdId: number | null;
+  id: number;
+  createdAt: string;
+  aliasName: string | null;
+  terminalId: number;
+  branchName: string | null;
+  branchId: number | null;
+  orderNumber: string;
+  invoiceType: string;
+}
+
+// Backend хариуны бүтэц баталгаажаагүй — эхлээд туршиж лог хийж форматыг тодруулах хэрэгтэй
+export interface StorePayChangeRequestItem {
+  loan_id: number;
+  Current_amount: string;
+  New_amount: string;
+  Created_date: string;
+  Action_date: string;
+  Status_desc: string;
+  Change_type_desc: string;
+  Store_name: string;
+  Branch_name: string;
+}
+
+// Backend-ийн 400 алдааны { message, msgList } бүтцийг дамжуулж хэрэглэгчид
+// ойлгомжтой мессеж болгон харуулах боломжтой болгоно (getApiErrorMessage-тэй хамт)
+export class ApiError extends Error {
+  status?: number;
+  msgList?: string[];
+
+  constructor(message: string, options?: { status?: number; msgList?: string[] }) {
+    super(message);
+    this.name = "ApiError";
+    this.status = options?.status;
+    this.msgList = options?.msgList;
+  }
+}
+
+export function getApiErrorMessage(error: unknown, fallback = "Алдаа гарлаа"): string {
+  if (error instanceof ApiError && error.msgList && error.msgList.length > 0) {
+    return error.msgList.join("\n");
+  }
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  return fallback;
+}
+
 class ApiService {
   private baseURL: string;
 
@@ -277,8 +404,9 @@ class ApiService {
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.message || `HTTP error! status: ${response.status}`
+      throw new ApiError(
+        errorData.message || `HTTP error! status: ${response.status}`,
+        { status: response.status, msgList: errorData.msgList }
       );
     }
     return response.json();
@@ -912,6 +1040,118 @@ class ApiService {
     );
 
     return this.handleResponse<Order>(response);
+  }
+
+  async createStorePayLoan(data: CreateStorePayLoanRequest): Promise<StorePayLoan> {
+    const response = await fetch(`${this.baseURL}/payments/storepay/loan`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    return this.handleResponse<StorePayLoan>(response);
+  }
+
+  // Auth шаардлагагүй — QPay-ийн polling-той адил тогтмол давтамжтай дуудна
+  async checkStorePayLoan(loanId: number): Promise<StorePayCheckResponse> {
+    const response = await fetch(
+      `${this.baseURL}/payments/storepay/loan/check/${loanId}`,
+      { method: "GET" }
+    );
+
+    return this.handleResponse<StorePayCheckResponse>(response);
+  }
+
+  // Нэвтрэлт тасарсны дараа requestId-гээр сэргээж шалгахад ашиглана
+  async checkStorePayRequest(requestId: string): Promise<StorePayCheckResponse> {
+    const response = await fetch(
+      `${this.baseURL}/payments/storepay/loan/checkRequest/${encodeURIComponent(
+        requestId
+      )}`,
+      { method: "GET" }
+    );
+
+    return this.handleResponse<StorePayCheckResponse>(response);
+  }
+
+  async cancelStorePayLoan(accountId: number): Promise<void> {
+    const response = await fetch(
+      `${this.baseURL}/payments/storepay/loan/cancel`,
+      {
+        method: "POST",
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ accountId }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new ApiError(
+        errorData.message || `HTTP error! status: ${response.status}`,
+        { status: response.status, msgList: errorData.msgList }
+      );
+    }
+  }
+
+  // Backend хариуны бүтэц баталгаажаагүй — эхлээд туршиж лог хийж форматыг тодруулах хэрэгтэй
+  async getStorePayLoanList(startDate: string, endDate: string): Promise<unknown> {
+    const response = await fetch(
+      `${this.baseURL}/payments/storepay/loan/list/${startDate}/${endDate}`,
+      { method: "GET", headers: this.getAuthHeaders() }
+    );
+
+    return this.handleResponse<unknown>(response);
+  }
+
+  async changeStorePayLoan(data: StorePayChangeRequest): Promise<unknown> {
+    const response = await fetch(
+      `${this.baseURL}/payments/storepay/loan/change`,
+      {
+        method: "POST",
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
+
+    return this.handleResponse<unknown>(response);
+  }
+
+  async getStorePayChangeRequests(): Promise<StorePayChangeRequestItem[]> {
+    const response = await fetch(
+      `${this.baseURL}/payments/storepay/loan/change-requests`,
+      {
+        method: "POST",
+        headers: this.getAuthHeaders(),
+      }
+    );
+
+    return this.handleResponse<StorePayChangeRequestItem[]>(response);
+  }
+
+  async createPocketInvoice(
+    data: CreatePocketInvoiceRequest
+  ): Promise<PocketInvoice> {
+    const response = await fetch(`${this.baseURL}/payments/pocket/invoice`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    return this.handleResponse<PocketInvoice>(response);
+  }
+
+  // Auth шаардлагагүй — QR дэлгэц нээлттэй байх хугацаанд тогтмол давтамжтай дуудна
+  async checkPocketInvoiceStatus(
+    orderNumber: string
+  ): Promise<PocketInvoiceStatus> {
+    const response = await fetch(
+      `${this.baseURL}/payments/pocket/invoice/order-number/${encodeURIComponent(
+        orderNumber
+      )}`,
+      { method: "GET" }
+    );
+
+    return this.handleResponse<PocketInvoiceStatus>(response);
   }
 
   async getBanners(): Promise<Banner[]> {

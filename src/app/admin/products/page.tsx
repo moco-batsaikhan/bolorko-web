@@ -423,12 +423,10 @@ export default function AdminProducts() {
   const handleFacebookSync = async () => {
     setSyncing(true);
     try {
-      const result = await apiService.syncFacebookProducts();
-      showToast(
-        `Sync дууслаа: нийт ${result.total}, шинээр ${result.created}, шинэчилсэн ${result.updated}, алгассан ${result.skipped}`,
-        "success",
-      );
-      fetchData();
+      // Backend endpoint нь sync-ийг background-д эхлүүлээд шууд буцдаг тул
+      // үр дүнгийн тоог энд авахгүй — бодит үр дүн серверийн log-д бичигдэнэ
+      await apiService.syncFacebookProducts();
+      showToast("Sync эхэллээ. Үр дүнг хэдэн минутын дараа шинэчлээд шалгана уу.", "success");
     } catch (error) {
       console.error("Facebook sync error:", error);
       showToast(

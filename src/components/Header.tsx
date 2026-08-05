@@ -40,7 +40,7 @@ export function Header() {
     apiService
       .getMainCategories()
       .then(setCategories)
-      .catch((err) => console.error("Failed to load categories:", err));
+      .catch(err => console.error("Failed to load categories:", err));
   }, []);
 
   useEffect(() => {
@@ -83,9 +83,9 @@ export function Header() {
   return (
     <header className="bg-white shadow-sm border-b sticky top-0 z-40">
       {/* Зарын мөр */}
-      <div className="bg-red-600 text-white py-2 text-center text-xs tracking-widest uppercase">
+      {/* <div className="bg-red-600 text-white py-2 text-center text-xs tracking-widest uppercase">
         50,000₮-с дээш захиалгад хот дотор үнэгүй хүргэлт
-      </div>
+      </div> */}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3 md:gap-6 h-16">
@@ -94,11 +94,7 @@ export function Header() {
             <Link href="/" className="flex items-center space-x-2 group">
               <div className="w-10 h-10 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-200">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/imgs/icon.png"
-                  alt="Bolorko Logo"
-                  className="w-10 h-10 object-contain"
-                />
+                <img src="/imgs/icon.png" alt="Bolorko Logo" className="w-10 h-10 object-contain" />
               </div>
               <span className="font-display text-2xl font-bold tracking-wide text-gray-900 group-hover:text-red-600 transition-colors duration-200">
                 BOLORKO
@@ -132,7 +128,7 @@ export function Header() {
                 {categories.length === 0 ? (
                   <p className="px-5 py-3 text-sm text-gray-500">Ангилал байхгүй байна</p>
                 ) : (
-                  categories.map((main) => (
+                  categories.map(main => (
                     <div key={main.id} className="px-2">
                       <button
                         onClick={() => goToCategory(main.id)}
@@ -143,7 +139,7 @@ export function Header() {
                       </button>
                       {main.children && main.children.length > 0 && (
                         <div className="ml-3 pl-3 border-l-2 border-red-100 mb-1">
-                          {main.children.map((sub) => (
+                          {main.children.map(sub => (
                             <button
                               key={sub.id}
                               onClick={() => goToCategory(sub.id)}
@@ -169,7 +165,7 @@ export function Header() {
                 type="text"
                 placeholder="Бараа хайх..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={e => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-mega-500 focus:bg-white transition-colors"
               />
             </div>
@@ -205,9 +201,7 @@ export function Header() {
               {isProfileOpen && isAuthenticated && (
                 <div className="dropdown-3d absolute right-0 top-full mt-2 w-48 bg-white rounded-lg border border-gray-200 py-2 z-50">
                   <div className="px-4 py-2 border-b border-gray-100">
-                    <div className="font-semibold text-gray-900">
-                      {user?.name || "Хэрэглэгч"}
-                    </div>
+                    <div className="font-semibold text-gray-900">{user?.name || "Хэрэглэгч"}</div>
                     <div className="text-sm text-gray-500">{user?.email}</div>
                   </div>
                   {user?.role === UserRole.ADMIN && (
@@ -271,7 +265,7 @@ export function Header() {
                   type="text"
                   placeholder="Бараа хайх..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={e => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-mega-500"
                 />
               </div>
@@ -284,7 +278,7 @@ export function Header() {
                 Ангилал
               </div>
               <div className="space-y-1">
-                {categories.map((main) => (
+                {categories.map(main => (
                   <div key={main.id}>
                     <button
                       onClick={() => goToCategory(main.id)}
@@ -294,7 +288,7 @@ export function Header() {
                     </button>
                     {main.children && main.children.length > 0 && (
                       <div className="ml-4 pl-3 border-l-2 border-red-100">
-                        {main.children.map((sub) => (
+                        {main.children.map(sub => (
                           <button
                             key={sub.id}
                             onClick={() => goToCategory(sub.id)}
