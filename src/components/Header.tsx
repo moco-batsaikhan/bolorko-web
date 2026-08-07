@@ -20,6 +20,7 @@ import { useCart } from "../contexts/CartContext";
 import { LoginModal } from "./LoginModal";
 import { UserRole } from "@/constants/roles";
 import { apiService, ProductCategory } from "@/services/apiService";
+import { CART_ENABLED } from "@/config/featureFlags";
 
 export function Header() {
   const router = useRouter();
@@ -175,17 +176,20 @@ export function Header() {
 
           {/* Right side icons */}
           <div className="flex items-center space-x-2 md:space-x-4">
-            <Link
-              href="/cart"
-              className="relative p-2 text-gray-700 hover:text-mega-600 transition-all duration-300 hover:bg-mega-50 rounded-lg transform hover:scale-110"
-            >
-              <ShoppingCart className="w-5 h-5" />
-              {itemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
-                  {itemCount > 99 ? "99+" : itemCount}
-                </span>
-              )}
-            </Link>
+            {/* Сагсны урсгал түр хаагдсан (CART_ENABLED=false) — буцаахдаа зөвхөн флагийг true болгоно */}
+            {CART_ENABLED && (
+              <Link
+                href="/cart"
+                className="relative p-2 text-gray-700 hover:text-mega-600 transition-all duration-300 hover:bg-mega-50 rounded-lg transform hover:scale-110"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                {itemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                    {itemCount > 99 ? "99+" : itemCount}
+                  </span>
+                )}
+              </Link>
+            )}
 
             <div className="relative hidden md:block" ref={profileRef}>
               <button

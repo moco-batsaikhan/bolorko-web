@@ -13,6 +13,7 @@ import Image from "next/image";
 import { ShoppingCart, Plus, Minus, Trash2, ArrowRight } from "lucide-react";
 import Loading from "@/components/Loading";
 import { useRouter } from "next/navigation";
+import { CART_ENABLED } from "@/config/featureFlags";
 
 export default function CartPage() {
   const { isAuthenticated, user } = useAuth();
@@ -82,6 +83,34 @@ export default function CartPage() {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("mn-MN").format(price) + "₮";
   };
+
+  // Сагсны урсгал түр хаагдсан (CART_ENABLED=false) — доорх код хэвээр
+  // үлдсэн тул буцаахдаа зөвхөн флагийг true болгоно
+  if (!CART_ENABLED) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="text-center">
+            <ShoppingCart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+              Сагсны үйлчилгээ түр ажиллахгүй байна
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Одоогоор бүтээгдэхүүнийг шууд захиалах боломжтой.
+            </p>
+            <Link
+              href="/shop"
+              className="bg-mega-600 text-white px-6 py-3 rounded-lg hover:bg-mega-700 transition-colors"
+            >
+              Дэлгүүр рүү очих
+            </Link>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (loading) {
     return <Loading />;
@@ -270,8 +299,8 @@ export default function CartPage() {
                         item.quantity,
                     0
                   );
-                  const shippingCost = subtotal > 50000 ? 0 : 5000; // Free shipping over 50k
-                  const totalAmount = subtotal + shippingCost;
+                  // Хүргэлтийн төлбөр захиалгын дүнд нэмэгдэхгүй
+                  const totalAmount = subtotal;
 
                   return (
                     <>
@@ -280,14 +309,6 @@ export default function CartPage() {
                           <span className="text-gray-600">Нийт:</span>
                           <span className="font-medium">
                             {formatPrice(subtotal)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Хүргэлт:</span>
-                          <span className="font-medium">
-                            {shippingCost > 0
-                              ? formatPrice(shippingCost)
-                              : "Үнэгүй"}
                           </span>
                         </div>
                       </div>

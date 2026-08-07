@@ -3,8 +3,9 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { apiService, Product } from "@/services/apiService";
+import { CART_ENABLED } from "@/config/featureFlags";
 import { API_BASE_URL } from "@/constants/constants";
 import Link from "next/link";
 import Image from "next/image";
@@ -26,6 +27,7 @@ import Loading from "@/components/Loading";
 
 export default function ProductDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const { isAuthenticated, user } = useAuth();
   const { showToast } = useToast();
   const { addToCart, loading: cartLoading } = useCart();
@@ -155,6 +157,29 @@ export default function ProductDetailPage() {
       showToast("Алдаа гарлаа. Дахин оролдоно уу.", "error");
       console.error("Add to cart error:", error);
     }
+  };
+
+  // Худалдан авах: сагсыг алгасаад шууд захиалгын мэдээлэл авах алхам руу
+  // шилжинэ (CART_ENABLED=false үед). Нэвтрэлт заавал шаардахгүй.
+  const handleBuyNow = () => {
+    if (!product) return;
+
+    const unitPrice = parseFloat(product.salePrice ?? product.price);
+    const buyNowItem = {
+      productId: product.id,
+      quantity,
+      unitPrice,
+      name: product.name,
+      image: images[0],
+    };
+
+    try {
+      sessionStorage.setItem("buy_now_item", JSON.stringify(buyNowItem));
+    } catch (e) {
+      console.warn("Could not write buy_now_item to sessionStorage", e);
+    }
+
+    router.push("/checkout");
   };
 
   // Handle rating submission
@@ -487,23 +512,37 @@ export default function ProductDetailPage() {
                 </select>
               </div>
 
-              <button
-                onClick={handleAddToCart}
-                disabled={product.stock === 0 || cartLoading}
-                className="w-full flex items-center justify-center px-6 py-3 bg-mega-600 text-white rounded-lg hover:bg-mega-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-lg font-medium"
-              >
-                <ShoppingCart className="w-5 h-5 mr-2" />
-                {cartLoading ? (
-                  <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Нэмж байна...
-                  </div>
-                ) : product.stock === 0 ? (
-                  "Дууссан"
-                ) : (
-                  "Сагсанд нэмэх"
-                )}
-              </button>
+              {/* Сагсны урсгал түр хаагдсан (CART_ENABLED=false) — "Сагсанд нэмэх"
+                  товчны оронд шууд захиалах товч харагдана. Буцаахдаа зөвхөн
+                  featureFlags.ts дахь CART_ENABLED-г true болгоно. */}
+              {CART_ENABLED ? (
+                <button
+                  onClick={handleAddToCart}
+                  disabled={product.stock === 0 || cartLoading}
+                  className="w-full flex items-center justify-center px-6 py-3 bg-mega-600 text-white rounded-lg hover:bg-mega-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-lg font-medium"
+                >
+                  <ShoppingCart className="w-5 h-5 mr-2" />
+                  {cartLoading ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Нэмж байна...
+                    </div>
+                  ) : product.stock === 0 ? (
+                    "Дууссан"
+                  ) : (
+                    "Сагсанд нэмэх"
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={handleBuyNow}
+                  disabled={product.stock === 0}
+                  className="w-full flex items-center justify-center px-6 py-3 bg-mega-600 text-white rounded-lg hover:bg-mega-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-lg font-medium"
+                >
+                  <ShoppingCart className="w-5 h-5 mr-2" />
+                  {product.stock === 0 ? "Дууссан" : "Худалдан авах"}
+                </button>
+              )}
             </div>
           </div>
         </div>

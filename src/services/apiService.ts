@@ -100,19 +100,17 @@ export interface Order {
 }
 
 // userId илгээхгүй — сервер нэвтэрсэн хэрэглэгчийг token-оос уншина,
-// token-гүй бол зочны захиалга (userId=null) болно
+// token-гүй бол зочны захиалга (userId=null) болно.
+// phone заавал шаардлагатай; shippingAddress нь OPTIONAL тул шаардлагагүй
+// үед бүхэлд нь орхиж болно (жишээ нь: "Худалдан авах" товчийн хялбарчилсан
+// урсгал — зөвхөн утасны дугаар авдаг).
 export interface CreateOrderRequest {
   orderItems: {
     productId: number;
     quantity: number;
   }[];
-  shippingAddress: {
-    fullName: string;
-    phone: string;
-    city: string;
-    addressLine: string;
-    note?: string;
-  };
+  phone: string;
+  shippingAddress?: ShippingAddress;
 }
 
 export interface UpdateOrderStatusRequest {

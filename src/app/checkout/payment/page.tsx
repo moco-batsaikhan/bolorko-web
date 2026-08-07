@@ -377,6 +377,11 @@ export default function PaymentPage() {
         setPocketOrderId(orderId);
       }
 
+      // Invoice үүсгэхээс өмнө order.id бэлэн (хүчинтэй) эсэхийг шалгана
+      if (!orderId || Number.isNaN(orderId)) {
+        throw new Error("Захиалга бэлэн болоогүй байна");
+      }
+
       const invoice = await apiService.createPocketInvoice({
         amount: pendingOrder.totalAmount,
         orderId,

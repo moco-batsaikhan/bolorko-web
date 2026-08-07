@@ -1,12 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { apiService, Product } from "@/services/apiService";
 import { API_BASE_URL } from "@/constants/constants";
 import Loading from "@/components/Loading";
-import { Newspaper, Calendar, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Newspaper,
+  Calendar,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  X,
+} from "lucide-react";
 
 function getImageUrls(images: string[] | string | null): string[] {
   if (!images) return [];
@@ -51,8 +60,149 @@ function renderText(text: string) {
   });
 }
 
+// Зураг томруулж, гуйлгэж (swipe) харах, хажууд нь мэдээллийг харуулах модал
+function ImageModal({
+  post,
+  images,
+  initialIndex,
+  onClose,
+}: {
+  post: Product;
+  images: string[];
+  initialIndex: number;
+  onClose: () => void;
+}) {
+  const [index, setIndex] = useState(initialIndex);
+  const touchStartX = useRef<number | null>(null);
+
+  const goPrev = () => setIndex((i) => (i - 1 + images.length) % images.length);
+  const goNext = () => setIndex((i) => (i + 1) % images.length);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") goPrev();
+      if (e.key === "ArrowRight") goNext();
+    };
+    window.addEventListener("keydown", handleKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", handleKey);
+      document.body.style.overflow = "";
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [images.length]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    if (delta > 50) goPrev();
+    else if (delta < -50) goNext();
+    touchStartX.current = null;
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-2 sm:p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-xl overflow-hidden w-full max-w-5xl max-h-[95vh] flex flex-col md:flex-row"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Image + carousel */}
+        <div
+          className="relative bg-black flex items-center justify-center md:w-2/3 aspect-square md:aspect-auto md:h-[85vh] flex-shrink-0"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={images[index]}
+            alt={`${post.name} ${index + 1}`}
+            className="max-w-full max-h-full object-contain select-none"
+            draggable={false}
+          />
+
+          <button
+            onClick={onClose}
+            className="absolute top-2 right-2 text-white bg-black/50 hover:bg-black/70 rounded-full p-1.5 transition-colors"
+            aria-label="Хаах"
+          >
+            <X size={20} />
+          </button>
+
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={goPrev}
+                className="absolute left-2 top-1/2 -translate-y-1/2 text-white bg-black/40 hover:bg-black/60 rounded-full p-1.5 transition-colors"
+                aria-label="Өмнөх зураг"
+              >
+                <ChevronLeft size={22} />
+              </button>
+              <button
+                onClick={goNext}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-white bg-black/40 hover:bg-black/60 rounded-full p-1.5 transition-colors"
+                aria-label="Дараагийн зураг"
+              >
+                <ChevronRight size={22} />
+              </button>
+              <div className="absolute top-2 left-2 text-white text-xs bg-black/50 px-2 py-1 rounded">
+                {index + 1} / {images.length}
+              </div>
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                {images.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setIndex(i)}
+                    className={`w-2 h-2 rounded-full transition-colors ${
+                      i === index ? "bg-white" : "bg-white/40"
+                    }`}
+                    aria-label={`${i + 1}-р зураг`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Info side */}
+        <div className="md:w-1/3 p-5 overflow-y-auto">
+          <h2 className="font-semibold text-gray-900 text-lg mb-1">{post.name}</h2>
+          {post.postedAt && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-3">
+              <Calendar size={13} />
+              {new Date(post.postedAt).toLocaleDateString("mn-MN")}
+            </div>
+          )}
+          <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line break-words">
+            {renderText(post.description)}
+          </p>
+          {post.permalinkUrl && (
+            <a
+              href={post.permalinkUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 mt-4 text-sm text-red-600 hover:text-red-700 hover:underline"
+            >
+              <ExternalLink size={14} />
+              Facebook дээр үзэх
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function InfoCard({ post }: { post: Product }) {
   const [expanded, setExpanded] = useState(false);
+  const [modalIndex, setModalIndex] = useState<number | null>(null);
   const images = getImageUrls(post.images);
   const isLong = post.description.length > 300;
 
@@ -118,12 +268,17 @@ function InfoCard({ post }: { post: Product }) {
           }`}
         >
           {images.slice(0, 6).map((url, i) => (
-            <div key={i} className="relative aspect-square bg-gray-100 overflow-hidden">
+            <button
+              key={i}
+              type="button"
+              onClick={() => setModalIndex(i)}
+              className="relative aspect-square bg-gray-100 overflow-hidden cursor-zoom-in group"
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={url}
                 alt={`${post.name} ${i + 1}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                 loading="lazy"
               />
               {i === 5 && images.length > 6 && (
@@ -131,9 +286,18 @@ function InfoCard({ post }: { post: Product }) {
                   +{images.length - 6}
                 </div>
               )}
-            </div>
+            </button>
           ))}
         </div>
+      )}
+
+      {modalIndex !== null && (
+        <ImageModal
+          post={post}
+          images={images}
+          initialIndex={modalIndex}
+          onClose={() => setModalIndex(null)}
+        />
       )}
     </article>
   );

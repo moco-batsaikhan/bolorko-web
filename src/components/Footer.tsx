@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MapPin, Phone, Mail } from "lucide-react";
+import { CART_ENABLED } from "@/config/featureFlags";
 
 function FacebookIcon({ size = 16 }: { size?: number }) {
   return (
@@ -53,11 +54,13 @@ export function Footer() {
                   Мэдээлэл
                 </Link>
               </li>
-              <li>
-                <Link href="/cart" className="text-gray-400 hover:text-white transition-colors">
-                  Сагс
-                </Link>
-              </li>
+              {CART_ENABLED && (
+                <li>
+                  <Link href="/cart" className="text-gray-400 hover:text-white transition-colors">
+                    Сагс
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link href="/orders" className="text-gray-400 hover:text-white transition-colors">
                   Захиалга

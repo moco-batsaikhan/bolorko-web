@@ -9,6 +9,7 @@ import Loading from "@/components/Loading";
 import Link from "next/link";
 import { ShoppingBag, ShoppingCart, Star, Package, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { CART_ENABLED } from "@/config/featureFlags";
 
 const FACEBOOK_URL = "https://www.facebook.com/momsoonshop";
 
@@ -120,20 +121,24 @@ function ProductCard({
             )}
           </div>
 
-          <button
-            onClick={e => onQuickAdd(e, product.id)}
-            disabled={outOfStock || addingProductId === product.id}
-            className="mt-auto w-full max-w-[180px] flex items-center justify-center gap-2 px-4 py-2 border border-red-600 text-red-600 text-xs font-medium uppercase tracking-widest hover:bg-red-600 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-red-600"
-          >
-            {addingProductId === product.id ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-            ) : (
-              <>
-                <ShoppingCart size={14} />
-                {outOfStock ? "Дууссан" : "Сагслах"}
-              </>
-            )}
-          </button>
+          {/* Сагсны урсгал түр хаагдсан (CART_ENABLED=false) — барааны карт дээр
+              дарахад шууд бүтээгдэхүүний дэлгэц рүү орно, тэндээс шууд захиална */}
+          {CART_ENABLED && (
+            <button
+              onClick={e => onQuickAdd(e, product.id)}
+              disabled={outOfStock || addingProductId === product.id}
+              className="mt-auto w-full max-w-[180px] flex items-center justify-center gap-2 px-4 py-2 border border-red-600 text-red-600 text-xs font-medium uppercase tracking-widest hover:bg-red-600 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-red-600"
+            >
+              {addingProductId === product.id ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+              ) : (
+                <>
+                  <ShoppingCart size={14} />
+                  {outOfStock ? "Дууссан" : "Сагслах"}
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </Link>
