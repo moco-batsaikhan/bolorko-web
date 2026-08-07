@@ -9,7 +9,7 @@ import Loading from "@/components/Loading";
 import Link from "next/link";
 import { ShoppingBag, ShoppingCart, Star, Package, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
-import { CART_ENABLED } from "@/config/featureFlags";
+import { CART_ENABLED, STOCK_CHECK_ENABLED } from "@/config/featureFlags";
 
 const FACEBOOK_URL = "https://www.facebook.com/momsoonshop";
 
@@ -60,7 +60,8 @@ function ProductCard({
   onQuickAdd: (e: React.MouseEvent, productId: number) => void;
 }) {
   const imageUrl = getProductImageUrl(product.images);
-  const outOfStock = product.stock <= 0;
+  // Нөөцийн хяналт түр хаагдсан тул stock-оос үл хамааран захиалах боломжтой
+  const outOfStock = STOCK_CHECK_ENABLED && product.stock <= 0;
 
   return (
     <Link href={`/shop/${product.id}`} className="group block h-full">

@@ -5,7 +5,7 @@ import { Footer } from "@/components/Footer";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { apiService, Product } from "@/services/apiService";
-import { CART_ENABLED } from "@/config/featureFlags";
+import { CART_ENABLED, STOCK_CHECK_ENABLED } from "@/config/featureFlags";
 import { API_BASE_URL } from "@/constants/constants";
 import Link from "next/link";
 import Image from "next/image";
@@ -348,6 +348,8 @@ export default function ProductDetailPage() {
   }
 
   const images = getProductImages(product.images);
+  // Нөөцийн хяналт түр хаагдсан тул stock-оос үл хамааран захиалах боломжтой
+  const isOutOfStock = STOCK_CHECK_ENABLED && product.stock === 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -460,21 +462,23 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            {/* Stock */}
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">Нөөц:</span>
-              <span
-                className={`px-2 py-1 rounded text-sm font-medium ${
-                  product.stock > 10
-                    ? "bg-green-100 text-green-800"
-                    : product.stock > 0
-                    ? "bg-yellow-100 text-yellow-800"
-                    : "bg-red-100 text-red-800"
-                }`}
-              >
-                {product.stock > 0 ? `${product.stock} ширхэг` : "Дууссан"}
-              </span>
-            </div>
+            {/* Stock — нөөцийн хяналт түр хаагдсан үед харуулахгүй */}
+            {STOCK_CHECK_ENABLED && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-600">Нөөц:</span>
+                <span
+                  className={`px-2 py-1 rounded text-sm font-medium ${
+                    product.stock > 10
+                      ? "bg-green-100 text-green-800"
+                      : product.stock > 0
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {product.stock > 0 ? `${product.stock} ширхэг` : "Дууссан"}
+                </span>
+              </div>
+            )}
 
             {/* Description */}
             <div className="space-y-2">
@@ -499,10 +503,10 @@ export default function ProductDetailPage() {
                   value={quantity}
                   onChange={(e) => setQuantity(Number(e.target.value))}
                   className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-mega-500 focus:border-transparent"
-                  disabled={product.stock === 0}
+                  disabled={isOutOfStock}
                 >
                   {Array.from(
-                    { length: Math.min(product.stock, 10) },
+                    { length: STOCK_CHECK_ENABLED ? Math.min(product.stock, 10) : 10 },
                     (_, i) => (
                       <option key={i + 1} value={i + 1}>
                         {i + 1}
@@ -518,7 +522,7 @@ export default function ProductDetailPage() {
               {CART_ENABLED ? (
                 <button
                   onClick={handleAddToCart}
-                  disabled={product.stock === 0 || cartLoading}
+                  disabled={isOutOfStock || cartLoading}
                   className="w-full flex items-center justify-center px-6 py-3 bg-mega-600 text-white rounded-lg hover:bg-mega-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-lg font-medium"
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
@@ -527,7 +531,7 @@ export default function ProductDetailPage() {
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                       Нэмж байна...
                     </div>
-                  ) : product.stock === 0 ? (
+                  ) : isOutOfStock ? (
                     "Дууссан"
                   ) : (
                     "Сагсанд нэмэх"
@@ -536,11 +540,11 @@ export default function ProductDetailPage() {
               ) : (
                 <button
                   onClick={handleBuyNow}
-                  disabled={product.stock === 0}
+                  disabled={isOutOfStock}
                   className="w-full flex items-center justify-center px-6 py-3 bg-mega-600 text-white rounded-lg hover:bg-mega-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-lg font-medium"
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
-                  {product.stock === 0 ? "Дууссан" : "Худалдан авах"}
+                  {isOutOfStock ? "Дууссан" : "Худалдан авах"}
                 </button>
               )}
             </div>

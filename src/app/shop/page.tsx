@@ -10,6 +10,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ShoppingCart, Star, Filter, Package, Tag, Eye, Heart, Search, X } from "lucide-react";
 import Loading from "@/components/Loading";
+import { STOCK_CHECK_ENABLED } from "@/config/featureFlags";
 
 function ShopContent() {
   const searchParams = useSearchParams();
@@ -343,22 +344,24 @@ function ShopContent() {
                         </div>
                       )}
 
-                      {/* Stock Badge */}
-                      <div className="absolute top-2 right-2">
-                        <span
-                          className={`px-2 py-1 rounded text-xs font-medium ${
-                            product.stock > 10
-                              ? "bg-green-500 text-white"
-                              : product.stock > 0
-                              ? "bg-yellow-500 text-white"
-                              : "bg-red-500 text-white"
-                          }`}
-                        >
-                          {product.stock > 0
-                            ? `${product.stock} ширхэг`
-                            : "Дууссан"}
-                        </span>
-                      </div>
+                      {/* Stock Badge — нөөцийн хяналт түр хаагдсан үед харуулахгүй */}
+                      {STOCK_CHECK_ENABLED && (
+                        <div className="absolute top-2 right-2">
+                          <span
+                            className={`px-2 py-1 rounded text-xs font-medium ${
+                              product.stock > 10
+                                ? "bg-green-500 text-white"
+                                : product.stock > 0
+                                ? "bg-yellow-500 text-white"
+                                : "bg-red-500 text-white"
+                            }`}
+                          >
+                            {product.stock > 0
+                              ? `${product.stock} ширхэг`
+                              : "Дууссан"}
+                          </span>
+                        </div>
+                      )}
 
                       {/* Action Buttons */}
                       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">

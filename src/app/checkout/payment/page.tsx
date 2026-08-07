@@ -519,49 +519,83 @@ export default function PaymentPage() {
                   <div className="text-sm font-medium text-gray-700 mb-3">
                     Төлбөрийн хэрэгсэл сонгоно уу
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Шууд төлөх */}
+                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                    Шууд төлөх
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 mb-5">
                     <button
                       type="button"
                       onClick={() => setPaymentMethod("qpay")}
-                      className={`text-left p-4 border-2 rounded-lg transition-colors ${
+                      className={`flex items-center gap-3 text-left p-4 border-2 rounded-lg transition-colors ${
                         paymentMethod === "qpay"
                           ? "border-mega-600 bg-mega-50"
                           : "border-gray-200 hover:border-gray-300"
                       }`}
                     >
-                      <div className="font-semibold">QPay</div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Банкны апп-аар шууд төлөх
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/imgs/qpay.jpg"
+                        alt="QPay"
+                        className="w-10 h-10 object-contain rounded flex-shrink-0"
+                      />
+                      <div>
+                        <div className="font-semibold">QPay</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Банкны апп-аар шууд төлөх
+                        </div>
                       </div>
                     </button>
+                  </div>
 
+                  {/* Хуваан төлөх — StorePay, Pocket */}
+                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                    Хуваан төлөх
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
                     <button
                       type="button"
                       onClick={() => setPaymentMethod("storepay")}
-                      className={`text-left p-4 border-2 rounded-lg transition-colors ${
+                      className={`flex items-center gap-3 text-left p-4 border-2 rounded-lg transition-colors ${
                         paymentMethod === "storepay"
                           ? "border-mega-600 bg-mega-50"
                           : "border-gray-200 hover:border-gray-300"
                       }`}
                     >
-                      <div className="font-semibold">StorePay</div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Зээлээр авах (лизинг)
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/imgs/storepay.jpg"
+                        alt="StorePay"
+                        className="w-10 h-10 object-contain rounded flex-shrink-0"
+                      />
+                      <div>
+                        <div className="font-semibold">StorePay</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Зээлээр авах (лизинг)
+                        </div>
                       </div>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setPaymentMethod("pocket")}
-                      className={`text-left p-4 border-2 rounded-lg transition-colors ${
+                      className={`flex items-center gap-3 text-left p-4 border-2 rounded-lg transition-colors ${
                         paymentMethod === "pocket"
                           ? "border-mega-600 bg-mega-50"
                           : "border-gray-200 hover:border-gray-300"
                       }`}
                     >
-                      <div className="font-semibold">Pocket Zero</div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        QR/апп-аар зээлээр авах
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/imgs/pocket.png"
+                        alt="Pocket"
+                        className="w-10 h-10 object-contain rounded flex-shrink-0"
+                      />
+                      <div>
+                        <div className="font-semibold">Pocket Zero</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          QR/апп-аар зээлээр авах
+                        </div>
                       </div>
                     </button>
                   </div>
