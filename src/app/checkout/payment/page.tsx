@@ -270,7 +270,7 @@ export default function PaymentPage() {
       // баталгаажсаны дараа захиалга үүсгэдэг) — өмнө нь үүссэн бол дахин үүсгэхгүй
       let orderId = storePayOrderId;
       if (!orderId) {
-        const order = await apiService.createOrder(pendingOrder);
+        const { order } = await apiService.createOrder(pendingOrder);
         orderId = order.id;
         setStorePayOrderId(orderId);
       }
@@ -372,7 +372,7 @@ export default function PaymentPage() {
       // Pocket-д ч мөн StorePay-тэй адил orderId урьдчилан шаардлагатай
       let orderId = pocketOrderId;
       if (!orderId) {
-        const order = await apiService.createOrder(pendingOrder);
+        const { order } = await apiService.createOrder(pendingOrder);
         orderId = order.id;
         setPocketOrderId(orderId);
       }

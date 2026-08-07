@@ -113,6 +113,15 @@ export interface CreateOrderRequest {
   shippingAddress?: ShippingAddress;
 }
 
+// POST /orders буцаах хариу нь Order-г шууд биш, { order, invoice } хэлбэрээр
+// боож ирдэг — орж ирсний дараа автоматаар QPay invoice үүсгэдэг тул (order.id
+// хэрэгтэй Pocket/StorePay урсгалуудад ашиглагдана, invoice-г эдгээр урсгал
+// тусад нь өөрсдийн invoice/зээл үүсгэдэг тул ашиглахгүй)
+export interface CreateOrderResponse {
+  order: Order;
+  invoice: unknown;
+}
+
 export interface UpdateOrderStatusRequest {
   status: "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED";
 }
@@ -989,14 +998,14 @@ class ApiService {
     }
   }
 
-  async createOrder(orderData: CreateOrderRequest): Promise<Order> {
+  async createOrder(orderData: CreateOrderRequest): Promise<CreateOrderResponse> {
     const response = await fetch(`${this.baseURL}/orders`, {
       method: "POST",
       headers: this.getAuthHeaders(),
       body: JSON.stringify(orderData),
     });
 
-    return this.handleResponse<Order>(response);
+    return this.handleResponse<CreateOrderResponse>(response);
   }
 
   async getAllOrders(): Promise<Order[]> {
