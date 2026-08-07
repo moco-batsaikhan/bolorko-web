@@ -128,10 +128,10 @@ export default function OrdersPage() {
           <div className="text-center">
             <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-              Захиалга үзэхийн тулд нэвтэрнэ үү
+              Захиалгын түүх боломжгүй байна
             </h2>
             <p className="text-gray-600 mb-6">
-              Таны захиалгын түүхийг харахын тулд нэвтэрч орно уу.
+              Энэ хэсэг одоогоор боломжгүй байна.
             </p>
             <Link
               href="/"
