@@ -25,7 +25,7 @@ interface BuyNowItem {
 }
 
 export default function CheckoutPage() {
-  const { cart } = useCart();
+  const { cart, loading: cartLoading } = useCart();
   const { user } = useAuth();
   const router = useRouter();
 
@@ -53,7 +53,9 @@ export default function CheckoutPage() {
 
   const formatPrice = (price: number) => new Intl.NumberFormat("mn-MN").format(price) + "₮";
 
-  if (!buyNowLoaded) {
+  // buy-now өгөгдөл уншигдаагүй, эсвэл (сагсны горимд) сагс сервэрээс
+  // ачаалагдаж дуусаагүй үед түр "хоосон" мессеж харуулахгүй
+  if (!buyNowLoaded || (CART_ENABLED && !buyNowItem && cartLoading)) {
     return <Loading />;
   }
 

@@ -183,7 +183,7 @@ export default function ProductDetailPage() {
   };
 
   // Худалдан авах: сагсыг алгасаад шууд захиалгын мэдээлэл авах алхам руу
-  // шилжинэ (CART_ENABLED=false үед). Нэвтрэлт заавал шаардахгүй.
+  // шилжинэ (CART_ENABLED=false бол ашиглагдана). Нэвтрэлт заавал шаардахгүй.
   const handleBuyNow = () => {
     if (!product) return;
     if (!validateSelection()) return;
@@ -592,9 +592,8 @@ export default function ProductDetailPage() {
                 </select>
               </div>
 
-              {/* Сагсны урсгал түр хаагдсан (CART_ENABLED=false) — "Сагсанд нэмэх"
-                  товчны оронд шууд захиалах товч харагдана. Буцаахдаа зөвхөн
-                  featureFlags.ts дахь CART_ENABLED-г true болгоно. */}
+              {/* CART_ENABLED=true үед "Сагсанд нэмэх" товч, false үед сагсыг
+                  алгасаад шууд захиалах товч харагдана (featureFlags.ts). */}
               {CART_ENABLED ? (
                 <button
                   onClick={handleAddToCart}
