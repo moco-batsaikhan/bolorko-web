@@ -37,6 +37,7 @@ export default function CheckoutPage() {
   const [note, setNote] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const [buyNowItem, setBuyNowItem] = useState<BuyNowItem | null>(null);
   const [buyNowLoaded, setBuyNowLoaded] = useState(false);
@@ -136,6 +137,19 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
+
+    // Утасны дугаар заавал 8 оронтой байх ёстой — HTML pattern дээр гадна
+    // JS талд ч бататгаж шалгана
+    if (!/^\d{8}$/.test(phone)) {
+      setFormError("Утасны дугаар 8 оронтой байх ёстой");
+      return;
+    }
+    if (!city.trim() || !addressLine.trim()) {
+      setFormError("Хот, хаягаа бөглөнө үү");
+      return;
+    }
+
     // Энэ цэг хүртэл ирсэн бол хэрэглэгч аль хэдийн нэвтэрсэн (дээрх
     // Нэвтрэх шаардлагатай шалгалтыг давсан) — сервер token-оос
     // хэрэглэгчийг таньж захиалгад холбоно.
@@ -158,18 +172,20 @@ export default function CheckoutPage() {
             selectedSize: item.selectedSize ?? undefined,
           }));
 
-      // phone одоо ЗААВАЛ, shippingAddress OPTIONAL тул хялбарчилсан
-      // (утасны дугаараар л) урсгалд бүхэлд нь орхигдоно
-      const orderData: CreateOrderRequest = CART_ENABLED
-        ? {
-            orderItems,
-            phone,
-            shippingAddress: { fullName, phone, city, addressLine, note },
-          }
-        : {
-            orderItems,
-            phone,
-          };
+      // Хот, хаягийг хялбарчилсан урсгалд ч авдаг болсон тул хоёр урсгал
+      // хоёулаа shippingAddress-г дамжуулна. Нэр талбарыг харуулахгүй ч
+      // нэвтэрсэн хэрэглэгчийн нэрээр автоматаар бөглөнө.
+      const orderData: CreateOrderRequest = {
+        orderItems,
+        phone,
+        shippingAddress: {
+          fullName: fullName || user.name,
+          phone,
+          city,
+          addressLine,
+          note,
+        },
+      };
 
       const pendingOrder = { ...orderData, totalAmount, email: user?.email };
 
@@ -211,8 +227,13 @@ export default function CheckoutPage() {
                 <div>
                   <label className="block text-sm text-gray-600">Утас</label>
                   <input
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="\d{8}"
+                    maxLength={8}
                     value={phone}
-                    onChange={e => setPhone(e.target.value)}
+                    onChange={e => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                    placeholder="99112233"
                     className="mt-1 block w-full border border-gray-200 rounded px-3 py-2"
                     required
                   />
@@ -248,20 +269,47 @@ export default function CheckoutPage() {
                 </div>
               </div>
             ) : (
-              // Хялбарчилсан урсгал: зөвхөн утасны дугаар
-              <div>
-                <label className="block text-sm text-gray-600">Утасны дугаар</label>
-                <input
-                  type="tel"
-                  inputMode="numeric"
-                  pattern="\d{8}"
-                  value={phone}
-                  onChange={e => setPhone(e.target.value)}
-                  placeholder="99112233"
-                  className="mt-1 block w-full border border-gray-200 rounded px-3 py-2"
-                  required
-                />
+              // Хялбарчилсан урсгал: утас, хот, хаяг (нэр аккаунтаас автоматаар авагдана)
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-600">Утасны дугаар</label>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="\d{8}"
+                    maxLength={8}
+                    value={phone}
+                    onChange={e => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                    placeholder="99112233"
+                    className="mt-1 block w-full border border-gray-200 rounded px-3 py-2"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-600">Хот</label>
+                  <input
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="mt-1 block w-full border border-gray-200 rounded px-3 py-2"
+                    required
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-sm text-gray-600">Хаяг</label>
+                  <input
+                    value={addressLine}
+                    onChange={(e) => setAddressLine(e.target.value)}
+                    className="mt-1 block w-full border border-gray-200 rounded px-3 py-2"
+                    required
+                  />
+                </div>
               </div>
+            )}
+
+            {formError && (
+              <p className="text-red-600 text-sm mt-4">{formError}</p>
             )}
 
             <div className="mt-6">

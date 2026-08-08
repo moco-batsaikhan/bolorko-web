@@ -818,13 +818,13 @@ export default function AdminProducts() {
                   : "border-transparent text-gray-500 hover:text-gray-700"
               }`}
             >
-              Зар / Мэдээлэл <span className="text-gray-400">({infoTabCount})</span>
+              Мэдээлэл <span className="text-gray-400">({infoTabCount})</span>
             </button>
           </div>
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
             <h2 className="text-xl font-semibold text-gray-800">
-              {productTypeTab === "PRODUCT" ? "Бараа" : "Зар / Мэдээлэл"}{" "}
+              {productTypeTab === "PRODUCT" ? "Бараа" : "Мэдээлэл"}{" "}
               <span className="text-sm font-normal text-gray-400">({filteredProducts.length})</span>
             </h2>
 
@@ -1210,7 +1210,7 @@ export default function AdminProducts() {
               <div className="text-center py-12 text-gray-400 text-sm">
                 {productTypeTab === "PRODUCT"
                   ? "Тохирох бараа олдсонгүй"
-                  : "Тохирох зар/мэдээлэл олдсонгүй"}
+                  : "Тохирох мэдээлэл олдсонгүй"}
               </div>
             )}
           </div>

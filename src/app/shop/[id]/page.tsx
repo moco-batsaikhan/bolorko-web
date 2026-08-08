@@ -161,6 +161,7 @@ export default function ProductDetailPage() {
   // Handle add to cart
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
+      showToast("Сагсанд нэмэхийн тулд эхлээд нэвтэрнэ үү", "error");
       setShowLoginModal(true);
       return;
     }
