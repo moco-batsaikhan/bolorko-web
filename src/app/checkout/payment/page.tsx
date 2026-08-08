@@ -22,7 +22,9 @@ const POCKET_FAILURE_STATES = new Set(["cancelled", "rejected", "unsuccess"]);
 
 interface PendingOrder extends CreateOrderRequest {
   totalAmount: number;
-  email?: string;
+  // Захиалгад Storepay/Pocket-ээр төлж болохгүй бараа орсон эсэхийг
+  // checkout хуудаснаас дамжуулна (тодорхойгүй бол зөвшөөрсөнд тооцно)
+  installmentPaymentAllowed?: boolean;
 }
 
 interface QPayUrl {
@@ -192,6 +194,9 @@ export default function PaymentPage() {
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("mn-MN").format(price) + "₮";
 
+  // Тодорхойгүй (хуучин sessionStorage өгөгдөл) бол зөвшөөрсөнд тооцно
+  const installmentAllowed = pendingOrder?.installmentPaymentAllowed !== false;
+
   const handlePayment = async () => {
     if (!pendingOrder) {
       showToast("Захиалга олдсонгүй", "error");
@@ -208,7 +213,9 @@ export default function PaymentPage() {
         // одоо захиалгын жинхэнэ нийт дүнг илгээнэ
         amount: pendingOrder.totalAmount,
         redirectUrl: `${API_BASE_URL}/payments/webhook/qpay`,
-        email: user?.email || pendingOrder.email || "",
+        // User дээр email талбар байхгүй болсон тул QPay invoice-д хоосон
+        // утга дамжуулна (энэ endpoint нь mail/* биш, тусад нь шалгах хэрэгтэй)
+        email: "",
         productName: `Bolorko Захиалга`,
       };
 
@@ -255,6 +262,11 @@ export default function PaymentPage() {
   const handleStorePayPayment = async () => {
     if (!pendingOrder) {
       showToast("Захиалга олдсонгүй", "error");
+      return;
+    }
+    // UI-аас нуусан ч гэсэн шууд дуудагдах боломжтой тул давхар хамгаална
+    if (!installmentAllowed) {
+      showToast("Энэ бараанд хэсэгчилсэн төлбөр боломжгүй", "error");
       return;
     }
     if (!/^\d{8}$/.test(mobileNumber)) {
@@ -362,6 +374,11 @@ export default function PaymentPage() {
   const handlePocketPayment = async () => {
     if (!pendingOrder) {
       showToast("Захиалга олдсонгүй", "error");
+      return;
+    }
+    // UI-аас нуусан ч гэсэн шууд дуудагдах боломжтой тул давхар хамгаална
+    if (!installmentAllowed) {
+      showToast("Энэ бараанд хэсэгчилсэн төлбөр боломжгүй", "error");
       return;
     }
     setIsProcessing(true);
@@ -552,55 +569,62 @@ export default function PaymentPage() {
                   <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
                     Хуваан төлөх
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod("storepay")}
-                      className={`flex items-center gap-3 text-left p-4 border-2 rounded-lg transition-colors ${
-                        paymentMethod === "storepay"
-                          ? "border-mega-600 bg-mega-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src="/imgs/storepay.jpg"
-                        alt="StorePay"
-                        className="w-10 h-10 object-contain rounded flex-shrink-0"
-                      />
-                      <div>
-                        <div className="font-semibold">StorePay</div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          Зээлээр авах (лизинг)
+                  {installmentAllowed ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod("storepay")}
+                        className={`flex items-center gap-3 text-left p-4 border-2 rounded-lg transition-colors ${
+                          paymentMethod === "storepay"
+                            ? "border-mega-600 bg-mega-50"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src="/imgs/storepay.jpg"
+                          alt="StorePay"
+                          className="w-10 h-10 object-contain rounded flex-shrink-0"
+                        />
+                        <div>
+                          <div className="font-semibold">StorePay</div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Зээлээр авах (лизинг)
+                          </div>
                         </div>
-                      </div>
-                    </button>
+                      </button>
 
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod("pocket")}
-                      className={`flex items-center gap-3 text-left p-4 border-2 rounded-lg transition-colors ${
-                        paymentMethod === "pocket"
-                          ? "border-mega-600 bg-mega-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src="/imgs/pocket.png"
-                        alt="Pocket"
-                        className="w-10 h-10 object-contain rounded flex-shrink-0"
-                      />
-                      <div>
-                        <div className="font-semibold">Pocket Zero</div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          QR/апп-аар зээлээр авах
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod("pocket")}
+                        className={`flex items-center gap-3 text-left p-4 border-2 rounded-lg transition-colors ${
+                          paymentMethod === "pocket"
+                            ? "border-mega-600 bg-mega-50"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src="/imgs/pocket.png"
+                          alt="Pocket"
+                          className="w-10 h-10 object-contain rounded flex-shrink-0"
+                        />
+                        <div>
+                          <div className="font-semibold">Pocket Zero</div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            QR/апп-аар зээлээр авах
+                          </div>
                         </div>
-                      </div>
-                    </button>
-                  </div>
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      Энэ бараанд хэсэгчилсэн төлбөр (Storepay/Pocket) боломжгүй. QPay-ээр
+                      төлнө үү.
+                    </p>
+                  )}
 
-                  {paymentMethod === "storepay" && (
+                  {installmentAllowed && paymentMethod === "storepay" && (
                     <div className="mt-4 max-w-xs">
                       <label className="block text-sm text-gray-600 mb-1">
                         Утасны дугаар

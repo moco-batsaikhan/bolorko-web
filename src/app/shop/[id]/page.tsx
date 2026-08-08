@@ -198,6 +198,7 @@ export default function ProductDetailPage() {
       image: images[0],
       selectedColor,
       selectedSize,
+      installmentPaymentAllowed: product.installmentPaymentAllowed,
     };
 
     try {
@@ -622,6 +623,13 @@ export default function ProductDetailPage() {
                   <ShoppingCart className="w-5 h-5 mr-2" />
                   {isOutOfStock ? "Дууссан" : "Худалдан авах"}
                 </button>
+              )}
+
+              {product.installmentPaymentAllowed === false && (
+                <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  Энэ бараанд хэсэгчилсэн төлбөр (Storepay/Pocket) боломжгүй — зөвхөн QPay-ээр
+                  төлнө.
+                </p>
               )}
             </div>
           </div>

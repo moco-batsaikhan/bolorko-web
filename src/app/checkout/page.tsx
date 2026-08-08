@@ -11,7 +11,6 @@ import { LoginModal } from "@/components/LoginModal";
 import Loading from "@/components/Loading";
 import { CreateOrderRequest } from "@/services/apiService";
 import { CART_ENABLED } from "@/config/featureFlags";
-import { SHIPPING_FEE } from "@/constants/constants";
 
 // "Худалдан авах" товчоор (барааны дэлгэц) ирсэн ганц барааны мэдээлэл —
 // sessionStorage-д "buy_now_item" түлхүүрээр хадгалагдана
@@ -23,6 +22,7 @@ interface BuyNowItem {
   image?: string;
   selectedColor?: string | null;
   selectedSize?: string | null;
+  installmentPaymentAllowed?: boolean;
 }
 
 export default function CheckoutPage() {
@@ -30,10 +30,7 @@ export default function CheckoutPage() {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
-  const [fullName, setFullName] = useState(user?.name || "");
   const [phone, setPhone] = useState("");
-  const [city, setCity] = useState("");
-  const [addressLine, setAddressLine] = useState("");
   const [note, setNote] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -103,6 +100,7 @@ export default function CheckoutPage() {
           lineTotal: buyNowItem.unitPrice * buyNowItem.quantity,
           selectedColor: buyNowItem.selectedColor,
           selectedSize: buyNowItem.selectedSize,
+          installmentPaymentAllowed: buyNowItem.installmentPaymentAllowed,
         },
       ]
     : CART_ENABLED && cart
@@ -113,8 +111,15 @@ export default function CheckoutPage() {
         lineTotal: parseFloat(item.product.salePrice ?? item.product.price) * item.quantity,
         selectedColor: item.selectedColor,
         selectedSize: item.selectedSize,
+        installmentPaymentAllowed: item.product.installmentPaymentAllowed,
       }))
     : [];
+
+  // Захиалгад Storepay/Pocket-ээр төлж болохгүй бараа орсон эсэх — нэг ч
+  // бараа хориотой бол бүх захиалгад хэсэгчилсэн төлбөр саналгүй болно
+  const installmentAllowed = summaryItems.every(
+    item => item.installmentPaymentAllowed !== false
+  );
 
   if (summaryItems.length === 0) {
     return (
@@ -132,8 +137,8 @@ export default function CheckoutPage() {
   }
 
   const subtotal = summaryItems.reduce((total, item) => total + item.lineTotal, 0);
-  // Хүргэлтийн тогтмол төлбөр үндсэн үнэ дээр нэмэгдэнэ
-  const totalAmount = subtotal + SHIPPING_FEE;
+  // Хүргэлтийн төлбөр захиалгын дүнд нэмэгдэхгүй
+  const totalAmount = subtotal;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,10 +148,6 @@ export default function CheckoutPage() {
     // JS талд ч бататгаж шалгана
     if (!/^\d{8}$/.test(phone)) {
       setFormError("Утасны дугаар 8 оронтой байх ёстой");
-      return;
-    }
-    if (!city.trim() || !addressLine.trim()) {
-      setFormError("Хот, хаягаа бөглөнө үү");
       return;
     }
 
@@ -172,22 +173,22 @@ export default function CheckoutPage() {
             selectedSize: item.selectedSize ?? undefined,
           }));
 
-      // Хот, хаягийг хялбарчилсан урсгалд ч авдаг болсон тул хоёр урсгал
-      // хоёулаа shippingAddress-г дамжуулна. Нэр талбарыг харуулахгүй ч
-      // нэвтэрсэн хэрэглэгчийн нэрээр автоматаар бөглөнө.
+      // Нэр, хот, хаяг талбаруудыг формоос авахгүй болсон тул зөвхөн
+      // тайлбар (байвал) дамжуулна — нэрийг нэвтэрсэн хэрэглэгчийн
+      // мэдээллээс автоматаар бөглөнө
       const orderData: CreateOrderRequest = {
         orderItems,
         phone,
         shippingAddress: {
-          fullName: fullName || user.name,
+          fullName: user.name,
           phone,
-          city,
-          addressLine,
+          city: "",
+          addressLine: "",
           note,
         },
       };
 
-      const pendingOrder = { ...orderData, totalAmount, email: user?.email };
+      const pendingOrder = { ...orderData, totalAmount, installmentPaymentAllowed: installmentAllowed };
 
       // store temporarily and proceed to payment page
       try {
@@ -211,102 +212,33 @@ export default function CheckoutPage() {
           <form className="lg:col-span-2 bg-white rounded-lg shadow p-6" onSubmit={handleSubmit}>
             <h2 className="text-xl font-semibold mb-4">Захиалгын мэдээлэл</h2>
 
-            {CART_ENABLED ? (
-              // Хуучин (сагс дээр суурилсан) урсгал — CART_ENABLED=true болгож буцаах боломжтой
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-600">Нэр</label>
-                  <input
-                    value={fullName}
-                    onChange={e => setFullName(e.target.value)}
-                    className="mt-1 block w-full border border-gray-200 rounded px-3 py-2"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm text-gray-600">Утас</label>
-                  <input
-                    type="tel"
-                    inputMode="numeric"
-                    pattern="\d{8}"
-                    maxLength={8}
-                    value={phone}
-                    onChange={e => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))}
-                    placeholder="99112233"
-                    className="mt-1 block w-full border border-gray-200 rounded px-3 py-2"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm text-gray-600">Хот</label>
-                  <input
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    className="mt-1 block w-full border border-gray-200 rounded px-3 py-2"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm text-gray-600">Хаяг</label>
-                  <input
-                    value={addressLine}
-                    onChange={(e) => setAddressLine(e.target.value)}
-                    className="mt-1 block w-full border border-gray-200 rounded px-3 py-2"
-                    required
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="block text-sm text-gray-600">Тайлбар (дэлгэрэнгүй)</label>
-                  <textarea
-                    value={note}
-                    onChange={e => setNote(e.target.value)}
-                    className="mt-1 block w-full border border-gray-200 rounded px-3 py-2"
-                  />
-                </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-600">
+                  Утасны дугаар <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="\d{8}"
+                  maxLength={8}
+                  value={phone}
+                  onChange={e => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                  placeholder="99112233"
+                  className="mt-1 block w-full border border-gray-200 rounded px-3 py-2"
+                  required
+                />
               </div>
-            ) : (
-              // Хялбарчилсан урсгал: утас, хот, хаяг (нэр аккаунтаас автоматаар авагдана)
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-600">Утасны дугаар</label>
-                  <input
-                    type="tel"
-                    inputMode="numeric"
-                    pattern="\d{8}"
-                    maxLength={8}
-                    value={phone}
-                    onChange={e => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))}
-                    placeholder="99112233"
-                    className="mt-1 block w-full border border-gray-200 rounded px-3 py-2"
-                    required
-                  />
-                </div>
 
-                <div>
-                  <label className="block text-sm text-gray-600">Хот</label>
-                  <input
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    className="mt-1 block w-full border border-gray-200 rounded px-3 py-2"
-                    required
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="block text-sm text-gray-600">Хаяг</label>
-                  <input
-                    value={addressLine}
-                    onChange={(e) => setAddressLine(e.target.value)}
-                    className="mt-1 block w-full border border-gray-200 rounded px-3 py-2"
-                    required
-                  />
-                </div>
+              <div>
+                <label className="block text-sm text-gray-600">Тайлбар (заавал биш)</label>
+                <textarea
+                  value={note}
+                  onChange={e => setNote(e.target.value)}
+                  className="mt-1 block w-full border border-gray-200 rounded px-3 py-2"
+                />
               </div>
-            )}
+            </div>
 
             {formError && (
               <p className="text-red-600 text-sm mt-4">{formError}</p>
@@ -353,15 +285,18 @@ export default function CheckoutPage() {
                   <span>Нийт:</span>
                   <span>{formatPrice(subtotal)}</span>
                 </div>
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>Хүргэлт:</span>
-                  <span>{formatPrice(SHIPPING_FEE)}</span>
-                </div>
                 <div className="flex justify-between text-lg font-semibold mt-2">
                   <span>Нийт дүн:</span>
                   <span>{formatPrice(totalAmount)}</span>
                 </div>
               </div>
+
+              {!installmentAllowed && (
+                <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+                  Энэ захиалгад орсон зарим бараанд хэсэгчилсэн төлбөр
+                  (Storepay/Pocket) боломжгүй тул зөвхөн QPay-ээр төлнө.
+                </p>
+              )}
             </div>
           </aside>
         </div>

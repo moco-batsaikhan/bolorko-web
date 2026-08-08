@@ -166,6 +166,7 @@ export default function AdminProducts() {
     categoryId: 0,
     status: "ACTIVE",
     images: [],
+    installmentPaymentAllowed: true,
   };
 
   const [formData, setFormData] = useState<CreateProductRequest>(defaultFormData);
@@ -654,6 +655,7 @@ export default function AdminProducts() {
       categoryId: product.categoryId || 0,
       status: product.status,
       images: [],
+      installmentPaymentAllowed: product.installmentPaymentAllowed,
     });
     setColorsList(product.colors ?? []);
     setSizesList(product.sizes ?? []);
@@ -1388,6 +1390,20 @@ export default function AdminProducts() {
                   </select>
                 </div>
                 </div>
+
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.installmentPaymentAllowed ?? true}
+                    onChange={e =>
+                      setFormData({ ...formData, installmentPaymentAllowed: e.target.checked })
+                    }
+                    className="w-4 h-4 accent-blue-600"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Хэсэгчилсэн төлбөр (Storepay/Pocket)-д зөвшөөрөх
+                  </span>
+                </label>
               </div>
 
               {/* Өнгө, размер */}
@@ -1654,6 +1670,20 @@ export default function AdminProducts() {
                   </select>
                 </div>
                 </div>
+
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.installmentPaymentAllowed ?? true}
+                    onChange={e =>
+                      setFormData({ ...formData, installmentPaymentAllowed: e.target.checked })
+                    }
+                    className="w-4 h-4 accent-blue-600"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Хэсэгчилсэн төлбөр (Storepay/Pocket)-д зөвшөөрөх
+                  </span>
+                </label>
               </div>
 
               {/* Өнгө, размер */}

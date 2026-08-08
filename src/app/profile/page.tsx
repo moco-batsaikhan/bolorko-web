@@ -12,7 +12,7 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState<boolean>(false);
   const [name, setName] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
+  const [phone, setPhone] = useState<string>("");
   const [saving, setSaving] = useState<boolean>(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [oldPassword, setOldPassword] = useState<string>("");
@@ -53,19 +53,25 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user) {
       setName(user.name || "");
-      setEmail(user.email || "");
+      setPhone(user.phone || "");
     }
   }, [user]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+
+    if (!/^\d{8}$/.test(phone)) {
+      setError("Утасны дугаар 8 оронтой байх ёстой");
+      return;
+    }
+
     setSaving(true);
     setError(null);
     setSuccessMessage(null);
 
     try {
-      const payload = { name: name.trim(), email: email.trim() };
+      const payload = { name: name.trim(), phone: phone.trim() };
       const updated = await apiService.updateProfile(payload);
       setUser(updated);
       setEditMode(false);
@@ -87,7 +93,7 @@ export default function ProfilePage() {
   const handleCancel = () => {
     if (user) {
       setName(user.name || "");
-      setEmail(user.email || "");
+      setPhone(user.phone || "");
     }
     setEditMode(false);
     setError(null);
@@ -157,7 +163,7 @@ export default function ProfilePage() {
                 <h3 className="mt-4 text-lg font-semibold text-gray-900">
                   {user?.name}
                 </h3>
-                <p className="text-sm text-gray-500">{user?.email}</p>
+                <p className="text-sm text-gray-500">{user?.phone}</p>
                 {user?.role === "ADMIN" && (
                   <p className="mt-3 text-xs text-gray-600">
                     Роль: {user?.role}
@@ -217,9 +223,9 @@ export default function ProfilePage() {
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">И-мэйл</p>
+                          <p className="text-sm text-gray-500">Утас</p>
                           <p className="font-medium text-gray-900">
-                            {user.email}
+                            {user.phone}
                           </p>
                         </div>
                       </div>
@@ -238,12 +244,15 @@ export default function ProfilePage() {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700">
-                            И-мэйл
+                            Утасны дугаар
                           </label>
                           <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            type="tel"
+                            inputMode="numeric"
+                            pattern="\d{8}"
+                            maxLength={8}
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))}
                             className="mt-1 block w-full rounded-md border border-gray-200 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-mega-200"
                             required
                           />

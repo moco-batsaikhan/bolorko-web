@@ -17,7 +17,7 @@ export default function AdminUsersPage() {
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [editForm, setEditForm] = useState<UpdateUserRequest>({
     name: "",
-    email: "",
+    phone: "",
     role: "",
   });
   const [updating, setUpdating] = useState(false);
@@ -48,7 +48,7 @@ export default function AdminUsersPage() {
     setEditingUser(user);
     setEditForm({
       name: user.name,
-      email: user.email,
+      phone: user.phone,
       role: user.role.role,
     });
     setShowEditModal(true);
@@ -57,6 +57,11 @@ export default function AdminUsersPage() {
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
+
+    if (!/^\d{8}$/.test(editForm.phone)) {
+      showToast("Утасны дугаар 8 оронтой байх ёстой", "error");
+      return;
+    }
 
     try {
       setUpdating(true);
@@ -87,7 +92,7 @@ export default function AdminUsersPage() {
   const handleModalClose = () => {
     setShowEditModal(false);
     setEditingUser(null);
-    setEditForm({ name: "", email: "", role: "" });
+    setEditForm({ name: "", phone: "", role: "" });
   };
 
   const handleDeleteClick = (user: AdminUser) => {
@@ -125,7 +130,7 @@ export default function AdminUsersPage() {
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      user.phone.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = filterRole === "all" || user.role.role === filterRole;
     return matchesSearch && matchesRole;
   });
@@ -222,7 +227,7 @@ export default function AdminUsersPage() {
                     </div>
                     <div>
                       <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                      <div className="text-sm text-gray-500">{user.email}</div>
+                      <div className="text-sm text-gray-500">{user.phone}</div>
                     </div>
                   </div>
                 </td>
@@ -303,11 +308,16 @@ export default function AdminUsersPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">И-мэйл</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Утасны дугаар</label>
                 <input
-                  type="email"
-                  value={editForm.email}
-                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="\d{8}"
+                  maxLength={8}
+                  value={editForm.phone}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, phone: e.target.value.replace(/\D/g, "").slice(0, 8) })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500 focus:border-transparent"
                   required
                 />
@@ -393,7 +403,7 @@ export default function AdminUsersPage() {
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">{deletingUser.name}</p>
-                    <p className="text-sm text-gray-500">{deletingUser.email}</p>
+                    <p className="text-sm text-gray-500">{deletingUser.phone}</p>
                   </div>
                 </div>
               </div>

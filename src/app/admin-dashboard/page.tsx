@@ -5,13 +5,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/constants/roles";
-import { ShieldCheck, Mail, Lock, Eye, EyeOff, LogOut, Home } from "lucide-react";
+import { ShieldCheck, Phone, Lock, Eye, EyeOff, LogOut, Home } from "lucide-react";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading, login, logout, error } = useAuth();
 
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -30,7 +30,7 @@ export default function AdminDashboardPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await login(email, password);
+      await login(phone, password);
       // Амжилттай бол дээрх useEffect админ эсэхийг шалгаад шилжүүлнэ
     } finally {
       setSubmitting(false);
@@ -61,7 +61,7 @@ export default function AdminDashboardPage() {
           </div>
           <h1 className="text-xl font-bold text-gray-900 mb-2">Хандах эрхгүй байна</h1>
           <p className="text-gray-600 mb-6">
-            <span className="font-medium">{user?.email}</span> бүртгэл админ эрхгүй байна.
+            <span className="font-medium">{user?.phone}</span> бүртгэл админ эрхгүй байна.
             Админ эрхтэй бүртгэлээр дахин нэвтэрнэ үү.
           </p>
           <div className="flex flex-col gap-3">
@@ -106,14 +106,17 @@ export default function AdminDashboardPage() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">И-мэйл</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Утасны дугаар</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@example.com"
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="\d{8}"
+                  maxLength={8}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                  placeholder="99112233"
                   required
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500 focus:border-transparent"
                 />

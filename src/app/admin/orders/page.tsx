@@ -147,7 +147,7 @@ export default function AdminOrdersPage() {
     const matchesSearch =
       order.id.toString().includes(searchTerm) ||
       order.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.user?.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      order.user?.phone?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus =
       statusFilter === "ALL" || order.status === statusFilter;
@@ -280,7 +280,7 @@ export default function AdminOrdersPage() {
                               {order.user?.name || "Тодорхойгүй"}
                             </div>
                             <div className="text-sm text-gray-500">
-                              {order.user?.email || ""}
+                              {order.user?.phone || ""}
                             </div>
                           </div>
                         </div>
@@ -402,7 +402,7 @@ export default function AdminOrdersPage() {
                     <strong>Нэр:</strong> {selectedOrder.user?.name || "-"}
                   </div>
                   <div>
-                    <strong>Имэйл:</strong> {selectedOrder.user?.email || "-"}
+                    <strong>Утас:</strong> {selectedOrder.user?.phone || "-"}
                   </div>
                   <div>
                     <strong>Хэрэглэгчийн ID:</strong> {selectedOrder.userId}

@@ -7,7 +7,7 @@ import {
 export interface User {
   id: number;
   name: string;
-  email: string;
+  phone: string;
   role: string;
   createdAt: string;
 }
@@ -15,7 +15,7 @@ export interface User {
 export interface AdminUser {
   id: number;
   name: string;
-  email: string;
+  phone: string;
   password: string;
   roleId: number;
   createdAt: string;
@@ -27,7 +27,7 @@ export interface AdminUser {
 
 export interface UpdateUserRequest {
   name: string;
-  email: string;
+  phone: string;
   role: string;
 }
 
@@ -98,7 +98,7 @@ export interface Order {
   user?: {
     id: number;
     name: string;
-    email: string;
+    phone: string;
     roleId: number;
     createdAt: string;
   };
@@ -177,6 +177,9 @@ export interface Product {
   // сонголтын UI (swatch/dropdown) харуулна
   colors?: string[] | null;
   sizes?: string[] | null;
+  // false бол Storepay/Pocket-ээр төлбөр төлөх боломжгүй (admin тэмдэглэнэ,
+  // үндсэн утга true) — QPay-д нөлөөлөхгүй
+  installmentPaymentAllowed: boolean;
   averageRating: string;
   ratingCount: number;
   // Facebook sync талбарууд
@@ -200,6 +203,7 @@ export interface CreateProductRequest {
   images?: File[];
   colors?: string[];
   sizes?: string[];
+  installmentPaymentAllowed?: boolean;
 }
 
 export interface UpdateProductRequest {
@@ -212,6 +216,7 @@ export interface UpdateProductRequest {
   images?: File[];
   colors?: string[];
   sizes?: string[];
+  installmentPaymentAllowed?: boolean;
 }
 
 // Backend endpoint нь одоо sync-ийг background-д ажиллуулаад 202-той шууд
@@ -265,13 +270,13 @@ export interface LoginResponse {
 }
 
 export interface LoginCredentials {
-  email: string;
+  phone: string;
   password: string;
 }
 
 export interface RegisterCredentials {
   name: string;
-  email: string;
+  phone: string;
   password: string;
   role?: string;
 }
@@ -567,7 +572,7 @@ class ApiService {
 
   async updateProfile(payload: {
     name: string;
-    email: string;
+    phone: string;
     roleId?: number;
   }): Promise<User> {
     const response = await fetch(`${this.baseURL}/users/profile`, {
@@ -761,6 +766,12 @@ class ApiService {
       formData.append("categoryId", productData.categoryId.toString());
     }
     formData.append("status", productData.status);
+    if (productData.installmentPaymentAllowed !== undefined) {
+      formData.append(
+        "installmentPaymentAllowed",
+        String(productData.installmentPaymentAllowed)
+      );
+    }
 
     if (productData.images && productData.images.length > 0) {
       productData.images.forEach((image) => {
@@ -811,6 +822,12 @@ class ApiService {
     // болно (backend талд ч энэ falsy-коллапс тусад нь засах шаардлагатай)
     formData.append("categoryId", String(productData.categoryId ?? 0));
     formData.append("status", productData.status);
+    if (productData.installmentPaymentAllowed !== undefined) {
+      formData.append(
+        "installmentPaymentAllowed",
+        String(productData.installmentPaymentAllowed)
+      );
+    }
 
     if (productData.images && productData.images.length > 0) {
       productData.images.forEach((image) => {

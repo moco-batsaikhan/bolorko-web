@@ -206,7 +206,7 @@ export function Header() {
                 <div className="dropdown-3d absolute right-0 top-full mt-2 w-48 bg-white rounded-lg border border-gray-200 py-2 z-50">
                   <div className="px-4 py-2 border-b border-gray-100">
                     <div className="font-semibold text-gray-900">{user?.name || "Хэрэглэгч"}</div>
-                    <div className="text-sm text-gray-500">{user?.email}</div>
+                    <div className="text-sm text-gray-500">{user?.phone}</div>
                   </div>
                   {user?.role === UserRole.ADMIN && (
                     <Link

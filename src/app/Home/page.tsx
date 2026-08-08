@@ -9,6 +9,8 @@ import Loading from "@/components/Loading";
 import Link from "next/link";
 import { ShoppingBag, ShoppingCart, Star, Package, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { LoginModal } from "@/components/LoginModal";
 import { CART_ENABLED, STOCK_CHECK_ENABLED } from "@/config/featureFlags";
 
 const FACEBOOK_URL = "https://www.facebook.com/momsoonshop";
@@ -148,6 +150,8 @@ function ProductCard({
 
 export default function HomePage() {
   const { addToCart } = useCart();
+  const { isAuthenticated } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [infoPosts, setInfoPosts] = useState<Product[]>([]);
   const [categoryCards, setCategoryCards] = useState<CategoryCard[]>([]);
   const [categorySections, setCategorySections] = useState<CategorySection[]>([]);
@@ -244,6 +248,12 @@ export default function HomePage() {
   const handleQuickAdd = async (e: React.MouseEvent, productId: number) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
+
     setAddingProductId(productId);
     try {
       await addToCart(productId, 1);
@@ -608,6 +618,7 @@ export default function HomePage() {
       )}
 
       <Footer />
+      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
     </div>
   );
 }

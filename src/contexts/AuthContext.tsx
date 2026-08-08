@@ -8,8 +8,8 @@ import { useToast } from "./ToastContext";
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (name: string, email: string, password: string) => Promise<boolean>;
+  login: (phone: string, password: string) => Promise<boolean>;
+  register: (name: string, phone: string, password: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
   error: string | null;
@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const translateAuthError = (error: unknown): string => {
     if (!(error instanceof Error)) return "Нэвтрэхэд алдаа гарлаа";
     if (/invalid credentials/i.test(error.message)) {
-      return "И-мэйл эсвэл нууц үг буруу байна";
+      return "Утасны дугаар эсвэл нууц үг буруу байна";
     }
     if (/failed to fetch|network/i.test(error.message)) {
       return "Сервертэй холбогдож чадсангүй. Дахин оролдоно уу.";
@@ -86,12 +86,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return error.message;
   };
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (phone: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await apiService.login({ email, password });
+      const response = await apiService.login({ phone, password });
       setUser(response.user);
       setIsLoading(false);
       return true;
@@ -104,12 +104,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (name: string, email: string, password: string): Promise<boolean> => {
+  const register = async (name: string, phone: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await apiService.register({ name, email, password });
+      const response = await apiService.register({ name, phone, password });
       setUser(response.user);
       setIsLoading(false);
       return true;
@@ -117,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.warn("Register failed:", error instanceof Error ? error.message : error);
       setError(
         error instanceof Error && /already exists|давхардсан/i.test(error.message)
-          ? "Энэ и-мэйл хаягаар аль хэдийн бүртгүүлсэн байна"
+          ? "Энэ утасны дугаараар аль хэдийн бүртгүүлсэн байна"
           : translateAuthError(error)
       );
       setIsLoading(false);

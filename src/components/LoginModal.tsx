@@ -13,7 +13,7 @@ interface LoginModalProps {
 export function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState("");
@@ -26,12 +26,16 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
     if (isLoginMode) {
       // Login logic
-      if (!email || !password) {
-        setLocalError("И-мэйл болон нууц үг оруулна уу");
+      if (!phone || !password) {
+        setLocalError("Утасны дугаар болон нууц үг оруулна уу");
+        return;
+      }
+      if (!/^\d{8}$/.test(phone)) {
+        setLocalError("Утасны дугаар 8 оронтой байх ёстой");
         return;
       }
 
-      const success = await login(email, password);
+      const success = await login(phone, password);
       if (success) {
         // Show success toast
         showToast("Амжилттай нэвтэрлээ!", "success");
@@ -43,8 +47,12 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
       }
     } else {
       // Register logic
-      if (!name || !email || !password) {
+      if (!name || !phone || !password) {
         setLocalError("Бүх талбарыг бөглөнө үү");
+        return;
+      }
+      if (!/^\d{8}$/.test(phone)) {
+        setLocalError("Утасны дугаар 8 оронтой байх ёстой");
         return;
       }
 
@@ -53,7 +61,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
         return;
       }
 
-      const success = await register(name, email, password);
+      const success = await register(name, phone, password);
       if (success) {
         // Show success toast and switch to login mode
         showToast("Бүртгэл амжилттай! Одоо нэвтэрнэ үү.", "success");
@@ -70,7 +78,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const handleClose = () => {
     onClose();
     setName("");
-    setEmail("");
+    setPhone("");
     setPassword("");
     setLocalError("");
     setIsLoginMode(true);
@@ -80,7 +88,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setIsLoginMode(!isLoginMode);
     setLocalError("");
     setName("");
-    setEmail("");
+    setPhone("");
     setPassword("");
   };
 
@@ -146,14 +154,17 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              И-мэйл
+              Утасны дугаар
             </label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="tel"
+              inputMode="numeric"
+              pattern="\d{8}"
+              maxLength={8}
+              value={phone}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500 focus:border-transparent transition-all duration-200"
-              placeholder="И-мэйл хаягаа оруулна уу"
+              placeholder="99112233"
             />
           </div>
 
