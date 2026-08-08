@@ -6,7 +6,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
 import { CartItem, apiService } from "@/services/apiService";
-import { API_BASE_URL } from "@/constants/constants";
+import { API_BASE_URL, SHIPPING_FEE } from "@/constants/constants";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -307,8 +307,8 @@ export default function CartPage() {
                         item.quantity,
                     0
                   );
-                  // Хүргэлтийн төлбөр захиалгын дүнд нэмэгдэхгүй
-                  const totalAmount = subtotal;
+                  // Хүргэлтийн тогтмол төлбөр үндсэн үнэ дээр нэмэгдэнэ
+                  const totalAmount = subtotal + SHIPPING_FEE;
 
                   return (
                     <>
@@ -317,6 +317,12 @@ export default function CartPage() {
                           <span className="text-gray-600">Нийт:</span>
                           <span className="font-medium">
                             {formatPrice(subtotal)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Хүргэлт:</span>
+                          <span className="font-medium">
+                            {formatPrice(SHIPPING_FEE)}
                           </span>
                         </div>
                       </div>

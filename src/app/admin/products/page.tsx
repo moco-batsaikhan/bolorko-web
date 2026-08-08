@@ -1181,7 +1181,7 @@ export default function AdminProducts() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Төлөв</label>
                   <select
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={formData.status}
@@ -1189,16 +1189,51 @@ export default function AdminProducts() {
                       setFormData({ ...formData, status: e.target.value as "ACTIVE" | "INACTIVE" })
                     }
                   >
-                    <option value="ACTIVE">Active</option>
-                    <option value="INACTIVE">Inactive</option>
+                    <option value="ACTIVE">Идэвхтэй</option>
+                    <option value="INACTIVE">Идэвхгүй</option>
                   </select>
+                </div>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Product Images
-                </label>
+              {/* Өнгө, размер */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-2">
+                  Өнгө ба размер <span className="normal-case text-gray-400">(заавал биш)</span>
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Өнгө</label>
+                    <input
+                      type="text"
+                      placeholder="Жишээ: Хөх, Улаан"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={colorsText}
+                      onChange={e => setColorsText(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Размер</label>
+                    <input
+                      type="text"
+                      placeholder="Жишээ: S, M, L"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={sizesText}
+                      onChange={e => setSizesText(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Хэд хэдэн сонголттой бол таслалаар тусгаарлан бичнэ үү. Хоосон орхивол
+                  худалдан авагчид өнгө/размер сонгох сонголт харагдахгүй.
+                </p>
+              </div>
+
+              {/* Зураг */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-2">
+                  Зураг
+                </h3>
                 <div className="space-y-2">
                   <input
                     type="file"
@@ -1208,22 +1243,21 @@ export default function AdminProducts() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <div className="text-xs text-gray-500 space-y-1">
-                    <p>• Select multiple images at once (max: 10 images)</p>
-                    <p>• First image will be the cover image</p>
-                    <p>• Supported formats: JPG, PNG, GIF, WebP</p>
-                    <p>• Hover over images to remove individual images</p>
+                    <p>• Нэг дор олон зураг сонгож болно (дээд тал нь 10 зураг)</p>
+                    <p>• Эхний зураг үндсэн (cover) зураг болно</p>
+                    <p>• Дэмждэг формат: JPG, PNG, GIF, WebP</p>
                   </div>
                 </div>
                 {previewImages.length > 0 && (
                   <div className="mt-3">
                     <div className="flex justify-between items-center mb-2">
                       <p className="text-sm text-gray-600">
-                        {previewImages.length} / 10 image(s) selected
+                        {previewImages.length} / 10 зураг сонгосон
                       </p>
                       {previewImages.length >= 10 ? (
-                        <span className="text-xs text-orange-500 font-medium">Maximum reached</span>
+                        <span className="text-xs text-orange-500 font-medium">Дээд хэмжээндээ хүрсэн</span>
                       ) : (
-                        <p className="text-xs text-gray-500">First image will be the cover</p>
+                        <p className="text-xs text-gray-500">Эхний зураг cover болно</p>
                       )}
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -1256,9 +1290,6 @@ export default function AdminProducts() {
                         </div>
                       ))}
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Tip: You can drag and drop files to reorder them (cover image first)
-                    </p>
                   </div>
                 )}
               </div>
@@ -1282,7 +1313,7 @@ export default function AdminProducts() {
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
                 >
                   <Save size={16} />
-                  Create Product
+                  Бараа үүсгэх
                 </button>
               </div>
             </form>
@@ -1311,64 +1342,85 @@ export default function AdminProducts() {
               </button>
             </div>
 
-            <form onSubmit={handleUpdateProduct} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Product Name</label>
-                <input
-                  type="text"
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={formData.name}
-                  onChange={e => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                <textarea
-                  required
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={formData.description}
-                  onChange={e => setFormData({ ...formData, description: e.target.value })}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleUpdateProduct} className="space-y-8">
+              {/* Үндсэн мэдээлэл */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-2">
+                  Үндсэн мэдээлэл
+                </h3>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Барааны нэр</label>
                   <input
-                    type="number"
+                    type="text"
                     required
-                    min="0"
-                    step="0.01"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={formData.price}
-                    onChange={e =>
-                      setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })
-                    }
+                    value={formData.name}
+                    onChange={e => setFormData({ ...formData, name: e.target.value })}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Stock</label>
-                  <input
-                    type="number"
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Тайлбар</label>
+                  <textarea
                     required
-                    min="0"
+                    rows={4}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={formData.stock}
-                    onChange={e =>
-                      setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })
-                    }
+                    value={formData.description}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              {/* Үнэ, нөөц */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-2">
+                  Үнэ ба нөөц
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Үнэ (₮)</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      step="0.01"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={formData.price}
+                      onChange={e =>
+                        setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Нөөц (ширхэг)</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={formData.stock}
+                      onChange={e =>
+                        setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })
+                      }
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500">
+                  💡 Зөвлөмж: үнэ, нөөц, хямдралыг хаалт нээлгүйгээр ч жагсаалтын хүснэгтэн
+                  дээр шууд засаж болно.
+                </p>
+              </div>
+
+              {/* Ангилал ба төлөв */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-2">
+                  Ангилал ба төлөв
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category <span className="text-gray-400 font-normal">(заавал биш)</span>
+                    Ангилал <span className="text-gray-400 font-normal">(заавал биш)</span>
                   </label>
                   <select
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -1397,7 +1449,7 @@ export default function AdminProducts() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Төлөв</label>
                   <select
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={formData.status}
@@ -1405,22 +1457,60 @@ export default function AdminProducts() {
                       setFormData({ ...formData, status: e.target.value as "ACTIVE" | "INACTIVE" })
                     }
                   >
-                    <option value="ACTIVE">Active</option>
-                    <option value="INACTIVE">Inactive</option>
+                    <option value="ACTIVE">Идэвхтэй</option>
+                    <option value="INACTIVE">Идэвхгүй</option>
                   </select>
+                </div>
                 </div>
               </div>
 
-              <div>
+              {/* Өнгө, размер */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-2">
+                  Өнгө ба размер <span className="normal-case text-gray-400">(заавал биш)</span>
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Өнгө</label>
+                    <input
+                      type="text"
+                      placeholder="Жишээ: Хөх, Улаан"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={colorsText}
+                      onChange={e => setColorsText(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Размер</label>
+                    <input
+                      type="text"
+                      placeholder="Жишээ: S, M, L"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={sizesText}
+                      onChange={e => setSizesText(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Хэд хэдэн сонголттой бол таслалаар тусгаарлан бичнэ үү. Хоосон орхивол
+                  худалдан авагчид өнгө/размер сонгох сонголт харагдахгүй.
+                </p>
+              </div>
+
+              {/* Зураг */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-2">
+                  Зураг
+                </h3>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Current Product Images
+                  Одоогийн зураг
                 </label>
 
                 {/* Show current images */}
                 {selectedProduct.images && (
                   <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                     <p className="text-sm text-gray-600 mb-2">
-                      Current images (will be replaced if new images are uploaded):
+                      Одоогийн зурагнууд (шинэ зураг оруулбал солигдоно):
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {Array.isArray(selectedProduct.images) ? (
@@ -1465,7 +1555,7 @@ export default function AdminProducts() {
                 )}
 
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Upload New Images (Optional)
+                  Шинэ зураг оруулах <span className="text-gray-400 font-normal">(заавал биш)</span>
                 </label>
                 <input
                   type="file"
@@ -1475,25 +1565,20 @@ export default function AdminProducts() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <div className="text-xs text-gray-500 mt-1 space-y-1">
-                  <p>
-                    Leave empty to keep current images. Upload new images to replace all current
-                    images.
-                  </p>
-                  <p>
-                    Maximum 10 images allowed. Hover over new images to remove individual images.
-                  </p>
+                  <p>Хоосон орхивол одоогийн зурагнууд хэвээр үлдэнэ. Шинэ зураг оруулбал бүх одоогийн зургийг орлоно.</p>
+                  <p>Дээд тал нь 10 зураг. Зураг дээр хулгайлж (hover) байгаад ганцаарчлан устгаж болно.</p>
                 </div>
 
                 {previewImages.length > 0 && (
                   <div className="mt-3">
                     <div className="flex justify-between items-center mb-2">
                       <p className="text-sm text-gray-600">
-                        New images preview ({previewImages.length} / 10):
+                        Шинэ зургийн урьдчилан харах ({previewImages.length} / 10):
                       </p>
                       {previewImages.length >= 10 ? (
-                        <span className="text-xs text-orange-500 font-medium">Maximum reached</span>
+                        <span className="text-xs text-orange-500 font-medium">Дээд хэмжээндээ хүрсэн</span>
                       ) : (
-                        <p className="text-xs text-gray-500">Will replace all current images</p>
+                        <p className="text-xs text-gray-500">Бүх одоогийн зургийг орлоно</p>
                       )}
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -1507,7 +1592,7 @@ export default function AdminProducts() {
                           />
                           {index === 0 && (
                             <div className="absolute -top-1 -left-1 bg-green-500 text-white text-xs px-1 py-0.5 rounded-sm">
-                              New Cover
+                              Шинэ cover
                             </div>
                           )}
                           {/* Remove button */}
@@ -1542,14 +1627,14 @@ export default function AdminProducts() {
                   }}
                   className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  Cancel
+                  Цуцлах
                 </button>
                 <button
                   type="submit"
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
                 >
                   <Save size={16} />
-                  Update Product
+                  Хадгалах
                 </button>
               </div>
             </form>

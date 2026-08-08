@@ -10,6 +10,7 @@ import { Footer } from "@/components/Footer";
 import Loading from "@/components/Loading";
 import { CreateOrderRequest } from "@/services/apiService";
 import { CART_ENABLED } from "@/config/featureFlags";
+import { SHIPPING_FEE } from "@/constants/constants";
 
 // "Худалдан авах" товчоор (барааны дэлгэц) ирсэн ганц барааны мэдээлэл —
 // sessionStorage-д "buy_now_item" түлхүүрээр хадгалагдана
@@ -96,8 +97,8 @@ export default function CheckoutPage() {
   }
 
   const subtotal = summaryItems.reduce((total, item) => total + item.lineTotal, 0);
-  // Хүргэлтийн төлбөр захиалгын дүнд нэмэгдэхгүй
-  const totalAmount = subtotal;
+  // Хүргэлтийн тогтмол төлбөр үндсэн үнэ дээр нэмэгдэнэ
+  const totalAmount = subtotal + SHIPPING_FEE;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -268,6 +269,10 @@ export default function CheckoutPage() {
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Нийт:</span>
                   <span>{formatPrice(subtotal)}</span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Хүргэлт:</span>
+                  <span>{formatPrice(SHIPPING_FEE)}</span>
                 </div>
                 <div className="flex justify-between text-lg font-semibold mt-2">
                   <span>Нийт дүн:</span>

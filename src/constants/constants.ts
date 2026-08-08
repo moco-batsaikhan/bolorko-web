@@ -2,6 +2,9 @@
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "https://api.cubingmongolia.mn";
 
+// Хүргэлтийн тогтмол төлбөр — захиалгын дүн дээр нэмэгдэнэ
+export const SHIPPING_FEE = 7000;
+
 // API Endpoints
 export const API_ENDPOINTS = {
   AUTH: {
