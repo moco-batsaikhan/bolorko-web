@@ -711,6 +711,25 @@ export default function ProductDetailPage() {
               </form>
             )}
 
+            {/* Login Prompt for Non-authenticated Users */}
+            {!isAuthenticated && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-8 text-center">
+                <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Үнэлгээ өгөх
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Үнэлгээ өгөхийн тулд эхлээд нэвтэрнэ үү
+                </p>
+                <button
+                  onClick={() => setShowLoginModal(true)}
+                  className="bg-mega-600 text-white px-6 py-2 rounded-lg hover:bg-mega-700 transition-colors"
+                >
+                  Нэвтрэх
+                </button>
+              </div>
+            )}
+
             {/* Existing Reviews */}
             <div className="space-y-6">
               {product.ratings && product.ratings.length > 0 ? (

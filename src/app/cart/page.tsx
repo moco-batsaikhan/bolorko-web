@@ -14,6 +14,7 @@ import { ShoppingCart, Plus, Minus, Trash2, ArrowRight } from "lucide-react";
 import Loading from "@/components/Loading";
 import { useRouter } from "next/navigation";
 import { CART_ENABLED } from "@/config/featureFlags";
+import { LoginModal } from "@/components/LoginModal";
 
 export default function CartPage() {
   const { isAuthenticated, user } = useAuth();
@@ -23,6 +24,7 @@ export default function CartPage() {
   const router = useRouter();
   const [isUpdating, setIsUpdating] = useState<number | null>(null);
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -118,27 +120,30 @@ export default function CartPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="text-center">
-            <ShoppingCart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-              Сагс боломжгүй байна
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Энэ хэсэг одоогоор боломжгүй байна.
-            </p>
-            <Link
-              href="/"
-              className="bg-mega-600 text-white px-6 py-3 rounded-lg hover:bg-mega-700 transition-colors"
-            >
-              Нүүр хуудас руу буцах
-            </Link>
+      <>
+        <div className="min-h-screen bg-gray-50">
+          <Header />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div className="text-center">
+              <ShoppingCart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+                Сагс үзэхийн тулд нэвтэрнэ үү
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Таны хадгалсан бүтээгдэхүүнүүдийг харахын тулд нэвтэрч орно уу.
+              </p>
+              <button
+                onClick={() => setShowLoginModal(true)}
+                className="bg-mega-600 text-white px-6 py-3 rounded-lg hover:bg-mega-700 transition-colors"
+              >
+                Нэвтрэх
+              </button>
+            </div>
           </div>
+          <Footer />
         </div>
-        <Footer />
-      </div>
+        <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+      </>
     );
   }
 

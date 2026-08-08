@@ -806,9 +806,10 @@ class ApiService {
     formData.append("description", productData.description);
     formData.append("price", productData.price.toString());
     formData.append("stock", productData.stock.toString());
-    if (productData.categoryId) {
-      formData.append("categoryId", productData.categoryId.toString());
-    }
+    // categoryId=0 ("Ангилалгүй") гэсэн үед ч дамжуулна — эс бөгөөс "утга
+    // өгөгдөөгүй" гэж backend-д ойлгогдож, ангилалыг цэвэрлэх боломжгүй
+    // болно (backend талд ч энэ falsy-коллапс тусад нь засах шаардлагатай)
+    formData.append("categoryId", String(productData.categoryId ?? 0));
     formData.append("status", productData.status);
 
     if (productData.images && productData.images.length > 0) {

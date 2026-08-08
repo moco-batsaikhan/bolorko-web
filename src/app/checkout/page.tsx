@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { LoginModal } from "@/components/LoginModal";
 import Loading from "@/components/Loading";
 import { CreateOrderRequest } from "@/services/apiService";
 import { CART_ENABLED } from "@/config/featureFlags";
@@ -26,7 +27,7 @@ interface BuyNowItem {
 
 export default function CheckoutPage() {
   const { cart, loading: cartLoading } = useCart();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
   const [fullName, setFullName] = useState(user?.name || "");
@@ -35,6 +36,7 @@ export default function CheckoutPage() {
   const [addressLine, setAddressLine] = useState("");
   const [note, setNote] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const [buyNowItem, setBuyNowItem] = useState<BuyNowItem | null>(null);
   const [buyNowLoaded, setBuyNowLoaded] = useState(false);
@@ -52,6 +54,36 @@ export default function CheckoutPage() {
   }, []);
 
   const formatPrice = (price: number) => new Intl.NumberFormat("mn-MN").format(price) + "₮";
+
+  // Нэвтрэлтийн төлөв тодорхойгүй байгаа үед хүлээнэ
+  if (authLoading) {
+    return <Loading />;
+  }
+
+  // Захиалга хийхэд нэвтрэлт заавал шаардлагатай
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="max-w-md mx-auto px-4 py-24 text-center">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+            Нэвтрэх шаардлагатай
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Захиалга хийхийн тулд эхлээд нэвтэрнэ үү.
+          </p>
+          <button
+            onClick={() => setShowLoginModal(true)}
+            className="bg-mega-600 text-white px-6 py-3 rounded-lg hover:bg-mega-700 transition-colors"
+          >
+            Нэвтрэх
+          </button>
+        </div>
+        <Footer />
+        <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+      </div>
+    );
+  }
 
   // buy-now өгөгдөл уншигдаагүй, эсвэл (сагсны горимд) сагс сервэрээс
   // ачаалагдаж дуусаагүй үед түр "хоосон" мессеж харуулахгүй
@@ -104,8 +136,9 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Зочны захиалга дэмжигдэнэ — нэвтрэлт шаардлагагүй.
-    // Нэвтэрсэн бол сервер token-оос хэрэглэгчийг таньж захиалгад холбоно.
+    // Энэ цэг хүртэл ирсэн бол хэрэглэгч аль хэдийн нэвтэрсэн (дээрх
+    // Нэвтрэх шаардлагатай шалгалтыг давсан) — сервер token-оос
+    // хэрэглэгчийг таньж захиалгад холбоно.
     setIsProcessing(true);
     try {
       // colors/sizes сонгоогүй бол selectedColor/selectedSize-г огт дамжуулахгүй

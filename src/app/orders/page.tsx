@@ -21,12 +21,14 @@ import {
 } from "lucide-react";
 import Loading from "@/components/Loading";
 import { CART_ENABLED } from "@/config/featureFlags";
+import { LoginModal } from "@/components/LoginModal";
 
 export default function OrdersPage() {
   const { isAuthenticated, user } = useAuth();
   const { showToast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -122,27 +124,30 @@ export default function OrdersPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="text-center">
-            <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-              Захиалгын түүх боломжгүй байна
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Энэ хэсэг одоогоор боломжгүй байна.
-            </p>
-            <Link
-              href="/"
-              className="bg-mega-600 text-white px-6 py-3 rounded-lg hover:bg-mega-700 transition-colors"
-            >
-              Нүүр хуудас руу буцах
-            </Link>
+      <>
+        <div className="min-h-screen bg-gray-50">
+          <Header />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div className="text-center">
+              <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+                Захиалга үзэхийн тулд нэвтэрнэ үү
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Таны захиалгын түүхийг харахын тулд нэвтэрч орно уу.
+              </p>
+              <button
+                onClick={() => setShowLoginModal(true)}
+                className="bg-mega-600 text-white px-6 py-3 rounded-lg hover:bg-mega-700 transition-colors"
+              >
+                Нэвтрэх
+              </button>
+            </div>
           </div>
+          <Footer />
         </div>
-        <Footer />
-      </div>
+        <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+      </>
     );
   }
 

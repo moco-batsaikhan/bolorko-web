@@ -9,6 +9,7 @@ import {
   Menu,
   X,
   LogOut,
+  LogIn,
   Search,
   LayoutGrid,
   ChevronDown,
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useCart } from "../contexts/CartContext";
+import { LoginModal } from "./LoginModal";
 import { UserRole } from "@/constants/roles";
 import { apiService, ProductCategory } from "@/services/apiService";
 import { CART_ENABLED } from "@/config/featureFlags";
@@ -27,6 +29,7 @@ export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const profileRef = useRef<HTMLDivElement>(null);
@@ -188,20 +191,18 @@ export function Header() {
               </Link>
             )}
 
-            {/* Энгийн хэрэглэгчид нэвтрэх сонголт харагдахгүй — зөвхөн admin-dashboard
-                хэсэгт login харуулна. Аль хэдийн нэвтэрсэн хэрэглэгчид (админ гэх мэт)
-                профайлын цэсээ ашиглах боломжтой хэвээр байна. */}
-            {isAuthenticated && (
             <div className="relative hidden md:block" ref={profileRef}>
               <button
                 className="p-2 text-gray-700 hover:text-mega-600 transition-all duration-300 hover:bg-mega-50 rounded-lg transform hover:scale-110"
-                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                onClick={() =>
+                  isAuthenticated ? setIsProfileOpen(!isProfileOpen) : setShowLoginModal(true)
+                }
               >
-                <User className="w-5 h-5" />
+                {isAuthenticated ? <User className="w-5 h-5" /> : <LogIn className="w-5 h-5" />}
               </button>
 
               {/* Profile Dropdown */}
-              {isProfileOpen && (
+              {isProfileOpen && isAuthenticated && (
                 <div className="dropdown-3d absolute right-0 top-full mt-2 w-48 bg-white rounded-lg border border-gray-200 py-2 z-50">
                   <div className="px-4 py-2 border-b border-gray-100">
                     <div className="font-semibold text-gray-900">{user?.name || "Хэрэглэгч"}</div>
@@ -243,7 +244,6 @@ export function Header() {
                 </div>
               )}
             </div>
-            )}
 
             {/* Mobile menu button */}
             <button
@@ -316,19 +316,20 @@ export function Header() {
               Мэдээлэл
             </Link>
 
-            {/* Mobile profile — энгийн хэрэглэгчид нэвтрэх сонголт харагдахгүй */}
-            {isAuthenticated && (
+            {/* Mobile profile */}
             <div className="border-t border-gray-200 pt-2">
               <div className="relative" ref={mobileProfileRef}>
                 <button
                   className="flex items-center w-full px-3 py-2 text-gray-700 hover:bg-mega-50 hover:text-mega-600 rounded-lg transition-all duration-200"
-                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  onClick={() =>
+                    isAuthenticated ? setIsProfileOpen(!isProfileOpen) : setShowLoginModal(true)
+                  }
                 >
                   <User className="w-4 h-4 mr-3" />
-                  Профайл
+                  {isAuthenticated ? "Профайл" : "Нэвтрэх"}
                 </button>
 
-                {isProfileOpen && (
+                {isProfileOpen && isAuthenticated && (
                   <div className="ml-7 mt-1 space-y-1">
                     <div className="px-3 py-1 text-sm font-medium text-gray-900 border-b border-gray-100">
                       {user?.name || "Хэрэглэгч"}
@@ -380,10 +381,10 @@ export function Header() {
                 )}
               </div>
             </div>
-            )}
           </div>
         </div>
       )}
+      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
     </header>
   );
 }
