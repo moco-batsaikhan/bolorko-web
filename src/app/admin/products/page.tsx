@@ -31,6 +31,71 @@ import { useToast } from "@/contexts/ToastContext";
 import { API_BASE_URL } from "@/constants/constants";
 import Loading from "@/components/Loading";
 
+const PRODUCTS_PAGE_SIZE = 20;
+
+// Өнгө/размер зэрэг олон утгыг chip хэлбэрээр оруулах жижиг компонент.
+// Enter эсвэл таслал дарахад одоогийн бичсэн утгыг chip болгож нэмнэ,
+// Backspace хоосон үед сүүлийн chip-ийг устгана.
+function TagInput({
+  values,
+  onChange,
+  placeholder,
+}: {
+  values: string[];
+  onChange: (values: string[]) => void;
+  placeholder?: string;
+}) {
+  const [draft, setDraft] = useState("");
+
+  const commitDraft = () => {
+    const value = draft.trim();
+    if (value && !values.includes(value)) {
+      onChange([...values, value]);
+    }
+    setDraft("");
+  };
+
+  const removeAt = (index: number) => {
+    onChange(values.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div className="w-full px-2 py-1.5 border border-gray-300 rounded-md focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 flex flex-wrap gap-1.5">
+      {values.map((value, index) => (
+        <span
+          key={value}
+          className="inline-flex items-center gap-1 pl-2 pr-1 py-1 bg-blue-50 text-blue-700 text-sm rounded-md"
+        >
+          {value}
+          <button
+            type="button"
+            onClick={() => removeAt(index)}
+            className="text-blue-400 hover:text-blue-700 rounded-full hover:bg-blue-100 p-0.5"
+          >
+            <X size={12} />
+          </button>
+        </span>
+      ))}
+      <input
+        type="text"
+        value={draft}
+        onChange={e => setDraft(e.target.value)}
+        onKeyDown={e => {
+          if (e.key === "Enter" || e.key === ",") {
+            e.preventDefault();
+            commitDraft();
+          } else if (e.key === "Backspace" && draft === "" && values.length > 0) {
+            removeAt(values.length - 1);
+          }
+        }}
+        onBlur={commitDraft}
+        placeholder={values.length === 0 ? placeholder : "Нэмэх..."}
+        className="flex-1 min-w-[100px] outline-none text-sm py-1"
+      />
+    </div>
+  );
+}
+
 export default function AdminProducts() {
   // Helper function to convert relative URL to full URL
   const getFullImageUrl = (imageUrl: string): string => {
@@ -81,7 +146,11 @@ export default function AdminProducts() {
   >({});
   const [savingRowId, setSavingRowId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [quickFilter, setQuickFilter] = useState<"all" | "needsAttention" | "sale" | "info">("all");
+  const [categoryFilterId, setCategoryFilterId] = useState<number | "all">("all");
+  const [quickFilter, setQuickFilter] = useState<"all" | "needsAttention" | "sale">("all");
+  // Бараа (PRODUCT) болон зар/мэдээлэл (INFO) постуудыг тусад нь харуулна
+  const [productTypeTab, setProductTypeTab] = useState<"PRODUCT" | "INFO">("PRODUCT");
+  const [currentPage, setCurrentPage] = useState(1);
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
@@ -100,15 +169,9 @@ export default function AdminProducts() {
   };
 
   const [formData, setFormData] = useState<CreateProductRequest>(defaultFormData);
-  // Өнгө/размерыг таслалаар тусгаарласан текст хэлбэрээр авч, хадгалахдаа
-  // массив болгон хувиргана (жиш: "Хөх, Улаан" → ["Хөх", "Улаан"])
-  const [colorsText, setColorsText] = useState("");
-  const [sizesText, setSizesText] = useState("");
-  const parseCsvList = (text: string): string[] =>
-    text
-      .split(",")
-      .map(s => s.trim())
-      .filter(Boolean);
+  // Өнгө/размерыг chip (tag) хэлбэрээр авна
+  const [colorsList, setColorsList] = useState<string[]>([]);
+  const [sizesList, setSizesList] = useState<string[]>([]);
   const [categoryFormData, setCategoryFormData] = useState<CreateProductCategoryRequest>({
     name: "",
     description: "",
@@ -121,6 +184,11 @@ export default function AdminProducts() {
   useEffect(() => {
     fetchData();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Таб/хайлт/шүүлтүүр солигдоход хуудасны дугаарыг 1 рүү буцаана
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [productTypeTab, searchTerm, categoryFilterId, quickFilter]);
 
   const fetchData = async () => {
     try {
@@ -191,14 +259,14 @@ export default function AdminProducts() {
     try {
       await apiService.createProduct({
         ...formData,
-        colors: parseCsvList(colorsText),
-        sizes: parseCsvList(sizesText),
+        colors: colorsList,
+        sizes: sizesList,
       });
       showToast("Бараа амжилттай үүслээ", "success");
       setShowCreateModal(false);
       setFormData(defaultFormData);
-      setColorsText("");
-      setSizesText("");
+      setColorsList([]);
+      setSizesList([]);
       setPreviewImages([]);
       fetchData();
     } catch (error) {
@@ -220,8 +288,8 @@ export default function AdminProducts() {
         categoryId: formData.categoryId,
         status: formData.status,
         images: formData.images,
-        colors: parseCsvList(colorsText),
-        sizes: parseCsvList(sizesText),
+        colors: colorsList,
+        sizes: sizesList,
       };
 
       await apiService.updateProduct(selectedProduct.id, updateData);
@@ -229,8 +297,8 @@ export default function AdminProducts() {
       setShowEditModal(false);
       setSelectedProduct(null);
       setFormData(defaultFormData);
-      setColorsText("");
-      setSizesText("");
+      setColorsList([]);
+      setSizesList([]);
       setPreviewImages([]);
       fetchData();
     } catch (error) {
@@ -266,6 +334,12 @@ export default function AdminProducts() {
       };
       return { ...prev, [productId]: { ...current, [field]: value } };
     });
+  };
+
+  // Нөөцийг ±1-ээр хурдан тохируулах товч (жагсаалтын хүснэгтэд)
+  const adjustStock = (product: Product, delta: number) => {
+    const current = parseInt(rowEdits[product.id]?.stock ?? String(product.stock)) || 0;
+    handleRowEdit(product.id, "stock", String(Math.max(0, current + delta)));
   };
 
   const isRowDirty = (product: Product) => {
@@ -343,9 +417,17 @@ export default function AdminProducts() {
     }
   };
 
-  // Хайлт + шүүлтүүр
+  // Бараа (PRODUCT) болон зар/мэдээлэл (INFO) гэж тусад нь харуулна — талбар
+  // тохируулаагүй хуучин бараануудыг PRODUCT гэж үзнэ
+  const getProductType = (product: Product): "PRODUCT" | "INFO" => product.type ?? "PRODUCT";
+
+  // Хайлт + шүүлтүүр (идэвхтэй таб доторх)
   const filteredProducts = products.filter(product => {
+    if (getProductType(product) !== productTypeTab) return false;
     if (searchTerm && !product.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+      return false;
+    }
+    if (categoryFilterId !== "all" && product.categoryId !== categoryFilterId) {
       return false;
     }
     if (quickFilter === "needsAttention") {
@@ -354,13 +436,22 @@ export default function AdminProducts() {
     if (quickFilter === "sale") {
       return !!product.discountPercentage;
     }
-    if (quickFilter === "info") {
-      return product.type === "INFO";
-    }
     return true;
   });
 
-  const needsAttentionCount = products.filter(p => parseFloat(p.price) <= 0 || p.stock <= 0).length;
+  const productTabCount = products.filter(p => getProductType(p) === "PRODUCT").length;
+  const infoTabCount = products.filter(p => getProductType(p) === "INFO").length;
+  const needsAttentionCount = products.filter(
+    p => getProductType(p) === productTypeTab && (parseFloat(p.price) <= 0 || p.stock <= 0),
+  ).length;
+
+  // Хуудаслалт (client-side) — сервер тал одоогоор page/limit дэмждэггүй
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PAGE_SIZE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedProducts = filteredProducts.slice(
+    (safeCurrentPage - 1) * PRODUCTS_PAGE_SIZE,
+    safeCurrentPage * PRODUCTS_PAGE_SIZE,
+  );
 
   const openSaleModal = (product: Product) => {
     // Үндсэн үнэгүй бараанд хямдрал тавих боломжгүй
@@ -564,8 +655,8 @@ export default function AdminProducts() {
       status: product.status,
       images: [],
     });
-    setColorsText(product.colors?.join(", ") ?? "");
-    setSizesText(product.sizes?.join(", ") ?? "");
+    setColorsList(product.colors ?? []);
+    setSizesList(product.sizes ?? []);
     setShowEditModal(true);
   };
 
@@ -707,9 +798,33 @@ export default function AdminProducts() {
       {/* Products Section */}
       <div className="bg-white rounded-lg shadow">
         <div className="p-6">
+          {/* Бараа / Зар-мэдээлэл таб */}
+          <div className="flex gap-2 border-b border-gray-200 mb-4">
+            <button
+              onClick={() => setProductTypeTab("PRODUCT")}
+              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                productTypeTab === "PRODUCT"
+                  ? "border-blue-600 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Бараа <span className="text-gray-400">({productTabCount})</span>
+            </button>
+            <button
+              onClick={() => setProductTypeTab("INFO")}
+              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                productTypeTab === "INFO"
+                  ? "border-purple-600 text-purple-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Зар / Мэдээлэл <span className="text-gray-400">({infoTabCount})</span>
+            </button>
+          </div>
+
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
             <h2 className="text-xl font-semibold text-gray-800">
-              Products{" "}
+              {productTypeTab === "PRODUCT" ? "Бараа" : "Зар / Мэдээлэл"}{" "}
               <span className="text-sm font-normal text-gray-400">({filteredProducts.length})</span>
             </h2>
 
@@ -722,9 +837,35 @@ export default function AdminProducts() {
                   placeholder="Барааны нэрээр хайх..."
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+                  className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-56"
                 />
               </div>
+
+              {/* Ангиллаар шүүх */}
+              <select
+                value={categoryFilterId}
+                onChange={e =>
+                  setCategoryFilterId(e.target.value === "all" ? "all" : parseInt(e.target.value))
+                }
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                <option value="all">Бүх ангилал</option>
+                {categories
+                  .filter(c => !c.parentId)
+                  .map(main => [
+                    <option key={main.id} value={main.id}>
+                      {main.name}
+                    </option>,
+                    ...categories
+                      .filter(c => c.parentId === main.id)
+                      .map(child => (
+                        <option key={child.id} value={child.id}>
+                          {"   — "}
+                          {child.name}
+                        </option>
+                      )),
+                  ])}
+              </select>
 
               {/* Шүүлтүүр */}
               <div className="flex gap-2">
@@ -759,16 +900,6 @@ export default function AdminProducts() {
                 >
                   Хямдралтай
                 </button>
-                <button
-                  onClick={() => setQuickFilter("info")}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    quickFilter === "info"
-                      ? "bg-purple-600 text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  INFO
-                </button>
               </div>
             </div>
           </div>
@@ -780,30 +911,30 @@ export default function AdminProducts() {
               <thead>
                 <tr className="bg-gray-50">
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Product
+                    Бараа
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Category
+                    Ангилал
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Price
+                    Үнэ
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Хямдрал үнэ
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Stock
+                    Нөөц
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                    Төлөв
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
+                    Үйлдэл
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredProducts.map(product => (
+                {paginatedProducts.map(product => (
                   <tr
                     key={product.id}
                     className={`hover:bg-gray-50 ${isRowDirty(product) ? "bg-yellow-50" : ""}`}
@@ -841,15 +972,17 @@ export default function AdminProducts() {
                         </div>
                         <div className="ml-4">
                           <div className="flex items-center gap-2">
-                            <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(product)}
+                              className="text-sm font-medium text-gray-900 hover:text-indigo-600 hover:underline text-left"
+                              title="Дарж засах"
+                            >
+                              {product.name}
+                            </button>
                             {product.facebookPostId && (
                               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#1877F2] text-white">
                                 FB
-                              </span>
-                            )}
-                            {product.type === "INFO" && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700">
-                                INFO
                               </span>
                             )}
                             {product.permalinkUrl && (
@@ -884,15 +1017,17 @@ export default function AdminProducts() {
                         <input
                           type="number"
                           min="0"
+                          step="1000"
                           value={
                             rowEdits[product.id]?.price ?? String(parseFloat(product.price) || 0)
                           }
                           onChange={e => handleRowEdit(product.id, "price", e.target.value)}
+                          onFocus={e => e.target.select()}
                           onKeyDown={e => {
                             if (e.key === "Enter") handleRowSave(product);
                             if (e.key === "Escape") handleRowCancel(product.id);
                           }}
-                          className={`w-28 px-2 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          className={`w-32 px-2 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                             parseFloat(product.price) <= 0 && !isRowDirty(product)
                               ? "border-amber-300 bg-amber-50"
                               : "border-gray-200"
@@ -906,17 +1041,19 @@ export default function AdminProducts() {
                         <input
                           type="number"
                           min="0"
+                          step="1000"
                           placeholder="—"
                           value={
                             rowEdits[product.id]?.salePrice ??
                             (product.salePrice ? String(parseFloat(product.salePrice)) : "")
                           }
                           onChange={e => handleRowEdit(product.id, "salePrice", e.target.value)}
+                          onFocus={e => e.target.select()}
                           onKeyDown={e => {
                             if (e.key === "Enter") handleRowSave(product);
                             if (e.key === "Escape") handleRowCancel(product.id);
                           }}
-                          className={`w-28 px-2 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                          className={`w-32 px-2 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${
                             product.discountPercentage
                               ? "border-green-300 bg-green-50"
                               : "border-gray-200"
@@ -936,21 +1073,38 @@ export default function AdminProducts() {
                         {product.stock <= 0 && !isRowDirty(product) && (
                           <AlertTriangle size={14} className="text-amber-500 flex-shrink-0" />
                         )}
+                        <button
+                          type="button"
+                          onClick={() => adjustStock(product, -1)}
+                          className="w-6 h-6 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-100 transition-colors"
+                          title="-1"
+                        >
+                          −
+                        </button>
                         <input
                           type="number"
                           min="0"
                           value={rowEdits[product.id]?.stock ?? String(product.stock)}
                           onChange={e => handleRowEdit(product.id, "stock", e.target.value)}
+                          onFocus={e => e.target.select()}
                           onKeyDown={e => {
                             if (e.key === "Enter") handleRowSave(product);
                             if (e.key === "Escape") handleRowCancel(product.id);
                           }}
-                          className={`w-20 px-2 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          className={`w-16 px-2 py-1.5 text-sm text-center border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                             product.stock <= 0 && !isRowDirty(product)
                               ? "border-amber-300 bg-amber-50"
                               : "border-gray-200"
                           }`}
                         />
+                        <button
+                          type="button"
+                          onClick={() => adjustStock(product, 1)}
+                          className="w-6 h-6 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-100 transition-colors"
+                          title="+1"
+                        >
+                          +
+                        </button>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -1028,21 +1182,22 @@ export default function AdminProducts() {
                       <button
                         onClick={() => openImageModal(product)}
                         className="text-blue-600 hover:text-blue-900 p-1"
-                        title="View Images"
+                        title="Зургууд харах"
                       >
                         <Eye size={16} />
                       </button>
                       <button
                         onClick={() => openEditModal(product)}
-                        className="text-indigo-600 hover:text-indigo-900 p-1"
-                        title="Edit Product"
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-md hover:bg-indigo-700 transition-colors"
+                        title="Барааг засах хэсэг рүү очих"
                       >
-                        <Edit size={16} />
+                        <Edit size={14} />
+                        Засах
                       </button>
                       <button
                         onClick={() => handleDeleteProduct(product.id)}
                         className="text-red-600 hover:text-red-900 p-1"
-                        title="Delete Product"
+                        title="Устгах"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -1051,7 +1206,44 @@ export default function AdminProducts() {
                 ))}
               </tbody>
             </table>
+            {paginatedProducts.length === 0 && (
+              <div className="text-center py-12 text-gray-400 text-sm">
+                {productTypeTab === "PRODUCT"
+                  ? "Тохирох бараа олдсонгүй"
+                  : "Тохирох зар/мэдээлэл олдсонгүй"}
+              </div>
+            )}
           </div>
+
+          {/* Хуудаслалт */}
+          {filteredProducts.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 mt-2 border-t border-gray-100">
+              <p className="text-sm text-gray-500">
+                {(safeCurrentPage - 1) * PRODUCTS_PAGE_SIZE + 1}–
+                {Math.min(safeCurrentPage * PRODUCTS_PAGE_SIZE, filteredProducts.length)} /{" "}
+                {filteredProducts.length}
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={safeCurrentPage === 1}
+                  className="px-3 py-1.5 text-sm rounded-md border border-gray-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                >
+                  Өмнөх
+                </button>
+                <span className="px-3 text-sm text-gray-600">
+                  {safeCurrentPage} / {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={safeCurrentPage === totalPages}
+                  className="px-3 py-1.5 text-sm rounded-md border border-gray-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                >
+                  Дараах
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1065,8 +1257,8 @@ export default function AdminProducts() {
                 onClick={() => {
                   setShowCreateModal(false);
                   setFormData(defaultFormData);
-                  setColorsText("");
-                  setSizesText("");
+                  setColorsList([]);
+                  setSizesList([]);
                   // Clean up preview URLs
                   previewImages.forEach(url => URL.revokeObjectURL(url));
                   setPreviewImages([]);
@@ -1119,12 +1311,13 @@ export default function AdminProducts() {
                       type="number"
                       required
                       min="0"
-                      step="0.01"
+                      step="1000"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       value={formData.price}
                       onChange={e =>
                         setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })
                       }
+                      onFocus={e => e.target.select()}
                     />
                   </div>
 
@@ -1139,6 +1332,7 @@ export default function AdminProducts() {
                       onChange={e =>
                         setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })
                       }
+                      onFocus={e => e.target.select()}
                     />
                   </div>
                 </div>
@@ -1204,27 +1398,23 @@ export default function AdminProducts() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Өнгө</label>
-                    <input
-                      type="text"
-                      placeholder="Жишээ: Хөх, Улаан"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={colorsText}
-                      onChange={e => setColorsText(e.target.value)}
+                    <TagInput
+                      values={colorsList}
+                      onChange={setColorsList}
+                      placeholder="Хөх гэж бичээд Enter дарна"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Размер</label>
-                    <input
-                      type="text"
-                      placeholder="Жишээ: S, M, L"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={sizesText}
-                      onChange={e => setSizesText(e.target.value)}
+                    <TagInput
+                      values={sizesList}
+                      onChange={setSizesList}
+                      placeholder="M гэж бичээд Enter дарна"
                     />
                   </div>
                 </div>
                 <p className="text-xs text-gray-500">
-                  Хэд хэдэн сонголттой бол таслалаар тусгаарлан бичнэ үү. Хоосон орхивол
+                  Утга бичээд Enter эсвэл таслал дарж chip болгож нэмнэ үү. Хоосон орхивол
                   худалдан авагчид өнгө/размер сонгох сонголт харагдахгүй.
                 </p>
               </div>
@@ -1300,8 +1490,8 @@ export default function AdminProducts() {
                   onClick={() => {
                     setShowCreateModal(false);
                     setFormData(defaultFormData);
-                    setColorsText("");
-                    setSizesText("");
+                    setColorsList([]);
+                    setSizesList([]);
                     setPreviewImages([]);
                   }}
                   className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
@@ -1332,8 +1522,8 @@ export default function AdminProducts() {
                   setShowEditModal(false);
                   setSelectedProduct(null);
                   setFormData(defaultFormData);
-                  setColorsText("");
-                  setSizesText("");
+                  setColorsList([]);
+                  setSizesList([]);
                   setPreviewImages([]);
                 }}
                 className="text-gray-500 hover:text-gray-700"
@@ -1383,12 +1573,13 @@ export default function AdminProducts() {
                       type="number"
                       required
                       min="0"
-                      step="0.01"
+                      step="1000"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       value={formData.price}
                       onChange={e =>
                         setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })
                       }
+                      onFocus={e => e.target.select()}
                     />
                   </div>
 
@@ -1403,6 +1594,7 @@ export default function AdminProducts() {
                       onChange={e =>
                         setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })
                       }
+                      onFocus={e => e.target.select()}
                     />
                   </div>
                 </div>
@@ -1472,27 +1664,23 @@ export default function AdminProducts() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Өнгө</label>
-                    <input
-                      type="text"
-                      placeholder="Жишээ: Хөх, Улаан"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={colorsText}
-                      onChange={e => setColorsText(e.target.value)}
+                    <TagInput
+                      values={colorsList}
+                      onChange={setColorsList}
+                      placeholder="Хөх гэж бичээд Enter дарна"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Размер</label>
-                    <input
-                      type="text"
-                      placeholder="Жишээ: S, M, L"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={sizesText}
-                      onChange={e => setSizesText(e.target.value)}
+                    <TagInput
+                      values={sizesList}
+                      onChange={setSizesList}
+                      placeholder="M гэж бичээд Enter дарна"
                     />
                   </div>
                 </div>
                 <p className="text-xs text-gray-500">
-                  Хэд хэдэн сонголттой бол таслалаар тусгаарлан бичнэ үү. Хоосон орхивол
+                  Утга бичээд Enter эсвэл таслал дарж chip болгож нэмнэ үү. Хоосон орхивол
                   худалдан авагчид өнгө/размер сонгох сонголт харагдахгүй.
                 </p>
               </div>
@@ -1621,8 +1809,8 @@ export default function AdminProducts() {
                     setShowEditModal(false);
                     setSelectedProduct(null);
                     setFormData(defaultFormData);
-                    setColorsText("");
-                    setSizesText("");
+                    setColorsList([]);
+                    setSizesList([]);
                     setPreviewImages([]);
                   }}
                   className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
@@ -1676,10 +1864,12 @@ export default function AdminProducts() {
                   type="number"
                   required
                   min="1"
+                  step="1000"
                   max={parseFloat(selectedProduct.price) - 1}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={salePriceInput}
                   onChange={e => setSalePriceInput(e.target.value)}
+                  onFocus={e => e.target.select()}
                   placeholder="Жишээ: 75000"
                 />
                 {salePriceInput &&
