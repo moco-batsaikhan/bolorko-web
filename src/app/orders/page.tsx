@@ -243,6 +243,14 @@ export default function OrdersPage() {
                             <div className="flex-grow min-w-0">
                               <p className="font-medium text-gray-900 truncate">
                                 {item.product?.name || "Бүтээгдэхүүн"}
+                                {(item.selectedColor || item.selectedSize) && (
+                                  <span className="text-gray-500 font-normal">
+                                    {" "}
+                                    ({[item.selectedColor, item.selectedSize]
+                                      .filter(Boolean)
+                                      .join(", ")})
+                                  </span>
+                                )}
                               </p>
                               <p className="text-sm text-gray-500">
                                 Тоо ширхэг: {item.quantity} ×{" "}

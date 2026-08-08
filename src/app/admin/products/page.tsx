@@ -100,6 +100,15 @@ export default function AdminProducts() {
   };
 
   const [formData, setFormData] = useState<CreateProductRequest>(defaultFormData);
+  // Өнгө/размерыг таслалаар тусгаарласан текст хэлбэрээр авч, хадгалахдаа
+  // массив болгон хувиргана (жиш: "Хөх, Улаан" → ["Хөх", "Улаан"])
+  const [colorsText, setColorsText] = useState("");
+  const [sizesText, setSizesText] = useState("");
+  const parseCsvList = (text: string): string[] =>
+    text
+      .split(",")
+      .map(s => s.trim())
+      .filter(Boolean);
   const [categoryFormData, setCategoryFormData] = useState<CreateProductCategoryRequest>({
     name: "",
     description: "",
@@ -180,15 +189,21 @@ export default function AdminProducts() {
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await apiService.createProduct(formData);
-      showToast("Product created successfully!", "success");
+      await apiService.createProduct({
+        ...formData,
+        colors: parseCsvList(colorsText),
+        sizes: parseCsvList(sizesText),
+      });
+      showToast("Бараа амжилттай үүслээ", "success");
       setShowCreateModal(false);
       setFormData(defaultFormData);
+      setColorsText("");
+      setSizesText("");
       setPreviewImages([]);
       fetchData();
     } catch (error) {
       console.error("Error creating product:", error);
-      showToast("Failed to create product", "error");
+      showToast("Бараа үүсгэхэд алдаа гарлаа", "error");
     }
   };
 
@@ -205,18 +220,22 @@ export default function AdminProducts() {
         categoryId: formData.categoryId,
         status: formData.status,
         images: formData.images,
+        colors: parseCsvList(colorsText),
+        sizes: parseCsvList(sizesText),
       };
 
       await apiService.updateProduct(selectedProduct.id, updateData);
-      showToast("Product updated successfully!", "success");
+      showToast("Бараа амжилттай шинэчлэгдлээ", "success");
       setShowEditModal(false);
       setSelectedProduct(null);
       setFormData(defaultFormData);
+      setColorsText("");
+      setSizesText("");
       setPreviewImages([]);
       fetchData();
     } catch (error) {
       console.error("Error updating product:", error);
-      showToast("Failed to update product", "error");
+      showToast("Бараа шинэчлэхэд алдаа гарлаа", "error");
     }
   };
 
@@ -545,6 +564,8 @@ export default function AdminProducts() {
       status: product.status,
       images: [],
     });
+    setColorsText(product.colors?.join(", ") ?? "");
+    setSizesText(product.sizes?.join(", ") ?? "");
     setShowEditModal(true);
   };
 
@@ -1039,11 +1060,13 @@ export default function AdminProducts() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">Create New Product</h2>
+              <h2 className="text-2xl font-bold text-gray-800">Шинэ бараа нэмэх</h2>
               <button
                 onClick={() => {
                   setShowCreateModal(false);
                   setFormData(defaultFormData);
+                  setColorsText("");
+                  setSizesText("");
                   // Clean up preview URLs
                   previewImages.forEach(url => URL.revokeObjectURL(url));
                   setPreviewImages([]);
@@ -1055,64 +1078,81 @@ export default function AdminProducts() {
               </button>
             </div>
 
-            <form onSubmit={handleCreateProduct} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Product Name</label>
-                <input
-                  type="text"
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={formData.name}
-                  onChange={e => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                <textarea
-                  required
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={formData.description}
-                  onChange={e => setFormData({ ...formData, description: e.target.value })}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleCreateProduct} className="space-y-8">
+              {/* Үндсэн мэдээлэл */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-2">
+                  Үндсэн мэдээлэл
+                </h3>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Барааны нэр</label>
                   <input
-                    type="number"
+                    type="text"
                     required
-                    min="0"
-                    step="0.01"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={formData.price}
-                    onChange={e =>
-                      setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })
-                    }
+                    value={formData.name}
+                    onChange={e => setFormData({ ...formData, name: e.target.value })}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Stock</label>
-                  <input
-                    type="number"
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Тайлбар</label>
+                  <textarea
                     required
-                    min="0"
+                    rows={4}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={formData.stock}
-                    onChange={e =>
-                      setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })
-                    }
+                    value={formData.description}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              {/* Үнэ, нөөц */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-2">
+                  Үнэ ба нөөц
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Үнэ (₮)</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      step="0.01"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={formData.price}
+                      onChange={e =>
+                        setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Нөөц (ширхэг)</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={formData.stock}
+                      onChange={e =>
+                        setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Ангилал ба төлөв */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-2">
+                  Ангилал ба төлөв
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category <span className="text-gray-400 font-normal">(заавал биш)</span>
+                    Ангилал <span className="text-gray-400 font-normal">(заавал биш)</span>
                   </label>
                   <select
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -1229,11 +1269,13 @@ export default function AdminProducts() {
                   onClick={() => {
                     setShowCreateModal(false);
                     setFormData(defaultFormData);
+                    setColorsText("");
+                    setSizesText("");
                     setPreviewImages([]);
                   }}
                   className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  Cancel
+                  Цуцлах
                 </button>
                 <button
                   type="submit"
@@ -1253,12 +1295,14 @@ export default function AdminProducts() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">Edit Product</h2>
+              <h2 className="text-2xl font-bold text-gray-800">Бараа засах</h2>
               <button
                 onClick={() => {
                   setShowEditModal(false);
                   setSelectedProduct(null);
                   setFormData(defaultFormData);
+                  setColorsText("");
+                  setSizesText("");
                   setPreviewImages([]);
                 }}
                 className="text-gray-500 hover:text-gray-700"
@@ -1492,6 +1536,8 @@ export default function AdminProducts() {
                     setShowEditModal(false);
                     setSelectedProduct(null);
                     setFormData(defaultFormData);
+                    setColorsText("");
+                    setSizesText("");
                     setPreviewImages([]);
                   }}
                   className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"

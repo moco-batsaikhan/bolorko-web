@@ -36,6 +36,9 @@ export interface CartItem {
   cartId: number;
   productId: number;
   quantity: number;
+  // Ижил бараа өөр өнгө/размертай бол сагсанд тусдаа мөр болж ирнэ
+  selectedColor?: string | null;
+  selectedSize?: string | null;
   createdAt: string;
   product: Product;
 }
@@ -57,6 +60,8 @@ export interface CartTotal {
 export interface AddToCartRequest {
   productId: number;
   quantity: number;
+  selectedColor?: string;
+  selectedSize?: string;
 }
 
 export interface UpdateCartItemRequest {
@@ -70,6 +75,8 @@ export interface OrderItem {
   quantity: number;
   price: string;
   unitPrice?: string;
+  selectedColor?: string | null;
+  selectedSize?: string | null;
   createdAt: string;
   product: Product;
 }
@@ -108,6 +115,9 @@ export interface CreateOrderRequest {
   orderItems: {
     productId: number;
     quantity: number;
+    // Тухайн бараанд colors/sizes байхгүй бол дамжуулахгүй
+    selectedColor?: string;
+    selectedSize?: string;
   }[];
   phone: string;
   shippingAddress?: ShippingAddress;
@@ -163,6 +173,10 @@ export interface Product {
   type?: "PRODUCT" | "INFO";
   isFeatured?: boolean;
   images: string[] | string | null;
+  // Хоосон/тохируулаагүй бол null — байвал дэлгэрэнгүй хуудсан дээр
+  // сонголтын UI (swatch/dropdown) харуулна
+  colors?: string[] | null;
+  sizes?: string[] | null;
   averageRating: string;
   ratingCount: number;
   // Facebook sync талбарууд
@@ -184,6 +198,8 @@ export interface CreateProductRequest {
   categoryId?: number;
   status: "ACTIVE" | "INACTIVE";
   images?: File[];
+  colors?: string[];
+  sizes?: string[];
 }
 
 export interface UpdateProductRequest {
@@ -194,6 +210,8 @@ export interface UpdateProductRequest {
   categoryId?: number;
   status: "ACTIVE" | "INACTIVE";
   images?: File[];
+  colors?: string[];
+  sizes?: string[];
 }
 
 // Backend endpoint нь одоо sync-ийг background-д ажиллуулаад 202-той шууд
@@ -762,7 +780,21 @@ class ApiService {
       }
     );
 
-    return this.handleResponse<Product>(response);
+    const created = await this.handleResponse<Product>(response);
+
+    // colors/sizes-г найдвартай массив хэлбэрээр дамжуулахын тулд тусдаа
+    // JSON PATCH дуудлагаар шинэчилнэ (multipart form дотор массив зөв
+    // дамжихгүй эрсдэлтэй — жишээ нь ганцхан утгатай үед string болно)
+    const hasColors = !!productData.colors && productData.colors.length > 0;
+    const hasSizes = !!productData.sizes && productData.sizes.length > 0;
+    if (hasColors || hasSizes) {
+      return this.patchProduct(created.id, {
+        colors: hasColors ? productData.colors : undefined,
+        sizes: hasSizes ? productData.sizes : undefined,
+      });
+    }
+
+    return created;
   }
 
   async updateProduct(
@@ -797,7 +829,19 @@ class ApiService {
       }
     );
 
-    return this.handleResponse<Product>(response);
+    const updated = await this.handleResponse<Product>(response);
+
+    // colors/sizes-г тусдаа JSON PATCH-аар шинэчилнэ (multipart-ийн массив
+    // эрсдэлээс зайлсхийх зорилготой) — талбарууд дамжуулагдсан үед л
+    // ажиллана, хоосон массив бол цэвэрлэнэ (null)
+    if (productData.colors !== undefined || productData.sizes !== undefined) {
+      return this.patchProduct(id, {
+        colors: productData.colors && productData.colors.length > 0 ? productData.colors : null,
+        sizes: productData.sizes && productData.sizes.length > 0 ? productData.sizes : null,
+      });
+    }
+
+    return updated;
   }
 
   async deleteProduct(id: number): Promise<void> {
@@ -814,7 +858,10 @@ class ApiService {
     }
   }
 
-  // Барааны зарим талбарыг JSON-оор хэсэгчлэн шинэчилнэ (inline засварт зориулсан)
+  // Барааны зарим талбарыг JSON-оор хэсэгчлэн шинэчилнэ (inline засварт зориулсан).
+  // colors/sizes-г энд JSON-оор дамжуулна — multipart form дотор массив
+  // талбар нэг утгатай үед string болж хувирах эрсдэлтэй тул зориудаар
+  // энэ JSON PATCH замаар (createProduct/updateProduct дотроос дуудагдана)
   async patchProduct(
     id: number,
     data: Partial<{
@@ -825,6 +872,8 @@ class ApiService {
       categoryId: number | null;
       status: "ACTIVE" | "INACTIVE";
       salePrice: number | null;
+      colors: string[] | null;
+      sizes: string[] | null;
     }>
   ): Promise<Product> {
     const response = await fetch(

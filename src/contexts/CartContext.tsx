@@ -22,7 +22,11 @@ interface CartContextType {
   cartTotal: CartTotal | null;
   loading: boolean;
   itemCount: number;
-  addToCart: (productId: number, quantity?: number) => Promise<void>;
+  addToCart: (
+    productId: number,
+    quantity?: number,
+    options?: { selectedColor?: string; selectedSize?: string }
+  ) => Promise<void>;
   updateQuantity: (itemId: number, quantity: number) => Promise<void>;
   removeItem: (itemId: number) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -63,7 +67,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
-  const addToCart = async (productId: number, quantity: number = 1) => {
+  const addToCart = async (
+    productId: number,
+    quantity: number = 1,
+    options?: { selectedColor?: string; selectedSize?: string }
+  ) => {
     if (!user) {
       showToast("Сагсанд нэмэхийн тулд эхлээд нэвтэрнэ үү", "error");
       return;
@@ -71,7 +79,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     try {
       setLoading(true);
-      await apiService.addToCart(user.id, { productId, quantity });
+      await apiService.addToCart(user.id, {
+        productId,
+        quantity,
+        selectedColor: options?.selectedColor,
+        selectedSize: options?.selectedSize,
+      });
       await refreshCart();
       showToast("Бүтээгдэхүүн сагсанд нэмэгдлээ", "success");
     } catch (error) {

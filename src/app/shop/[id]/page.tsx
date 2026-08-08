@@ -46,6 +46,9 @@ export default function ProductDetailPage() {
 
   // Cart state
   const [quantity, setQuantity] = useState(1);
+  // Өнгө/размер сонголт — тухайн бараанд colors/sizes байгаа үед л ашиглагдана
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
   // Fetch product details
   useEffect(() => {
@@ -72,6 +75,9 @@ export default function ProductDetailPage() {
 
         setProduct(productData);
         setError(null);
+        // Шинэ бараа ачаалагдах бүрт өмнөх сонголтыг цэвэрлэнэ
+        setSelectedColor(null);
+        setSelectedSize(null);
       } catch (err) {
         setError("Бүтээгдэхүүн ачаалахад алдаа гарлаа");
         console.error("Error fetching product:", err);
@@ -139,6 +145,19 @@ export default function ProductDetailPage() {
     return [];
   };
 
+  // colors/sizes байгаа бол сонголт хийгдсэн эсэхийг шалгана
+  const validateSelection = () => {
+    if (product?.colors && product.colors.length > 0 && !selectedColor) {
+      showToast("Өнгөө сонгоно уу", "error");
+      return false;
+    }
+    if (product?.sizes && product.sizes.length > 0 && !selectedSize) {
+      showToast("Размерээ сонгоно уу", "error");
+      return false;
+    }
+    return true;
+  };
+
   // Handle add to cart
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
@@ -147,9 +166,13 @@ export default function ProductDetailPage() {
     }
 
     if (!product) return;
+    if (!validateSelection()) return;
 
     try {
-      await addToCart(product.id, quantity);
+      await addToCart(product.id, quantity, {
+        selectedColor: selectedColor ?? undefined,
+        selectedSize: selectedSize ?? undefined,
+      });
       showToast("Бүтээгдэхүүн сагсанд нэмэгдлээ!", "success");
       // Reset quantity to 1 after adding
       setQuantity(1);
@@ -163,6 +186,7 @@ export default function ProductDetailPage() {
   // шилжинэ (CART_ENABLED=false үед). Нэвтрэлт заавал шаардахгүй.
   const handleBuyNow = () => {
     if (!product) return;
+    if (!validateSelection()) return;
 
     const unitPrice = parseFloat(product.salePrice ?? product.price);
     const buyNowItem = {
@@ -171,6 +195,8 @@ export default function ProductDetailPage() {
       unitPrice,
       name: product.name,
       image: images[0],
+      selectedColor,
+      selectedSize,
     };
 
     try {
@@ -488,6 +514,56 @@ export default function ProductDetailPage() {
                 {renderDescription(product.description)}
               </p>
             </div>
+
+            {/* Өнгөний сонголт — зөвхөн product.colors байвал харагдана */}
+            {product.colors && product.colors.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-900 mb-2">
+                  Өнгө{selectedColor ? `: ${selectedColor}` : ""}
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {product.colors.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => setSelectedColor(color)}
+                      className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-colors ${
+                        selectedColor === color
+                          ? "border-mega-600 bg-mega-50 text-mega-700"
+                          : "border-gray-200 text-gray-700 hover:border-gray-300"
+                      }`}
+                    >
+                      {color}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Размерын сонголт — зөвхөн product.sizes байвал харагдана */}
+            {product.sizes && product.sizes.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-900 mb-2">
+                  Размер{selectedSize ? `: ${selectedSize}` : ""}
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {product.sizes.map((size) => (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => setSelectedSize(size)}
+                      className={`min-w-[3rem] px-3 py-2 rounded-lg border-2 text-sm font-medium transition-colors ${
+                        selectedSize === size
+                          ? "border-mega-600 bg-mega-50 text-mega-700"
+                          : "border-gray-200 text-gray-700 hover:border-gray-300"
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Actions */}
             <div className="space-y-4">

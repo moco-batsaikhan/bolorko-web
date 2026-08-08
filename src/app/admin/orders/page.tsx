@@ -466,6 +466,14 @@ export default function AdminOrdersPage() {
                       <div>
                         <div className="text-sm font-semibold text-gray-900">
                           {item.product?.name || "-"}
+                          {(item.selectedColor || item.selectedSize) && (
+                            <span className="text-gray-500 font-normal">
+                              {" "}
+                              ({[item.selectedColor, item.selectedSize]
+                                .filter(Boolean)
+                                .join(", ")})
+                            </span>
+                          )}
                         </div>
                         <div className="text-sm text-gray-600">
                           {item.product?.description || "-"}

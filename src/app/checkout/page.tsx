@@ -19,6 +19,8 @@ interface BuyNowItem {
   unitPrice: number;
   name: string;
   image?: string;
+  selectedColor?: string | null;
+  selectedSize?: string | null;
 }
 
 export default function CheckoutPage() {
@@ -63,6 +65,8 @@ export default function CheckoutPage() {
           name: buyNowItem.name,
           quantity: buyNowItem.quantity,
           lineTotal: buyNowItem.unitPrice * buyNowItem.quantity,
+          selectedColor: buyNowItem.selectedColor,
+          selectedSize: buyNowItem.selectedSize,
         },
       ]
     : CART_ENABLED && cart
@@ -71,6 +75,8 @@ export default function CheckoutPage() {
         name: item.product.name,
         quantity: item.quantity,
         lineTotal: parseFloat(item.product.salePrice ?? item.product.price) * item.quantity,
+        selectedColor: item.selectedColor,
+        selectedSize: item.selectedSize,
       }))
     : [];
 
@@ -99,11 +105,21 @@ export default function CheckoutPage() {
     // Нэвтэрсэн бол сервер token-оос хэрэглэгчийг таньж захиалгад холбоно.
     setIsProcessing(true);
     try {
+      // colors/sizes сонгоогүй бол selectedColor/selectedSize-г огт дамжуулахгүй
       const orderItems = buyNowItem
-        ? [{ productId: buyNowItem.productId, quantity: buyNowItem.quantity }]
+        ? [
+            {
+              productId: buyNowItem.productId,
+              quantity: buyNowItem.quantity,
+              selectedColor: buyNowItem.selectedColor ?? undefined,
+              selectedSize: buyNowItem.selectedSize ?? undefined,
+            },
+          ]
         : (cart?.cartItems ?? []).map(item => ({
             productId: item.productId,
             quantity: item.quantity,
+            selectedColor: item.selectedColor ?? undefined,
+            selectedSize: item.selectedSize ?? undefined,
           }));
 
       // phone одоо ЗААВАЛ, shippingAddress OPTIONAL тул хялбарчилсан
@@ -226,17 +242,27 @@ export default function CheckoutPage() {
           <aside className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold mb-4">Захиалгын тойм</h3>
             <div className="space-y-3">
-              {summaryItems.map(item => (
-                <div key={item.key} className="flex justify-between text-sm">
-                  <div className="min-w-0">
-                    <div className="truncate">{item.name}</div>
-                    <div className="text-gray-500 text-xs">{item.quantity} ширхэг</div>
+              {summaryItems.map(item => {
+                const variant = [item.selectedColor, item.selectedSize]
+                  .filter(Boolean)
+                  .join(", ");
+                return (
+                  <div key={item.key} className="flex justify-between text-sm">
+                    <div className="min-w-0">
+                      <div className="truncate">
+                        {item.name}
+                        {variant && (
+                          <span className="text-gray-500"> ({variant})</span>
+                        )}
+                      </div>
+                      <div className="text-gray-500 text-xs">{item.quantity} ширхэг</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium">{formatPrice(item.lineTotal)}</div>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <div className="font-medium">{formatPrice(item.lineTotal)}</div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
 
               <div className="border-t border-gray-200 pt-3">
                 <div className="flex justify-between text-sm text-gray-600">
