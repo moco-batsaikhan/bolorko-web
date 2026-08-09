@@ -25,7 +25,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-sm text-gray-400 leading-relaxed max-w-xs">
-              Загварлаг хувцас, аяллын хэрэгслийн онлайн дэлгүүр
+              Бүх төрлийн бараа захиалгийн онлайн дэлгүүр
             </p>
             <a
               href="https://www.facebook.com/momsoonshop"

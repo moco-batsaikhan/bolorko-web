@@ -5,8 +5,8 @@ import { ToastProvider } from "../contexts/ToastContext";
 import { CartProvider } from "../contexts/CartContext";
 
 export const metadata: Metadata = {
-  title: "Bolorko — Хувцас, аяллын хэрэгслийн дэлгүүр",
-  description: "Bolorko — Загварлаг хувцас болон аяллын хэрэгслийн онлайн дэлгүүр",
+  title: "Bolorko бүх төрлийн бараа захиалга",
+  description: "Bolorko — Загварлаг хувцас болон бүх төрлийн бараа захиалгийн онлайн дэлгүүр",
 };
 
 export default function RootLayout({
