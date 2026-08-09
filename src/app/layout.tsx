@@ -9,6 +9,12 @@ export const metadata: Metadata = {
   description: "Bolorko — Загварлаг хувцас болон бүх төрлийн бараа захиалгийн онлайн дэлгүүр",
 };
 
+// CSP-ийн nonce (middleware.ts) хүсэлт бүрд шинээр үүсдэг тул хуудсууд
+// static/pre-rendered биш, DYNAMIC-аар render хийгдэх ёстой — эс тэгвээс
+// build үеийн nonce (HTML-д баригдсан) ба хүсэлтийн header дэх nonce
+// хэзээ ч таарахгүй, Next.js-ийн өөрийн inline script-ууд ч блоклогдоно.
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({
   children,
 }: Readonly<{
