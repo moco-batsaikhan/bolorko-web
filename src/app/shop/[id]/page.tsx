@@ -407,7 +407,7 @@ export default function ProductDetailPage() {
                     className="object-cover"
                     sizes="(max-width: 1024px) 100vw, 50vw"
                     priority
-                    unoptimized={!images[selectedImageIndex].startsWith(API_BASE_URL)}
+                    unoptimized={!images[selectedImageIndex].startsWith(API_BASE_URL ?? "")}
                   />
                 </div>
 
@@ -430,7 +430,7 @@ export default function ProductDetailPage() {
                           fill
                           className="object-cover"
                           sizes="120px"
-                          unoptimized={!image.startsWith(API_BASE_URL)}
+                          unoptimized={!image.startsWith(API_BASE_URL ?? "")}
                         />
                       </button>
                     ))}

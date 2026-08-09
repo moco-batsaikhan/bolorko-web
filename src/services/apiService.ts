@@ -420,7 +420,7 @@ class ApiService {
   private baseURL: string;
 
   constructor() {
-    this.baseURL = API_BASE_URL;
+    this.baseURL = API_BASE_URL ?? "";
   }
 
   private getAuthHeaders(isMultipart: boolean = false): Record<string, string> {

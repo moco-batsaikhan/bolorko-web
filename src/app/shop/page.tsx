@@ -316,7 +316,7 @@ function ShopContent() {
                           fill
                           className="object-cover group-hover:scale-110 transition-transform duration-300"
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          unoptimized={!imageUrl.startsWith(API_BASE_URL)}
+                          unoptimized={!imageUrl.startsWith(API_BASE_URL ?? "")}
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
