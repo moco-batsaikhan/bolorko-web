@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { apiService, Product, ProductCategory, Banner } from "@/services/apiService";
@@ -148,6 +148,65 @@ function ProductCard({
   );
 }
 
+function ProductSlider({
+  products,
+  addingProductId,
+  onQuickAdd,
+}: {
+  products: Product[];
+  addingProductId: number | null;
+  onQuickAdd: (e: React.MouseEvent, productId: number) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: "left" | "right") => {
+    const container = scrollRef.current;
+    if (!container) return;
+    const amount = container.clientWidth * 0.85;
+    container.scrollBy({ left: direction === "left" ? -amount : amount, behavior: "smooth" });
+  };
+
+  return (
+    <div className="relative group/slider">
+      <div
+        ref={scrollRef}
+        className="flex gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2 no-scrollbar"
+      >
+        {products.map(product => (
+          <div key={product.id} className="snap-start shrink-0 w-[46%] sm:w-[32%] lg:w-[23%]">
+            <ProductCard
+              product={product}
+              addingProductId={addingProductId}
+              onQuickAdd={onQuickAdd}
+            />
+          </div>
+        ))}
+      </div>
+
+      {products.length > 2 && (
+        <>
+          <button
+            type="button"
+            onClick={() => scroll("left")}
+            className="hidden md:flex absolute left-0 top-[38%] -translate-y-1/2 -translate-x-4 items-center justify-center w-10 h-10 rounded-full bg-white shadow-md border border-gray-200 text-gray-700 hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors opacity-0 group-hover/slider:opacity-100"
+            aria-label="Өмнөх бараа"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <button
+            type="button"
+            onClick={() => scroll("right")}
+            className="hidden md:flex absolute right-0 top-[38%] -translate-y-1/2 translate-x-4 items-center justify-center w-10 h-10 rounded-full bg-white shadow-md border border-gray-200 text-gray-700 hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors opacity-0 group-hover/slider:opacity-100"
+            aria-label="Дараагийн бараа"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function HomePage() {
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
@@ -193,7 +252,7 @@ export default function HomePage() {
             new Date(b.postedAt || b.createdAt).getTime() -
             new Date(a.postedAt || a.createdAt).getTime(),
         );
-        setNewArrivals(arrivals.slice(0, 4));
+        setNewArrivals(arrivals.slice(0, 10));
 
         // Ангилал бүрийн бараануудыг татна: дугуй картын зураг болон
         // ангиллын барааны хэсгүүдэд хоёуланд нь ашиглагдана
@@ -215,7 +274,7 @@ export default function HomePage() {
               image = withImage ? getProductImageUrl(withImage.images) : null;
             }
 
-            return { category, image, products: active.slice(0, 4) };
+            return { category, image, products: active.slice(0, 10) };
           }),
         );
         setCategoryCards(sectionResults.map(({ category, image }) => ({ category, image })));
@@ -455,16 +514,11 @@ export default function HomePage() {
                   Шинэ бараа
                 </h2>
 
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                  {newArrivals.map(product => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      addingProductId={addingProductId}
-                      onQuickAdd={handleQuickAdd}
-                    />
-                  ))}
-                </div>
+                <ProductSlider
+                  products={newArrivals}
+                  addingProductId={addingProductId}
+                  onQuickAdd={handleQuickAdd}
+                />
 
                 <div className="text-center mt-10">
                   <Link
@@ -494,16 +548,11 @@ export default function HomePage() {
                   <span className="flex-1 h-px bg-gray-300"></span>
                 </div>
 
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                  {section.products.map(product => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      addingProductId={addingProductId}
-                      onQuickAdd={handleQuickAdd}
-                    />
-                  ))}
-                </div>
+                <ProductSlider
+                  products={section.products}
+                  addingProductId={addingProductId}
+                  onQuickAdd={handleQuickAdd}
+                />
 
                 <div className="text-center mt-8">
                   <Link

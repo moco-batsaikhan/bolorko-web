@@ -86,6 +86,16 @@
 
 /* ===== 3D UI utilities ===== */
 
+/* Гүйлгэх зурвасны scrollbar-г нуух — slider-үүдэд ашиглана */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Хөвдөг 3D карт: hover дээр өргөгдөж, бага зэрэг хазайна */
 .card-3d {
   transform-style: preserve-3d;

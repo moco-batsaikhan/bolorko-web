@@ -569,7 +569,9 @@ export default function ProductDetailPage() {
 
             {/* Actions */}
             <div className="space-y-4">
-              <div className="flex items-center space-x-4 mb-4">
+              {/* Тоо ширхэг сонголт түр хаагдсан — quantity нь үргэлж 1
+                  байна. Буцаахдаа доорх блокийг ердөө ил болгоно. */}
+              {/* <div className="flex items-center space-x-4 mb-4">
                 <label
                   htmlFor="quantity"
                   className="text-sm font-medium text-gray-900"
@@ -592,7 +594,7 @@ export default function ProductDetailPage() {
                     )
                   )}
                 </select>
-              </div>
+              </div> */}
 
               {/* CART_ENABLED=true үед "Сагсанд нэмэх" товч, false үед сагсыг
                   алгасаад шууд захиалах товч харагдана (featureFlags.ts). */}

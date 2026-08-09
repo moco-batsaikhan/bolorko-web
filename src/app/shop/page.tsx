@@ -20,7 +20,7 @@ function ShopContent() {
   const [loading, setLoading] = useState(true);
   // Хоёр шатлалт сонголт: үндсэн болон дэд ангилал
   const [selectedMain, setSelectedMain] = useState<number | null>(
-    initialCategory ? Number(initialCategory) : null
+    initialCategory ? Number(initialCategory) : null,
   );
   const [selectedSub, setSelectedSub] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -93,14 +93,12 @@ function ShopContent() {
       return;
     }
 
-    const main = mainCategories.find((c) => c.id === catId);
+    const main = mainCategories.find(c => c.id === catId);
     if (main) {
       setSelectedMain(catId);
       setSelectedSub(null);
     } else {
-      const parent = mainCategories.find((c) =>
-        c.children?.some((child) => child.id === catId)
-      );
+      const parent = mainCategories.find(c => c.children?.some(child => child.id === catId));
       if (parent) {
         setSelectedMain(parent.id);
         setSelectedSub(catId);
@@ -124,7 +122,7 @@ function ShopContent() {
     setSelectedSub(subId);
   };
 
-  const selectedMainCategory = mainCategories.find((c) => c.id === selectedMain);
+  const selectedMainCategory = mainCategories.find(c => c.id === selectedMain);
   const subCategories = selectedMainCategory?.children || [];
 
   // Format price
@@ -142,10 +140,8 @@ function ShopContent() {
       stars.push(
         <Star
           key={i}
-          className={`w-4 h-4 ${
-            i <= numRating ? "text-yellow-400 fill-current" : "text-gray-300"
-          }`}
-        />
+          className={`w-4 h-4 ${i <= numRating ? "text-yellow-400 fill-current" : "text-gray-300"}`}
+        />,
       );
     }
     return stars;
@@ -162,9 +158,7 @@ function ShopContent() {
 
     if (Array.isArray(images) && images.length > 0) {
       const firstImage = images[0];
-      return firstImage.startsWith("http")
-        ? firstImage
-        : `${API_BASE_URL}${firstImage}`;
+      return firstImage.startsWith("http") ? firstImage : `${API_BASE_URL}${firstImage}`;
     }
 
     return null;
@@ -206,21 +200,16 @@ function ShopContent() {
             {/* Subtitle */}
             <p className="text-xl md:text-2xl mb-8 opacity-90 max-w-3xl mx-auto leading-relaxed">
               Bolorko албан ёсны дэлгүүр.
-              <span className="font-semibold">
-                {" "}
-                Хувцас болон аяллын хэрэгсэл
-              </span>
+              <span className="font-semibold"> Хувцас болон аяллын хэрэгсэл</span>
             </p>
 
             {/* Stats */}
             <div className="flex flex-wrap justify-center gap-8 mt-12">
               <div className="text-center">
-                <div className="text-3xl font-bold text-white">
-                  {products.length}+
-                </div>
+                <div className="text-3xl font-bold text-white">{products.length}+</div>
                 <div className="text-white opacity-75">Бүтээгдэхүүн</div>
               </div>
-              <div className="text-center">
+              {/* <div className="text-center">
                 <div className="text-3xl font-bold text-white">
                   {products.reduce(
                     (total, product) => total + product.stock,
@@ -229,7 +218,7 @@ function ShopContent() {
                   +
                 </div>
                 <div className="text-white opacity-75">Нөөцөд</div>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -246,7 +235,7 @@ function ShopContent() {
                 type="text"
                 placeholder="Бараа хайх..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={e => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-10 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500"
               />
               {searchQuery && (
@@ -267,11 +256,11 @@ function ShopContent() {
 
             <select
               value={selectedMain ?? ""}
-              onChange={(e) => handleMainChange(e.target.value ? Number(e.target.value) : null)}
+              onChange={e => handleMainChange(e.target.value ? Number(e.target.value) : null)}
               className="px-4 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500 cursor-pointer"
             >
               <option value="">Бүх ангилал</option>
-              {mainCategories.map((category) => (
+              {mainCategories.map(category => (
                 <option key={category.id} value={category.id}>
                   {category.name}
                 </option>
@@ -281,11 +270,11 @@ function ShopContent() {
             {subCategories.length > 0 && (
               <select
                 value={selectedSub ?? ""}
-                onChange={(e) => handleSubChange(e.target.value ? Number(e.target.value) : null)}
+                onChange={e => handleSubChange(e.target.value ? Number(e.target.value) : null)}
                 className="px-4 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mega-500 cursor-pointer"
               >
                 <option value="">Бүх дэд ангилал</option>
-                {subCategories.map((sub) => (
+                {subCategories.map(sub => (
                   <option key={sub.id} value={sub.id}>
                     {sub.name}
                   </option>
@@ -309,7 +298,7 @@ function ShopContent() {
           <>
             {/* Products Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
-              {products.map((product) => {
+              {products.map(product => {
                 const imageUrl = getProductImageUrl(product.images);
 
                 return (
@@ -352,13 +341,11 @@ function ShopContent() {
                               product.stock > 10
                                 ? "bg-green-500 text-white"
                                 : product.stock > 0
-                                ? "bg-yellow-500 text-white"
-                                : "bg-red-500 text-white"
+                                  ? "bg-yellow-500 text-white"
+                                  : "bg-red-500 text-white"
                             }`}
                           >
-                            {product.stock > 0
-                              ? `${product.stock} ширхэг`
-                              : "Дууссан"}
+                            {product.stock > 0 ? `${product.stock} ширхэг` : "Дууссан"}
                           </span>
                         </div>
                       )}
@@ -442,12 +429,8 @@ function ShopContent() {
                 <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
                   <Package className="w-12 h-12 text-gray-400" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Бүтээгдэхүүн олдсонгүй
-                </h3>
-                <p className="text-gray-600">
-                  Энэ ангиллаар бүтээгдэхүүн байхгүй байна.
-                </p>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Бүтээгдэхүүн олдсонгүй</h3>
+                <p className="text-gray-600">Энэ ангиллаар бүтээгдэхүүн байхгүй байна.</p>
               </div>
             )}
           </>
