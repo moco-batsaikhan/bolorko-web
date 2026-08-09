@@ -12,7 +12,6 @@ import { Footer } from "@/components/Footer";
 import {
   apiService,
   CreateOrderRequest,
-  isInsufficientStockError,
   getApiErrorMessage,
   StorePayLoan,
   PocketInvoice,
@@ -60,9 +59,12 @@ export default function PaymentPage() {
   );
   const [mobileNumber, setMobileNumber] = useState("");
   const [mobileError, setMobileError] = useState<string | null>(null);
-  // StorePay-д orderId урьдчилан шаардлагатай тул QPay-ээс ялгаатай нь
-  // захиалгыг зээл үүсгэхээс өмнө үүсгэнэ — амжилтгүй болоод дахин оролдоход
-  // давхар захиалга үүсгэхгүйн тулд id-г хадгална
+  // QPay-д ч StorePay/Pocket-той адил захиалгыг нэхэмжлэл үүсгэхээс өмнө
+  // үүсгэнэ (эс тэгвээс төлбөрийн webhook ямар ч Order-той холбогдохгүй) —
+  // амжилтгүй болоод дахин оролдоход давхар захиалга үүсгэхгүйн тулд id-г хадгална
+  const [qpayOrderId, setQpayOrderId] = useState<number | null>(null);
+  // StorePay-д ч мөн адил orderId урьдчилан шаардлагатай — амжилтгүй болоод
+  // дахин оролдоход давхар захиалга үүсгэхгүйн тулд id-г хадгална
   const [storePayOrderId, setStorePayOrderId] = useState<number | null>(null);
   const [storePayLoan, setStorePayLoan] = useState<StorePayLoan | null>(null);
   const [storePayStatus, setStorePayStatus] = useState<
@@ -128,25 +130,10 @@ export default function PaymentPage() {
 
       // Example response: { invoiceId: 'MEGA-...', status: 'PAID', paidAt: '...' }
       if (data.status === "PAID") {
-        try {
-          await apiService.createOrder(pendingOrder);
-          sessionStorage.removeItem("pending_order");
-          await clearCart();
-        } catch (e) {
-          console.error("Order creation failed", e);
-          // Backend транзакцтай тул захиалга огт үүсээгүй — нөөц зөрчил үлдэхгүй
-          if (isInsufficientStockError(e)) {
-            showToast(
-              "Уучлаарай, зарим барааны нөөц дуссан тул захиалга үүсгэж чадсангүй. Бидэнтэй холбогдоно уу.",
-              "error"
-            );
-          } else {
-            showToast("Төлбөр амжилттай, захиалга үүсэхэд алдаа гарлаа", "error");
-          }
-          router.push(user ? "/orders" : "/");
-          return;
-        }
-
+        // Захиалга аль хэдийн handlePayment дотор үүссэн (orderId-тэй
+        // холбогдсон нэхэмжлэл), тул энд дахин үүсгэхгүй — зөвхөн цэвэрлэнэ
+        sessionStorage.removeItem("pending_order");
+        await clearCart();
         showToast("Төлбөр амжилттай төлөгдсөн", "success");
         router.push(user ? "/orders" : "/");
       } else {
@@ -207,21 +194,29 @@ export default function PaymentPage() {
     setInvoiceResponse(null);
 
     try {
+      // QPay нэхэмжлэлийг Order-той холбохын тулд захиалгыг эхлээд үүсгэнэ
+      // (эс тэгвээс QPay-ийн webhook ямар ч Order-г шинэчлэх боломжгүй болно)
+      let orderId = qpayOrderId;
+      if (!orderId) {
+        const { order } = await apiService.createOrder(pendingOrder);
+        orderId = order.id;
+        setQpayOrderId(orderId);
+      }
+
       // Build request body expected by the payments API
       const body = {
-        // Анхаар: туршилтын үед энд түр 10 гэж тавьж байсан —
-        // одоо захиалгын жинхэнэ нийт дүнг илгээнэ
         amount: pendingOrder.totalAmount,
         redirectUrl: `${API_BASE_URL}/payments/webhook/qpay`,
         // User дээр email талбар байхгүй болсон тул QPay invoice-д хоосон
         // утга дамжуулна (энэ endpoint нь mail/* биш, тусад нь шалгах хэрэгтэй)
         email: "",
-        productName: `Bolorko Захиалга`,
+        productName: `Order #${orderId}`,
+        orderId,
       };
 
       const token = localStorage.getItem("access_token");
 
-      const res = await fetch(`${API_BASE_URL}/payments/invoice`, {
+      const res = await fetch(`${API_BASE_URL}/payments/qpay/invoice`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -237,17 +232,6 @@ export default function PaymentPage() {
 
       const data = await res.json();
       setInvoiceResponse(data);
-
-      //!!!!!!!!!!!!!!!!!!!!!! Optionally create order after invoice created
-      //   try {
-      //     await apiService.createOrder(pendingOrder);
-      //     // clear local pending order and cart
-      //     sessionStorage.removeItem("pending_order");
-      //     await clearCart();
-      //   } catch (e) {
-      //     // ignore order creation errors for now
-      //     console.error("Order creation error", e);
-      //   }
     } catch (err) {
       console.error(err);
       const message =

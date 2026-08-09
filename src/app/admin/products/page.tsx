@@ -420,7 +420,7 @@ export default function AdminProducts() {
 
   // Бараа (PRODUCT) болон зар/мэдээлэл (INFO) гэж тусад нь харуулна — талбар
   // тохируулаагүй хуучин бараануудыг PRODUCT гэж үзнэ
-  const getProductType = (product: Product): "PRODUCT" | "INFO" => product.type ?? "PRODUCT";
+  const getProductType = (product: Product): "PRODUCT" | "INFO" => product.postType ?? "PRODUCT";
 
   // Хайлт + шүүлтүүр (идэвхтэй таб доторх)
   const filteredProducts = products.filter(product => {
@@ -563,6 +563,7 @@ export default function AdminProducts() {
       name: category.name,
       description: category.description,
       parentId: category.parentId ?? undefined,
+      hashtagName: category.hashtagName ?? "",
     });
     setCategoryIsFeatured(!!category.isFeatured);
     setCategoryImageFile(null);
@@ -592,6 +593,7 @@ export default function AdminProducts() {
           description: categoryFormData.description,
           image: categoryImageFile || undefined,
           isFeatured: categoryIsFeatured,
+          hashtagName: categoryFormData.hashtagName,
         });
         showToast("Ангилал шинэчлэгдлээ", "success");
       } else {
@@ -609,7 +611,7 @@ export default function AdminProducts() {
       console.error("Error saving category:", error);
       showToast(
         error instanceof Error ? error.message : "Ангилал хадгалахад алдаа гарлаа",
-        "error"
+        "error",
       );
     }
   };
@@ -623,7 +625,7 @@ export default function AdminProducts() {
         category.isFeatured
           ? "Ангилал онцлохоо болилоо"
           : "Ангилал онцлогдлоо — нүүр хуудсанд харагдана",
-        "success"
+        "success",
       );
       fetchData();
     } catch (error) {
@@ -731,9 +733,12 @@ export default function AdminProducts() {
                       )}
                       <div className="min-w-0">
                         <h3 className="font-semibold text-gray-800 truncate">{category.name}</h3>
-                        <p className="text-gray-600 text-sm line-clamp-2">
-                          {category.description}
-                        </p>
+                        <p className="text-gray-600 text-sm line-clamp-2">{category.description}</p>
+                        {category.hashtagName && (
+                          <span className="inline-block mt-1 px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-medium rounded">
+                            #{category.hashtagName}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center flex-shrink-0">
@@ -745,9 +750,7 @@ export default function AdminProducts() {
                             : "text-gray-300 hover:text-yellow-500"
                         }`}
                         title={
-                          category.isFeatured
-                            ? "Онцлохоо болиулах"
-                            : "Онцлох (нүүрэнд гаргах)"
+                          category.isFeatured ? "Онцлохоо болиулах" : "Онцлох (нүүрэнд гаргах)"
                         }
                       >
                         <Star size={16} className={category.isFeatured ? "fill-current" : ""} />
@@ -762,9 +765,7 @@ export default function AdminProducts() {
                       <button
                         onClick={() => handleDeleteCategory(category.id)}
                         className="text-red-500 hover:text-red-700 p-1"
-                        title={
-                          children.length > 0 ? "Эхлээд дэд ангиллуудыг нь устгана" : "Устгах"
-                        }
+                        title={children.length > 0 ? "Эхлээд дэд ангиллуудыг нь устгана" : "Устгах"}
                       >
                         <Trash2 size={16} />
                       </button>
@@ -1279,7 +1280,9 @@ export default function AdminProducts() {
                   Үндсэн мэдээлэл
                 </h3>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Барааны нэр</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Барааны нэр
+                  </label>
                   <input
                     type="text"
                     required
@@ -1324,7 +1327,9 @@ export default function AdminProducts() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Нөөц (ширхэг)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Нөөц (ширхэг)
+                    </label>
                     <input
                       type="number"
                       required
@@ -1346,49 +1351,52 @@ export default function AdminProducts() {
                   Ангилал ба төлөв
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Ангилал <span className="text-gray-400 font-normal">(заавал биш)</span>
-                  </label>
-                  <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={formData.categoryId || 0}
-                    onChange={e =>
-                      setFormData({ ...formData, categoryId: parseInt(e.target.value) })
-                    }
-                  >
-                    <option value={0}>Ангилалгүй</option>
-                    {categories
-                      .filter(c => !c.parentId)
-                      .map(main => [
-                        <option key={main.id} value={main.id}>
-                          {main.name}
-                        </option>,
-                        ...categories
-                          .filter(c => c.parentId === main.id)
-                          .map(child => (
-                            <option key={child.id} value={child.id}>
-                              {"   — "}
-                              {child.name}
-                            </option>
-                          )),
-                      ])}
-                  </select>
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Ангилал <span className="text-gray-400 font-normal">(заавал биш)</span>
+                    </label>
+                    <select
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={formData.categoryId || 0}
+                      onChange={e =>
+                        setFormData({ ...formData, categoryId: parseInt(e.target.value) })
+                      }
+                    >
+                      <option value={0}>Ангилалгүй</option>
+                      {categories
+                        .filter(c => !c.parentId)
+                        .map(main => [
+                          <option key={main.id} value={main.id}>
+                            {main.name}
+                          </option>,
+                          ...categories
+                            .filter(c => c.parentId === main.id)
+                            .map(child => (
+                              <option key={child.id} value={child.id}>
+                                {"   — "}
+                                {child.name}
+                              </option>
+                            )),
+                        ])}
+                    </select>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Төлөв</label>
-                  <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={formData.status}
-                    onChange={e =>
-                      setFormData({ ...formData, status: e.target.value as "ACTIVE" | "INACTIVE" })
-                    }
-                  >
-                    <option value="ACTIVE">Идэвхтэй</option>
-                    <option value="INACTIVE">Идэвхгүй</option>
-                  </select>
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Төлөв</label>
+                    <select
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={formData.status}
+                      onChange={e =>
+                        setFormData({
+                          ...formData,
+                          status: e.target.value as "ACTIVE" | "INACTIVE",
+                        })
+                      }
+                    >
+                      <option value="ACTIVE">Идэвхтэй</option>
+                      <option value="INACTIVE">Идэвхгүй</option>
+                    </select>
+                  </div>
                 </div>
 
                 <label className="flex items-center gap-3 cursor-pointer">
@@ -1430,8 +1438,8 @@ export default function AdminProducts() {
                   </div>
                 </div>
                 <p className="text-xs text-gray-500">
-                  Утга бичээд Enter эсвэл таслал дарж chip болгож нэмнэ үү. Хоосон орхивол
-                  худалдан авагчид өнгө/размер сонгох сонголт харагдахгүй.
+                  Утга бичээд Enter эсвэл таслал дарж chip болгож нэмнэ үү. Хоосон орхивол худалдан
+                  авагчид өнгө/размер сонгох сонголт харагдахгүй.
                 </p>
               </div>
 
@@ -1461,7 +1469,9 @@ export default function AdminProducts() {
                         {previewImages.length} / 10 зураг сонгосон
                       </p>
                       {previewImages.length >= 10 ? (
-                        <span className="text-xs text-orange-500 font-medium">Дээд хэмжээндээ хүрсэн</span>
+                        <span className="text-xs text-orange-500 font-medium">
+                          Дээд хэмжээндээ хүрсэн
+                        </span>
                       ) : (
                         <p className="text-xs text-gray-500">Эхний зураг cover болно</p>
                       )}
@@ -1555,7 +1565,9 @@ export default function AdminProducts() {
                   Үндсэн мэдээлэл
                 </h3>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Барааны нэр</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Барааны нэр
+                  </label>
                   <input
                     type="text"
                     required
@@ -1600,7 +1612,9 @@ export default function AdminProducts() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Нөөц (ширхэг)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Нөөц (ширхэг)
+                    </label>
                     <input
                       type="number"
                       required
@@ -1615,8 +1629,8 @@ export default function AdminProducts() {
                   </div>
                 </div>
                 <p className="text-xs text-gray-500">
-                  💡 Зөвлөмж: үнэ, нөөц, хямдралыг хаалт нээлгүйгээр ч жагсаалтын хүснэгтэн
-                  дээр шууд засаж болно.
+                  💡 Зөвлөмж: үнэ, нөөц, хямдралыг хаалт нээлгүйгээр ч жагсаалтын хүснэгтэн дээр
+                  шууд засаж болно.
                 </p>
               </div>
 
@@ -1626,49 +1640,52 @@ export default function AdminProducts() {
                   Ангилал ба төлөв
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Ангилал <span className="text-gray-400 font-normal">(заавал биш)</span>
-                  </label>
-                  <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={formData.categoryId || 0}
-                    onChange={e =>
-                      setFormData({ ...formData, categoryId: parseInt(e.target.value) })
-                    }
-                  >
-                    <option value={0}>Ангилалгүй</option>
-                    {categories
-                      .filter(c => !c.parentId)
-                      .map(main => [
-                        <option key={main.id} value={main.id}>
-                          {main.name}
-                        </option>,
-                        ...categories
-                          .filter(c => c.parentId === main.id)
-                          .map(child => (
-                            <option key={child.id} value={child.id}>
-                              {"   — "}
-                              {child.name}
-                            </option>
-                          )),
-                      ])}
-                  </select>
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Ангилал <span className="text-gray-400 font-normal">(заавал биш)</span>
+                    </label>
+                    <select
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={formData.categoryId || 0}
+                      onChange={e =>
+                        setFormData({ ...formData, categoryId: parseInt(e.target.value) })
+                      }
+                    >
+                      <option value={0}>Ангилалгүй</option>
+                      {categories
+                        .filter(c => !c.parentId)
+                        .map(main => [
+                          <option key={main.id} value={main.id}>
+                            {main.name}
+                          </option>,
+                          ...categories
+                            .filter(c => c.parentId === main.id)
+                            .map(child => (
+                              <option key={child.id} value={child.id}>
+                                {"   — "}
+                                {child.name}
+                              </option>
+                            )),
+                        ])}
+                    </select>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Төлөв</label>
-                  <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={formData.status}
-                    onChange={e =>
-                      setFormData({ ...formData, status: e.target.value as "ACTIVE" | "INACTIVE" })
-                    }
-                  >
-                    <option value="ACTIVE">Идэвхтэй</option>
-                    <option value="INACTIVE">Идэвхгүй</option>
-                  </select>
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Төлөв</label>
+                    <select
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={formData.status}
+                      onChange={e =>
+                        setFormData({
+                          ...formData,
+                          status: e.target.value as "ACTIVE" | "INACTIVE",
+                        })
+                      }
+                    >
+                      <option value="ACTIVE">Идэвхтэй</option>
+                      <option value="INACTIVE">Идэвхгүй</option>
+                    </select>
+                  </div>
                 </div>
 
                 <label className="flex items-center gap-3 cursor-pointer">
@@ -1710,8 +1727,8 @@ export default function AdminProducts() {
                   </div>
                 </div>
                 <p className="text-xs text-gray-500">
-                  Утга бичээд Enter эсвэл таслал дарж chip болгож нэмнэ үү. Хоосон орхивол
-                  худалдан авагчид өнгө/размер сонгох сонголт харагдахгүй.
+                  Утга бичээд Enter эсвэл таслал дарж chip болгож нэмнэ үү. Хоосон орхивол худалдан
+                  авагчид өнгө/размер сонгох сонголт харагдахгүй.
                 </p>
               </div>
 
@@ -1783,8 +1800,14 @@ export default function AdminProducts() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <div className="text-xs text-gray-500 mt-1 space-y-1">
-                  <p>Хоосон орхивол одоогийн зурагнууд хэвээр үлдэнэ. Шинэ зураг оруулбал бүх одоогийн зургийг орлоно.</p>
-                  <p>Дээд тал нь 10 зураг. Зураг дээр хулгайлж (hover) байгаад ганцаарчлан устгаж болно.</p>
+                  <p>
+                    Хоосон орхивол одоогийн зурагнууд хэвээр үлдэнэ. Шинэ зураг оруулбал бүх
+                    одоогийн зургийг орлоно.
+                  </p>
+                  <p>
+                    Дээд тал нь 10 зураг. Зураг дээр хулгайлж (hover) байгаад ганцаарчлан устгаж
+                    болно.
+                  </p>
                 </div>
 
                 {previewImages.length > 0 && (
@@ -1794,7 +1817,9 @@ export default function AdminProducts() {
                         Шинэ зургийн урьдчилан харах ({previewImages.length} / 10):
                       </p>
                       {previewImages.length >= 10 ? (
-                        <span className="text-xs text-orange-500 font-medium">Дээд хэмжээндээ хүрсэн</span>
+                        <span className="text-xs text-orange-500 font-medium">
+                          Дээд хэмжээндээ хүрсэн
+                        </span>
                       ) : (
                         <p className="text-xs text-gray-500">Бүх одоогийн зургийг орлоно</p>
                       )}
@@ -2148,6 +2173,27 @@ export default function AdminProducts() {
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
                   Нүүр хуудасны ангиллын картад харагдана
+                </p>
+              </div>
+
+              {/* Facebook sync hashtag */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Категорийн hashtag <span className="text-gray-400 font-normal">(заавал биш)</span>
+                </label>
+                <input
+                  type="text"
+                  value={categoryFormData.hashtagName ?? ""}
+                  onChange={e =>
+                    setCategoryFormData({ ...categoryFormData, hashtagName: e.target.value })
+                  }
+                  placeholder="Жишээ: гарцүнх"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Facebook пост дээр энэ hashtag орсон бол уг барааг автоматаар энэ категорид
+                  оруулна. Хоосон орхивол категорийн нэрнээс автоматаар тааруулна. &quot;#&quot;
+                  тэмдэггүйгээр бичнэ (жишээ: vip).
                 </p>
               </div>
 

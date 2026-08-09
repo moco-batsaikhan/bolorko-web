@@ -1,8 +1,4 @@
-import {
-  API_BASE_URL,
-  API_ENDPOINTS,
-  STORAGE_KEYS,
-} from "../constants/constants";
+import { API_BASE_URL, API_ENDPOINTS, STORAGE_KEYS } from "../constants/constants";
 
 export interface User {
   id: number;
@@ -145,6 +141,9 @@ export interface ProductCategory {
   children?: ProductCategory[];
   image?: string | null;
   isFeatured?: boolean;
+  // Facebook пост sync хийхэд ашиглагдана — "#"-гүйгээр. Хоосон бол
+  // категорийн нэрнээс автоматаар тааруулна
+  hashtagName?: string | null;
   createdAt: string;
   products?: Product[];
 }
@@ -170,7 +169,7 @@ export interface Product {
   stock: number;
   categoryId?: number | null;
   status: "ACTIVE" | "INACTIVE";
-  type?: "PRODUCT" | "INFO";
+  postType?: "PRODUCT" | "INFO";
   isFeatured?: boolean;
   images: string[] | string | null;
   // Хоосон/тохируулаагүй бол null — байвал дэлгэрэнгүй хуудсан дээр
@@ -231,6 +230,7 @@ export interface CreateProductCategoryRequest {
   parentId?: number;
   image?: File;
   isFeatured?: boolean;
+  hashtagName?: string;
 }
 
 export interface Banner {
@@ -434,10 +434,10 @@ class ApiService {
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new ApiError(
-        errorData.message || `HTTP error! status: ${response.status}`,
-        { status: response.status, msgList: errorData.msgList }
-      );
+      throw new ApiError(errorData.message || `HTTP error! status: ${response.status}`, {
+        status: response.status,
+        msgList: errorData.msgList,
+      });
     }
     return response.json();
   }
@@ -468,16 +468,13 @@ class ApiService {
       role: credentials.role || "USER",
     };
 
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.AUTH.REGISTER}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(registerData),
-      }
-    );
+    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.AUTH.REGISTER}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(registerData),
+    });
 
     const data = await this.handleResponse<LoginResponse>(response);
 
@@ -498,13 +495,10 @@ class ApiService {
     const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
     if (!token) return null;
 
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.AUTH.CURRENT_USER}`,
-      {
-        method: "GET",
-        headers: this.getAuthHeaders(),
-      }
-    );
+    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.AUTH.CURRENT_USER}`, {
+      method: "GET",
+      headers: this.getAuthHeaders(),
+    });
 
     if (response.status === 401 || response.status === 403) {
       return null;
@@ -533,20 +527,15 @@ class ApiService {
       const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
       if (!refreshToken) return null;
 
-      const response = await fetch(
-        `${this.baseURL}${API_ENDPOINTS.AUTH.REFRESH}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${refreshToken}`,
-          },
-        }
-      );
+      const response = await fetch(`${this.baseURL}${API_ENDPOINTS.AUTH.REFRESH}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${refreshToken}`,
+        },
+      });
 
-      const data = await this.handleResponse<{ access_token: string }>(
-        response
-      );
+      const data = await this.handleResponse<{ access_token: string }>(response);
       localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.access_token);
 
       return data.access_token;
@@ -558,23 +547,16 @@ class ApiService {
   }
 
   async getCurrentUser(): Promise<User> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.AUTH.CURRENT_USER}`,
-      {
-        headers: this.getAuthHeaders(),
-      }
-    );
+    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.AUTH.CURRENT_USER}`, {
+      headers: this.getAuthHeaders(),
+    });
 
     console.log("getCurrentUser: ", response);
 
     return this.handleResponse<User>(response);
   }
 
-  async updateProfile(payload: {
-    name: string;
-    phone: string;
-    roleId?: number;
-  }): Promise<User> {
+  async updateProfile(payload: { name: string; phone: string; roleId?: number }): Promise<User> {
     const response = await fetch(`${this.baseURL}/users/profile`, {
       method: "PATCH",
       headers: this.getAuthHeaders(),
@@ -611,13 +593,10 @@ class ApiService {
   }
 
   async getAllProducts(): Promise<Product[]> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.PRODUCTS.ALL}`,
-      {
-        method: "GET",
-        headers: this.getAuthHeaders(),
-      }
-    );
+    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.PRODUCTS.ALL}`, {
+      method: "GET",
+      headers: this.getAuthHeaders(),
+    });
 
     return this.handleResponse<Product[]>(response);
   }
@@ -681,12 +660,9 @@ class ApiService {
   }
 
   async getProductCategories(): Promise<ProductCategory[]> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.SHOP.PRODUCT_CATEGORIES}`,
-      {
-        method: "GET",
-      }
-    );
+    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.SHOP.PRODUCT_CATEGORIES}`, {
+      method: "GET",
+    });
 
     return this.handleResponse<ProductCategory[]>(response);
   }
@@ -696,60 +672,45 @@ class ApiService {
       `${this.baseURL}${API_ENDPOINTS.SHOP.PRODUCTS_BY_CATEGORY}/${categoryId}`,
       {
         method: "GET",
-      }
+      },
     );
 
     return this.handleResponse<Product[]>(response);
   }
 
   async getAdminProductCategories(): Promise<ProductCategory[]> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.PRODUCTS.CATEGORIES}`,
-      {
-        method: "GET",
-        headers: this.getAuthHeaders(),
-      }
-    );
+    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.PRODUCTS.CATEGORIES}`, {
+      method: "GET",
+      headers: this.getAuthHeaders(),
+    });
 
     return this.handleResponse<ProductCategory[]>(response);
   }
 
   async getUsers(): Promise<AdminUser[]> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.ADMIN.ALL_USERS}`,
-      {
-        method: "GET",
-        headers: this.getAuthHeaders(),
-      }
-    );
+    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.ADMIN.ALL_USERS}`, {
+      method: "GET",
+      headers: this.getAuthHeaders(),
+    });
 
     return this.handleResponse<AdminUser[]>(response);
   }
 
-  async updateUser(
-    id: number,
-    userData: UpdateUserRequest
-  ): Promise<AdminUser> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.ADMIN.UPDATE_USER}/${id}`,
-      {
-        method: "POST",
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(userData),
-      }
-    );
+  async updateUser(id: number, userData: UpdateUserRequest): Promise<AdminUser> {
+    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.ADMIN.UPDATE_USER}/${id}`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(userData),
+    });
 
     return this.handleResponse<AdminUser>(response);
   }
 
   async deleteUser(id: number): Promise<void> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.ADMIN.DELETE_USER}/${id}`,
-      {
-        method: "DELETE",
-        headers: this.getAuthHeaders(),
-      }
-    );
+    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.ADMIN.DELETE_USER}/${id}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -767,14 +728,11 @@ class ApiService {
     }
     formData.append("status", productData.status);
     if (productData.installmentPaymentAllowed !== undefined) {
-      formData.append(
-        "installmentPaymentAllowed",
-        String(productData.installmentPaymentAllowed)
-      );
+      formData.append("installmentPaymentAllowed", String(productData.installmentPaymentAllowed));
     }
 
     if (productData.images && productData.images.length > 0) {
-      productData.images.forEach((image) => {
+      productData.images.forEach(image => {
         formData.append("images", image);
       });
     }
@@ -782,14 +740,11 @@ class ApiService {
     const authHeaders = this.getAuthHeaders();
     delete authHeaders["Content-Type"];
 
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.PRODUCTS.CREATE}`,
-      {
-        method: "POST",
-        headers: authHeaders,
-        body: formData,
-      }
-    );
+    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.PRODUCTS.CREATE}`, {
+      method: "POST",
+      headers: authHeaders,
+      body: formData,
+    });
 
     const created = await this.handleResponse<Product>(response);
 
@@ -808,10 +763,7 @@ class ApiService {
     return created;
   }
 
-  async updateProduct(
-    id: number,
-    productData: UpdateProductRequest
-  ): Promise<Product> {
+  async updateProduct(id: number, productData: UpdateProductRequest): Promise<Product> {
     const formData = new FormData();
     formData.append("name", productData.name);
     formData.append("description", productData.description);
@@ -823,14 +775,11 @@ class ApiService {
     formData.append("categoryId", String(productData.categoryId ?? 0));
     formData.append("status", productData.status);
     if (productData.installmentPaymentAllowed !== undefined) {
-      formData.append(
-        "installmentPaymentAllowed",
-        String(productData.installmentPaymentAllowed)
-      );
+      formData.append("installmentPaymentAllowed", String(productData.installmentPaymentAllowed));
     }
 
     if (productData.images && productData.images.length > 0) {
-      productData.images.forEach((image) => {
+      productData.images.forEach(image => {
         formData.append("images", image);
       });
     }
@@ -838,14 +787,11 @@ class ApiService {
     const authHeaders = this.getAuthHeaders();
     delete authHeaders["Content-Type"];
 
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.PRODUCTS.UPDATE}/${id}`,
-      {
-        method: "PATCH",
-        headers: authHeaders,
-        body: formData,
-      }
-    );
+    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.PRODUCTS.UPDATE}/${id}`, {
+      method: "PATCH",
+      headers: authHeaders,
+      body: formData,
+    });
 
     const updated = await this.handleResponse<Product>(response);
 
@@ -863,13 +809,10 @@ class ApiService {
   }
 
   async deleteProduct(id: number): Promise<void> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.PRODUCTS.DELETE}/${id}`,
-      {
-        method: "DELETE",
-        headers: this.getAuthHeaders(),
-      }
-    );
+    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.PRODUCTS.DELETE}/${id}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -892,16 +835,13 @@ class ApiService {
       salePrice: number | null;
       colors: string[] | null;
       sizes: string[] | null;
-    }>
+    }>,
   ): Promise<Product> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.PRODUCTS.UPDATE}/${id}`,
-      {
-        method: "PATCH",
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(data),
-      }
-    );
+    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.PRODUCTS.UPDATE}/${id}`, {
+      method: "PATCH",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
 
     return this.handleResponse<Product>(response);
   }
@@ -929,9 +869,7 @@ class ApiService {
     return this.handleResponse<ProductCategory[]>(response);
   }
 
-  private buildCategoryFormData(
-    categoryData: Partial<CreateProductCategoryRequest>
-  ): FormData {
+  private buildCategoryFormData(categoryData: Partial<CreateProductCategoryRequest>): FormData {
     const formData = new FormData();
     if (categoryData.name !== undefined) formData.append("name", categoryData.name);
     if (categoryData.description !== undefined) {
@@ -943,6 +881,9 @@ class ApiService {
     if (categoryData.isFeatured !== undefined) {
       formData.append("isFeatured", categoryData.isFeatured.toString());
     }
+    if (categoryData.hashtagName !== undefined) {
+      formData.append("hashtagName", categoryData.hashtagName);
+    }
     if (categoryData.image) {
       formData.append("image", categoryData.image);
     }
@@ -950,32 +891,26 @@ class ApiService {
   }
 
   async createProductCategory(
-    categoryData: CreateProductCategoryRequest
+    categoryData: CreateProductCategoryRequest,
   ): Promise<ProductCategory> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.PRODUCTS.CATEGORIES_CREATE}`,
-      {
-        method: "POST",
-        headers: this.getAuthHeaders(true),
-        body: this.buildCategoryFormData(categoryData),
-      }
-    );
+    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.PRODUCTS.CATEGORIES_CREATE}`, {
+      method: "POST",
+      headers: this.getAuthHeaders(true),
+      body: this.buildCategoryFormData(categoryData),
+    });
 
     return this.handleResponse<ProductCategory>(response);
   }
 
   async updateProductCategory(
     id: number,
-    categoryData: Partial<CreateProductCategoryRequest>
+    categoryData: Partial<CreateProductCategoryRequest>,
   ): Promise<ProductCategory> {
-    const response = await fetch(
-      `${this.baseURL}${API_ENDPOINTS.PRODUCTS.CATEGORIES}/${id}`,
-      {
-        method: "PATCH",
-        headers: this.getAuthHeaders(true),
-        body: this.buildCategoryFormData(categoryData),
-      }
-    );
+    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.PRODUCTS.CATEGORIES}/${id}`, {
+      method: "PATCH",
+      headers: this.getAuthHeaders(true),
+      body: this.buildCategoryFormData(categoryData),
+    });
 
     return this.handleResponse<ProductCategory>(response);
   }
@@ -986,7 +921,7 @@ class ApiService {
       {
         method: "DELETE",
         headers: this.getAuthHeaders(),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -994,10 +929,7 @@ class ApiService {
     }
   }
 
-  async addToCart(
-    userId: number,
-    productData: AddToCartRequest
-  ): Promise<Cart> {
+  async addToCart(userId: number, productData: AddToCartRequest): Promise<Cart> {
     const response = await fetch(`${this.baseURL}/cart/${userId}/add`, {
       method: "POST",
       headers: this.getAuthHeaders(),
@@ -1026,28 +958,22 @@ class ApiService {
   async updateCartItemQuantity(
     userId: number,
     itemId: number,
-    quantityData: UpdateCartItemRequest
+    quantityData: UpdateCartItemRequest,
   ): Promise<Cart> {
-    const response = await fetch(
-      `${this.baseURL}/cart/${userId}/items/${itemId}`,
-      {
-        method: "PATCH",
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(quantityData),
-      }
-    );
+    const response = await fetch(`${this.baseURL}/cart/${userId}/items/${itemId}`, {
+      method: "PATCH",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(quantityData),
+    });
 
     return this.handleResponse<Cart>(response);
   }
 
   async removeCartItem(userId: number, itemId: number): Promise<void> {
-    const response = await fetch(
-      `${this.baseURL}/cart/${userId}/items/${itemId}`,
-      {
-        method: "DELETE",
-        headers: this.getAuthHeaders(),
-      }
-    );
+    const response = await fetch(`${this.baseURL}/cart/${userId}/items/${itemId}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -1091,10 +1017,7 @@ class ApiService {
     return this.handleResponse<Order[]>(response);
   }
 
-  async updateOrderStatus(
-    orderId: number,
-    statusData: UpdateOrderStatusRequest
-  ): Promise<Order> {
+  async updateOrderStatus(orderId: number, statusData: UpdateOrderStatusRequest): Promise<Order> {
     const response = await fetch(`${this.baseURL}/orders/${orderId}`, {
       method: "PATCH",
       headers: this.getAuthHeaders(),
@@ -1105,13 +1028,10 @@ class ApiService {
   }
 
   async markOrderAsPaid(orderId: number): Promise<Order> {
-    const response = await fetch(
-      `${this.baseURL}/orders/${orderId}/mark-paid`,
-      {
-        method: "PATCH",
-        headers: this.getAuthHeaders(),
-      }
-    );
+    const response = await fetch(`${this.baseURL}/orders/${orderId}/mark-paid`, {
+      method: "PATCH",
+      headers: this.getAuthHeaders(),
+    });
 
     return this.handleResponse<Order>(response);
   }
@@ -1128,10 +1048,9 @@ class ApiService {
 
   // Auth шаардлагагүй — QPay-ийн polling-той адил тогтмол давтамжтай дуудна
   async checkStorePayLoan(loanId: number): Promise<StorePayCheckResponse> {
-    const response = await fetch(
-      `${this.baseURL}/payments/storepay/loan/check/${loanId}`,
-      { method: "GET" }
-    );
+    const response = await fetch(`${this.baseURL}/payments/storepay/loan/check/${loanId}`, {
+      method: "GET",
+    });
 
     return this.handleResponse<StorePayCheckResponse>(response);
   }
@@ -1139,31 +1058,26 @@ class ApiService {
   // Нэвтрэлт тасарсны дараа requestId-гээр сэргээж шалгахад ашиглана
   async checkStorePayRequest(requestId: string): Promise<StorePayCheckResponse> {
     const response = await fetch(
-      `${this.baseURL}/payments/storepay/loan/checkRequest/${encodeURIComponent(
-        requestId
-      )}`,
-      { method: "GET" }
+      `${this.baseURL}/payments/storepay/loan/checkRequest/${encodeURIComponent(requestId)}`,
+      { method: "GET" },
     );
 
     return this.handleResponse<StorePayCheckResponse>(response);
   }
 
   async cancelStorePayLoan(accountId: number): Promise<void> {
-    const response = await fetch(
-      `${this.baseURL}/payments/storepay/loan/cancel`,
-      {
-        method: "POST",
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify({ accountId }),
-      }
-    );
+    const response = await fetch(`${this.baseURL}/payments/storepay/loan/cancel`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ accountId }),
+    });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new ApiError(
-        errorData.message || `HTTP error! status: ${response.status}`,
-        { status: response.status, msgList: errorData.msgList }
-      );
+      throw new ApiError(errorData.message || `HTTP error! status: ${response.status}`, {
+        status: response.status,
+        msgList: errorData.msgList,
+      });
     }
   }
 
@@ -1171,40 +1085,32 @@ class ApiService {
   async getStorePayLoanList(startDate: string, endDate: string): Promise<unknown> {
     const response = await fetch(
       `${this.baseURL}/payments/storepay/loan/list/${startDate}/${endDate}`,
-      { method: "GET", headers: this.getAuthHeaders() }
+      { method: "GET", headers: this.getAuthHeaders() },
     );
 
     return this.handleResponse<unknown>(response);
   }
 
   async changeStorePayLoan(data: StorePayChangeRequest): Promise<unknown> {
-    const response = await fetch(
-      `${this.baseURL}/payments/storepay/loan/change`,
-      {
-        method: "POST",
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(data),
-      }
-    );
+    const response = await fetch(`${this.baseURL}/payments/storepay/loan/change`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
 
     return this.handleResponse<unknown>(response);
   }
 
   async getStorePayChangeRequests(): Promise<StorePayChangeRequestItem[]> {
-    const response = await fetch(
-      `${this.baseURL}/payments/storepay/loan/change-requests`,
-      {
-        method: "POST",
-        headers: this.getAuthHeaders(),
-      }
-    );
+    const response = await fetch(`${this.baseURL}/payments/storepay/loan/change-requests`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+    });
 
     return this.handleResponse<StorePayChangeRequestItem[]>(response);
   }
 
-  async createPocketInvoice(
-    data: CreatePocketInvoiceRequest
-  ): Promise<PocketInvoice> {
+  async createPocketInvoice(data: CreatePocketInvoiceRequest): Promise<PocketInvoice> {
     const response = await fetch(`${this.baseURL}/payments/pocket/invoice`, {
       method: "POST",
       headers: this.getAuthHeaders(),
@@ -1215,14 +1121,10 @@ class ApiService {
   }
 
   // Auth шаардлагагүй — QR дэлгэц нээлттэй байх хугацаанд тогтмол давтамжтай дуудна
-  async checkPocketInvoiceStatus(
-    orderNumber: string
-  ): Promise<PocketInvoiceStatus> {
+  async checkPocketInvoiceStatus(orderNumber: string): Promise<PocketInvoiceStatus> {
     const response = await fetch(
-      `${this.baseURL}/payments/pocket/invoice/order-number/${encodeURIComponent(
-        orderNumber
-      )}`,
-      { method: "GET" }
+      `${this.baseURL}/payments/pocket/invoice/order-number/${encodeURIComponent(orderNumber)}`,
+      { method: "GET" },
     );
 
     return this.handleResponse<PocketInvoiceStatus>(response);
@@ -1244,10 +1146,7 @@ class ApiService {
     return this.handleResponse<Banner[]>(response);
   }
 
-  private async patchBannerJson(
-    id: number,
-    bannerData: UpdateBannerRequest
-  ): Promise<Banner> {
+  private async patchBannerJson(id: number, bannerData: UpdateBannerRequest): Promise<Banner> {
     const response = await fetch(`${this.baseURL}/banners/${id}`, {
       method: "PATCH",
       headers: this.getAuthHeaders(),
@@ -1301,10 +1200,7 @@ class ApiService {
     return this.handleResponse<Banner>(response);
   }
 
-  async updateBanner(
-    id: number,
-    bannerData: UpdateBannerRequest
-  ): Promise<Banner> {
+  async updateBanner(id: number, bannerData: UpdateBannerRequest): Promise<Banner> {
     if (bannerData.image) {
       const formData = new FormData();
       formData.append("title", bannerData.title);
@@ -1355,9 +1251,7 @@ class ApiService {
 
 // Backend-ийн "Insufficient stock" (400) алдааг таних helper
 export function isInsufficientStockError(error: unknown): boolean {
-  return (
-    error instanceof Error && /insufficient stock|нөөц/i.test(error.message)
-  );
+  return error instanceof Error && /insufficient stock|нөөц/i.test(error.message);
 }
 
 export const apiService = new ApiService();
