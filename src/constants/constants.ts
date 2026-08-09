@@ -1,6 +1,9 @@
 // API Configuration
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://api.cubingmongolia.mn";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+// Сайтын нийтэд ил хаяг — sitemap.xml болон robots.txt дээр бүрэн
+// (absolute) URL үүсгэхэд ашиглагдана
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://bolorko.mn";
 
 // Хүргэлтийн тогтмол төлбөр — захиалгын дүн дээр нэмэгдэнэ
 export const SHIPPING_FEE = 7000;

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { FacebookLiveBanner } from "@/components/FacebookLiveBanner";
 import { apiService, Product, ProductCategory, Banner } from "@/services/apiService";
 import { API_BASE_URL } from "@/constants/constants";
 import Loading from "@/components/Loading";
@@ -330,6 +331,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
       <Header />
+      <FacebookLiveBanner />
 
       {/* Hero — Banner Carousel */}
       {banners.length > 0 ? (

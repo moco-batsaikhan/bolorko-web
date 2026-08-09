@@ -224,6 +224,13 @@ export interface FacebookSyncResult {
   message: string;
 }
 
+export interface FacebookLiveStatus {
+  isLive: boolean;
+  permalinkUrl: string | null;
+  embedHtml: string | null;
+  title: string | null;
+}
+
 export interface CreateProductCategoryRequest {
   name: string;
   description: string;
@@ -858,6 +865,16 @@ class ApiService {
     });
 
     return this.handleResponse<FacebookSyncResult>(response);
+  }
+
+  // Facebook хуудас яг одоо live эфир хийж байгаа эсэхийг шалгана — нэвтрэлт
+  // шаардахгүй, нүүр хуудсан дээр polling хийхэд ашиглагдана
+  async getFacebookLiveStatus(): Promise<FacebookLiveStatus> {
+    const response = await fetch(`${this.baseURL}/products/facebook-live`, {
+      method: "GET",
+    });
+
+    return this.handleResponse<FacebookLiveStatus>(response);
   }
 
   // Онцолсон категориуд (дэд категориудтайгаа) — нүүрний "Онцлох ангилал" хэсэгт
