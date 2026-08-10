@@ -23,6 +23,8 @@ export const metadata: Metadata = {
     "bolorko.mn",
     "Bolorko дэлгүүр",
     "Bolorko онлайн дэлгүүр",
+    "Болорко",
+    "Boloroo",
     "онлайн дэлгүүр",
     "хувцас захиалга",
     "Монгол онлайн шоппинг",

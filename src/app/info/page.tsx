@@ -111,12 +111,14 @@ function ImageModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl overflow-hidden w-full max-w-5xl max-h-[95vh] flex flex-col md:flex-row"
+        className="bg-white rounded-xl overflow-hidden w-full max-w-5xl max-h-[90dvh] flex flex-col md:flex-row"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Image + carousel */}
+        {/* Image + carousel — mobile дээр өндрийг тогтмол хязгаарлана,
+            эс тэгвээс aspect-square нь landscape/богино дэлгэц дээр бүх
+            орон зайг эзэлж, доод талын мэдээллийн хэсгийг шахаж алдагдуулдаг байсан */}
         <div
-          className="relative bg-black flex items-center justify-center md:w-2/3 aspect-square md:aspect-auto md:h-[85vh] flex-shrink-0"
+          className="relative bg-black flex items-center justify-center md:w-2/3 h-[40dvh] md:h-[85vh] md:aspect-auto flex-shrink-0"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
@@ -171,8 +173,8 @@ function ImageModal({
           )}
         </div>
 
-        {/* Info side */}
-        <div className="md:w-1/3 p-5 overflow-y-auto">
+        {/* Info side — mobile дээр үлдсэн өндрийг дүүргэж дотроо scroll хийнэ */}
+        <div className="md:w-1/3 flex-1 md:flex-none min-h-0 p-5 overflow-y-auto">
           <h2 className="font-semibold text-gray-900 text-lg mb-1">{post.name}</h2>
           {post.postedAt && (
             <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-3">

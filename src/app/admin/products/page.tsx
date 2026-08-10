@@ -678,17 +678,17 @@ export default function AdminProducts() {
   }
 
   return (
-    <div className="p-6 max-w-full mx-auto">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+    <div className="p-3 sm:p-6 max-w-full mx-auto">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center gap-3">
           <Package className="text-blue-600" />
           Products Management
         </h1>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-2 sm:gap-3">
           <button
             onClick={handleFacebookSync}
             disabled={syncing}
-            className="bg-[#1877F2] hover:bg-[#0f5cc4] text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="bg-[#1877F2] hover:bg-[#0f5cc4] text-white px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-sm sm:text-base"
             title="Facebook хуудасны постуудаас бараа татах"
           >
             <RefreshCw size={20} className={syncing ? "animate-spin" : ""} />
@@ -696,14 +696,14 @@ export default function AdminProducts() {
           </button>
           <button
             onClick={() => setShowCategoryModal(true)}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+            className="bg-green-600 hover:bg-green-700 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm sm:text-base"
           >
             <Tag size={20} />
             Add Category
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm sm:text-base"
           >
             <Plus size={20} />
             Add Product
@@ -850,7 +850,7 @@ export default function AdminProducts() {
                 onChange={e =>
                   setCategoryFilterId(e.target.value === "all" ? "all" : parseInt(e.target.value))
                 }
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
               >
                 <option value="all">Бүх ангилал</option>
                 {categories
@@ -871,7 +871,7 @@ export default function AdminProducts() {
               </select>
 
               {/* Шүүлтүүр */}
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setQuickFilter("all")}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -906,8 +906,11 @@ export default function AdminProducts() {
               </div>
             </div>
           </div>
-          <p className="text-xs text-gray-400 mb-3">
+          <p className="text-xs text-gray-400 mb-1">
             💡 Үнэ болон нөөцийг хүснэгтэн дээр шууд засаад Enter эсвэл ✓ дарж хадгална
+          </p>
+          <p className="sm:hidden text-xs text-gray-400 mb-3">
+            ← Хүснэгтийг хажуу тийш гулсуулж бусад баганыг харна уу
           </p>
           <div className="overflow-x-auto">
             <table className="w-full table-auto">
@@ -1252,8 +1255,8 @@ export default function AdminProducts() {
 
       {/* Create Product Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-800">Шинэ бараа нэмэх</h2>
               <button
@@ -1309,7 +1312,7 @@ export default function AdminProducts() {
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-2">
                   Үнэ ба нөөц
                 </h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Үнэ (₮)</label>
                     <input
@@ -1350,7 +1353,7 @@ export default function AdminProducts() {
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-2">
                   Ангилал ба төлөв
                 </h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Ангилал <span className="text-gray-400 font-normal">(заавал биш)</span>
@@ -1419,7 +1422,7 @@ export default function AdminProducts() {
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-2">
                   Өнгө ба размер <span className="normal-case text-gray-400">(заавал биш)</span>
                 </h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Өнгө</label>
                     <TagInput
@@ -1539,8 +1542,8 @@ export default function AdminProducts() {
 
       {/* Edit Product Modal */}
       {showEditModal && selectedProduct && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-800">Бараа засах</h2>
               <button
@@ -1594,7 +1597,7 @@ export default function AdminProducts() {
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-2">
                   Үнэ ба нөөц
                 </h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Үнэ (₮)</label>
                     <input
@@ -1639,7 +1642,7 @@ export default function AdminProducts() {
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-2">
                   Ангилал ба төлөв
                 </h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Ангилал <span className="text-gray-400 font-normal">(заавал биш)</span>
@@ -1708,7 +1711,7 @@ export default function AdminProducts() {
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-2">
                   Өнгө ба размер <span className="normal-case text-gray-400">(заавал биш)</span>
                 </h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Өнгө</label>
                     <TagInput
@@ -1887,8 +1890,8 @@ export default function AdminProducts() {
 
       {/* Sale Price Modal */}
       {showSaleModal && selectedProduct && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-lg w-full">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-800">Хямдрал тохируулах</h2>
               <button
@@ -1986,8 +1989,8 @@ export default function AdminProducts() {
 
       {/* Image Gallery Modal */}
       {showImageModal && selectedProduct && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-800">
                 Product Images - {selectedProduct.name}
@@ -2073,8 +2076,8 @@ export default function AdminProducts() {
 
       {/* Category Modal */}
       {showCategoryModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-lg w-full">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-800">
                 {editingCategory ? "Ангилал засах" : "Шинэ ангилал үүсгэх"}

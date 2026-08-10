@@ -171,14 +171,16 @@ export default function AdminBanners() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Баннерын удирдлага</h2>
-          <p className="text-gray-600">Нүүр хуудасны баннеруудыг удирдах</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
+            Баннерын удирдлага
+          </h2>
+          <p className="text-sm sm:text-base text-gray-600">Нүүр хуудасны баннеруудыг удирдах</p>
         </div>
         <button
           onClick={openCreateModal}
-          className="flex items-center px-4 py-2 bg-mega-600 text-white rounded-lg hover:bg-mega-700 transition-colors"
+          className="flex items-center justify-center px-4 py-2 bg-mega-600 text-white rounded-lg hover:bg-mega-700 transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
           Баннер нэмэх

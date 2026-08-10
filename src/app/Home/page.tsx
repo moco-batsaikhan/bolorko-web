@@ -433,7 +433,7 @@ export default function HomePage() {
               Bolorko Collection
             </p>
             <h1 className="font-display text-4xl md:text-6xl font-bold uppercase mb-6">
-              Хувцас, аяллын
+              Онлайн худалдаа
               <br />
               хэрэгсэл
             </h1>

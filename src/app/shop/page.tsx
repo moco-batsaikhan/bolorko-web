@@ -200,7 +200,7 @@ function ShopContent() {
             {/* Subtitle */}
             <p className="text-xl md:text-2xl mb-8 opacity-90 max-w-3xl mx-auto leading-relaxed">
               Bolorko албан ёсны дэлгүүр.
-              <span className="font-semibold"> Хувцас болон аяллын хэрэгсэл</span>
+              <span className="font-semibold"> Хувцас болон бүх төрлийн бараа захиалга</span>
             </p>
 
             {/* Stats */}

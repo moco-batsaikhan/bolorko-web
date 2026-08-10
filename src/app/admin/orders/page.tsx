@@ -361,18 +361,18 @@ export default function AdminOrdersPage() {
 
       {/* Order Details Modal / Drawer */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white w-11/12 md:w-3/4 lg:w-2/3 max-h-[90vh] overflow-auto rounded-lg shadow-lg p-6">
-            <div className="flex items-start justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-2 sm:p-4">
+          <div className="bg-white w-full md:w-3/4 lg:w-2/3 max-h-[90vh] overflow-auto rounded-lg shadow-lg p-4 sm:p-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
                   Захиалгын дэлгэрэнгүй #{selectedOrder.id}
                 </h3>
                 <p className="text-sm text-gray-500">
                   Огноо: {formatDate(selectedOrder.createdAt)}
                 </p>
               </div>
-              <div className="ml-4 flex items-center space-x-3">
+              <div className="sm:ml-4 flex items-center space-x-3">
                 <button
                   onClick={() => {
                     const json = JSON.stringify(selectedOrder, null, 2);
