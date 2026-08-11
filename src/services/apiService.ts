@@ -169,6 +169,9 @@ export interface Product {
   stock: number;
   categoryId?: number | null;
   status: "ACTIVE" | "INACTIVE";
+  // status-оос тусдаа: бараа захиалгаар авагдаж байгаа эсэх, эсвэл бэлэн
+  // ирсэн эсэхийг заана (Facebook захиалгын урьдчилсан борлуулалтад)
+  availability: "TAKING_ORDERS" | "READY";
   postType?: "PRODUCT" | "INFO";
   isFeatured?: boolean;
   images: string[] | string | null;
@@ -199,6 +202,7 @@ export interface CreateProductRequest {
   stock: number;
   categoryId?: number;
   status: "ACTIVE" | "INACTIVE";
+  availability?: "TAKING_ORDERS" | "READY";
   images?: File[];
   colors?: string[];
   sizes?: string[];
@@ -212,6 +216,7 @@ export interface UpdateProductRequest {
   stock: number;
   categoryId?: number;
   status: "ACTIVE" | "INACTIVE";
+  availability?: "TAKING_ORDERS" | "READY";
   images?: File[];
   colors?: string[];
   sizes?: string[];
@@ -734,6 +739,9 @@ class ApiService {
       formData.append("categoryId", productData.categoryId.toString());
     }
     formData.append("status", productData.status);
+    if (productData.availability) {
+      formData.append("availability", productData.availability);
+    }
     if (productData.installmentPaymentAllowed !== undefined) {
       formData.append("installmentPaymentAllowed", String(productData.installmentPaymentAllowed));
     }
@@ -781,6 +789,9 @@ class ApiService {
     // болно (backend талд ч энэ falsy-коллапс тусад нь засах шаардлагатай)
     formData.append("categoryId", String(productData.categoryId ?? 0));
     formData.append("status", productData.status);
+    if (productData.availability) {
+      formData.append("availability", productData.availability);
+    }
     if (productData.installmentPaymentAllowed !== undefined) {
       formData.append("installmentPaymentAllowed", String(productData.installmentPaymentAllowed));
     }
@@ -839,6 +850,7 @@ class ApiService {
       stock: number;
       categoryId: number | null;
       status: "ACTIVE" | "INACTIVE";
+      availability: "TAKING_ORDERS" | "READY";
       salePrice: number | null;
       colors: string[] | null;
       sizes: string[] | null;

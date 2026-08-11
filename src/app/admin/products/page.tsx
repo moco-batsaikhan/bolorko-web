@@ -165,6 +165,7 @@ export default function AdminProducts() {
     stock: 0,
     categoryId: 0,
     status: "ACTIVE",
+    availability: "READY",
     images: [],
     installmentPaymentAllowed: true,
   };
@@ -418,6 +419,24 @@ export default function AdminProducts() {
     }
   };
 
+  // status-оос тусдаа: захиалгаар авч байгаа эсэх / бэлэн ирсэн эсэхийг сольж тэмдэглэнэ
+  const handleToggleAvailability = async (product: Product) => {
+    const newAvailability = product.availability === "READY" ? "TAKING_ORDERS" : "READY";
+    try {
+      await apiService.patchProduct(product.id, { availability: newAvailability });
+      setProducts(prev =>
+        prev.map(p => (p.id === product.id ? { ...p, availability: newAvailability } : p)),
+      );
+      showToast(
+        newAvailability === "READY" ? "Бэлэн ирсэн болголоо" : "Захиалгаар авах болголоо",
+        "success",
+      );
+    } catch (error) {
+      console.error("Error toggling availability:", error);
+      showToast("Захиалгын төлөв өөрчлөхөд алдаа гарлаа", "error");
+    }
+  };
+
   // Бараа (PRODUCT) болон зар/мэдээлэл (INFO) гэж тусад нь харуулна — талбар
   // тохируулаагүй хуучин бараануудыг PRODUCT гэж үзнэ
   const getProductType = (product: Product): "PRODUCT" | "INFO" => product.postType ?? "PRODUCT";
@@ -656,6 +675,7 @@ export default function AdminProducts() {
       stock: product.stock,
       categoryId: product.categoryId || 0,
       status: product.status,
+      availability: product.availability ?? "READY",
       images: [],
       installmentPaymentAllowed: product.installmentPaymentAllowed,
     });
@@ -1114,25 +1134,40 @@ export default function AdminProducts() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => handleToggleStatus(product)}
-                        className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full transition-opacity hover:opacity-70 cursor-pointer ${
-                          product.status === "ACTIVE"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                        title="Дарж идэвхтэй/идэвхгүй болгоно"
-                      >
-                        {product.status === "ACTIVE" ? (
-                          <>
-                            <Eye size={12} className="mr-1" /> Active
-                          </>
-                        ) : (
-                          <>
-                            <EyeOff size={12} className="mr-1" /> Inactive
-                          </>
-                        )}
-                      </button>
+                      <div className="flex flex-col items-start gap-1">
+                        <button
+                          onClick={() => handleToggleStatus(product)}
+                          className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full transition-opacity hover:opacity-70 cursor-pointer ${
+                            product.status === "ACTIVE"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                          title="Дарж идэвхтэй/идэвхгүй болгоно"
+                        >
+                          {product.status === "ACTIVE" ? (
+                            <>
+                              <Eye size={12} className="mr-1" /> Active
+                            </>
+                          ) : (
+                            <>
+                              <EyeOff size={12} className="mr-1" /> Inactive
+                            </>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleToggleAvailability(product)}
+                          className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full transition-opacity hover:opacity-70 cursor-pointer ${
+                            product.availability === "TAKING_ORDERS"
+                              ? "bg-amber-100 text-amber-800"
+                              : "bg-blue-100 text-blue-800"
+                          }`}
+                          title="Дарж захиалгаар авах/бэлэн ирсэн хооронд сольно"
+                        >
+                          {product.availability === "TAKING_ORDERS"
+                            ? "Захиалгаар"
+                            : "Бэлэн ирсэн"}
+                        </button>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                       {isRowDirty(product) && (
@@ -1398,6 +1433,25 @@ export default function AdminProducts() {
                     >
                       <option value="ACTIVE">Идэвхтэй</option>
                       <option value="INACTIVE">Идэвхгүй</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Захиалгын төлөв
+                    </label>
+                    <select
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={formData.availability ?? "READY"}
+                      onChange={e =>
+                        setFormData({
+                          ...formData,
+                          availability: e.target.value as "TAKING_ORDERS" | "READY",
+                        })
+                      }
+                    >
+                      <option value="READY">Бэлэн ирсэн</option>
+                      <option value="TAKING_ORDERS">Захиалгаар авж байна</option>
                     </select>
                   </div>
                 </div>
@@ -1687,6 +1741,25 @@ export default function AdminProducts() {
                     >
                       <option value="ACTIVE">Идэвхтэй</option>
                       <option value="INACTIVE">Идэвхгүй</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Захиалгын төлөв
+                    </label>
+                    <select
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={formData.availability ?? "READY"}
+                      onChange={e =>
+                        setFormData({
+                          ...formData,
+                          availability: e.target.value as "TAKING_ORDERS" | "READY",
+                        })
+                      }
+                    >
+                      <option value="READY">Бэлэн ирсэн</option>
+                      <option value="TAKING_ORDERS">Захиалгаар авж байна</option>
                     </select>
                   </div>
                 </div>

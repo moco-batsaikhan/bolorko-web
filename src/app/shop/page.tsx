@@ -308,13 +308,13 @@ function ShopContent() {
                     className="card-3d bg-white rounded-lg overflow-hidden group block"
                   >
                     {/* Product Image */}
-                    <div className="relative h-48 overflow-hidden">
+                    <div className="relative aspect-square overflow-hidden bg-gray-50">
                       {imageUrl ? (
                         <Image
                           src={imageUrl}
                           alt={product.name}
                           fill
-                          className="object-cover group-hover:scale-110 transition-transform duration-300"
+                          className="object-contain group-hover:scale-110 transition-transform duration-300"
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           unoptimized={!imageUrl.startsWith(API_BASE_URL ?? "")}
                         />

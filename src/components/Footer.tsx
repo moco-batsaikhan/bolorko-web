@@ -71,6 +71,11 @@ export function Footer() {
                   Хувийн мэдээлэл
                 </Link>
               </li>
+              <li>
+                <Link href="/terms" className="text-gray-400 hover:text-white transition-colors">
+                  Үйлчилгээний нөхцөл
+                </Link>
+              </li>
             </ul>
           </div>
 
