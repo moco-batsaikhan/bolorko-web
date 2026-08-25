@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/contexts/ToastContext";
-import { apiService, Order } from "@/services/apiService";
+import { apiService, Order, Product } from "@/services/apiService";
 import {
   Package,
   Clock,
@@ -24,6 +24,9 @@ export default function AdminOrdersPage() {
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(
+    null
+  );
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -447,7 +450,7 @@ export default function AdminOrdersPage() {
                     key={item.id}
                     className="border rounded p-3 flex flex-col md:flex-row md:items-center md:justify-between"
                   >
-                    <div className="flex items-start space-x-4">
+                    <div className="flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-left sm:space-x-4">
                       <div>
                         {Array.isArray(item.product?.images) &&
                         item.product?.images?.[0] ? (
@@ -463,7 +466,7 @@ export default function AdminOrdersPage() {
                           </div>
                         )}
                       </div>
-                      <div>
+                      <div className="mt-2 sm:mt-0">
                         <div className="text-sm font-semibold text-gray-900">
                           {item.product?.name || "-"}
                           {(item.selectedColor || item.selectedSize) && (
@@ -493,7 +496,7 @@ export default function AdminOrdersPage() {
                       </div>
                     </div>
 
-                    <div className="mt-3 md:mt-0 text-right">
+                    <div className="mt-3 md:mt-0 text-center sm:text-right">
                       <div className="text-sm text-gray-700">
                         Нийт:{" "}
                         {formatPrice(
@@ -510,19 +513,9 @@ export default function AdminOrdersPage() {
                         )}
                       </div>
                       <button
-                        onClick={() => {
-                          const productJson = JSON.stringify(
-                            item.product || {},
-                            null,
-                            2
-                          );
-                          const blob = new Blob([productJson], {
-                            type: "application/json",
-                          });
-                          const url = URL.createObjectURL(blob);
-                          window.open(url, "_blank");
-                        }}
-                        className="mt-2 inline-block text-sm text-mega-600 hover:underline"
+                        onClick={() => setSelectedProduct(item.product)}
+                        disabled={!item.product}
+                        className="mt-2 inline-block text-sm text-mega-600 hover:underline disabled:text-gray-400 disabled:cursor-not-allowed disabled:hover:no-underline"
                       >
                         Бүтээгдэхүүний дэлгэрэнгүй үзэх
                       </button>
@@ -546,6 +539,113 @@ export default function AdminOrdersPage() {
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => setSelectedOrder(null)}
+                  className="px-4 py-2 bg-gray-100 rounded"
+                >
+                  Хаах
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Бүтээгдэхүүний дэлгэрэнгүй
+                </h3>
+                <button
+                  onClick={() => setSelectedProduct(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XCircle className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {(Array.isArray(selectedProduct.images)
+                  ? selectedProduct.images
+                  : selectedProduct.images
+                    ? [selectedProduct.images]
+                    : []
+                ).map((img, idx) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={idx}
+                    src={String(img)}
+                    alt={selectedProduct.name}
+                    className="w-24 h-24 object-cover rounded border"
+                  />
+                ))}
+                {(!selectedProduct.images ||
+                  (Array.isArray(selectedProduct.images) &&
+                    selectedProduct.images.length === 0)) && (
+                  <div className="w-24 h-24 bg-gray-100 flex items-center justify-center rounded text-gray-400 text-xs">
+                    No image
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-4 space-y-2 text-sm text-gray-700">
+                <div className="text-base font-semibold text-gray-900">
+                  {selectedProduct.name}
+                </div>
+                {selectedProduct.description && (
+                  <div className="text-gray-600 whitespace-pre-wrap">
+                    {selectedProduct.description}
+                  </div>
+                )}
+                <div>
+                  <strong>Үнэ:</strong> {formatPrice(selectedProduct.price)}
+                  {selectedProduct.salePrice && (
+                    <span className="text-red-600 ml-2">
+                      Хямдарсан үнэ: {formatPrice(selectedProduct.salePrice)}
+                      {selectedProduct.discountPercentage
+                        ? ` (-${selectedProduct.discountPercentage}%)`
+                        : ""}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <strong>Үлдэгдэл:</strong> {selectedProduct.stock}
+                </div>
+                {selectedProduct.category?.name && (
+                  <div>
+                    <strong>Ангилал:</strong> {selectedProduct.category.name}
+                  </div>
+                )}
+                {selectedProduct.colors &&
+                  selectedProduct.colors.length > 0 && (
+                    <div>
+                      <strong>Өнгө:</strong>{" "}
+                      {selectedProduct.colors.join(", ")}
+                    </div>
+                  )}
+                {selectedProduct.sizes && selectedProduct.sizes.length > 0 && (
+                  <div>
+                    <strong>Хэмжээ:</strong> {selectedProduct.sizes.join(", ")}
+                  </div>
+                )}
+                <div>
+                  <strong>Төлөв:</strong>{" "}
+                  {selectedProduct.status === "ACTIVE"
+                    ? "Идэвхтэй"
+                    : "Идэвхгүй"}
+                </div>
+                <div>
+                  <strong>Бэлэн байдал:</strong>{" "}
+                  {selectedProduct.availability === "READY"
+                    ? "Бэлэн"
+                    : "Захиалгаар"}
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => setSelectedProduct(null)}
                   className="px-4 py-2 bg-gray-100 rounded"
                 >
                   Хаах
