@@ -87,6 +87,13 @@ export default function OrdersPage() {
           icon: <CheckCircle className="w-4 h-4" />,
           text: "Төлөгдсөн",
         };
+      case "PROCESSING":
+        return {
+          color: "text-blue-600",
+          bgColor: "bg-blue-100",
+          icon: <Package className="w-4 h-4" />,
+          text: "Бэлтгэж байна",
+        };
       case "SHIPPED":
         return {
           color: "text-blue-600",
@@ -94,7 +101,7 @@ export default function OrdersPage() {
           icon: <Truck className="w-4 h-4" />,
           text: "Хүргэлтэнд гарсан",
         };
-      case "DELIVERED":
+      case "COMPLETED":
         return {
           color: "text-green-700",
           bgColor: "bg-green-200",

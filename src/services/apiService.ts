@@ -85,12 +85,39 @@ export interface ShippingAddress {
   note?: string;
 }
 
+// Backend-ийн бодит enum-тай яг таарна (өмнө нь frontend талд "DELIVERED"
+// гэж буруу нэрлэгдэж байсан утга нь бодит байдал дээр "COMPLETED")
+export type OrderStatus =
+  | "PENDING"
+  | "PAID"
+  | "PROCESSING"
+  | "SHIPPED"
+  | "COMPLETED"
+  | "CANCELLED";
+
+// Захиалга аль сувгаас орж ирснийг заана — вэбсайтын хэвийн ursgal уу,
+// эсвэл админ Facebook-с гараар бүртгэсэн үү
+export type OrderSource = "WEBSITE" | "FACEBOOK";
+
+// status-оос тусдаа: төлбөр төлөгдсөн эсэхийг заана (гар захиалгад админ
+// өөрөө тохируулна, вэбсайтын захиалгад төлбөрийн систем автоматаар тавина)
+export type OrderPaymentStatus = "UNPAID" | "PAID" | "FAILED";
+
 export interface Order {
   id: number;
-  userId: number;
+  userId: number | null;
   total: string;
-  status: "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+  status: OrderStatus;
+  source: OrderSource;
+  paymentStatus: OrderPaymentStatus;
   createdAt: string;
+  updatedAt?: string;
+  // Гараар (Facebook) бүртгэсэн захиалгад холбогдох хэрэглэгчийн акаунт
+  // байхгүй тул эдгээр талбарт шууд нэр/утас/хаяг хадгалагдана
+  customerName?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  note?: string | null;
   user?: {
     id: number;
     name: string;
@@ -129,7 +156,49 @@ export interface CreateOrderResponse {
 }
 
 export interface UpdateOrderStatusRequest {
-  status: "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+  status: OrderStatus;
+}
+
+export interface ManualOrderItem {
+  productId: number;
+  quantity: number;
+  // Facebook дээр тохирсон үнэ — хоосон бол барааны идэвхтэй үнийг ашиглана
+  unitPrice?: number;
+  selectedColor?: string;
+  selectedSize?: string;
+}
+
+export interface CreateManualOrderRequest {
+  source?: OrderSource;
+  customerName: string;
+  phone: string;
+  address?: string;
+  note?: string;
+  items: ManualOrderItem[];
+  status?: OrderStatus;
+  paymentStatus?: OrderPaymentStatus;
+  // Захиалга бодитоор хийгдсэн огноо (жишээ нь: "2026-07-15") — админ
+  // хожим бүртгэж байгаа тохиолдолд бодит огноог тэмдэглэхэд ашиглана
+  orderDate?: string;
+}
+
+export type UpdateManualOrderRequest = Partial<CreateManualOrderRequest>;
+
+export interface FilterOrdersParams {
+  source?: OrderSource;
+  status?: OrderStatus;
+  search?: string;
+  startDate?: string;
+  endDate?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedOrders {
+  data: Order[];
+  total: number;
+  page: number;
+  pages: number;
 }
 
 export interface ProductCategory {
@@ -1060,6 +1129,50 @@ class ApiService {
     const response = await fetch(`${this.baseURL}/orders/${orderId}/mark-paid`, {
       method: "PATCH",
       headers: this.getAuthHeaders(),
+    });
+
+    return this.handleResponse<Order>(response);
+  }
+
+  // Админ хэсгийн захиалгын жагсаалт — эх сурвалж/төлөв/огноо/хайлтаар
+  // шүүж, хуудаслан авна (Facebook-ээр орж ирсэн захиалгыг гараар
+  // бүртгэх/удирдах хэсэгт ашиглагдана)
+  async getAdminOrders(filters?: FilterOrdersParams): Promise<PaginatedOrders> {
+    const query = new URLSearchParams();
+    if (filters?.source) query.append("source", filters.source);
+    if (filters?.status) query.append("status", filters.status);
+    if (filters?.search?.trim()) query.append("search", filters.search.trim());
+    if (filters?.startDate) query.append("startDate", filters.startDate);
+    if (filters?.endDate) query.append("endDate", filters.endDate);
+    if (filters?.page) query.append("page", filters.page.toString());
+    if (filters?.limit) query.append("limit", filters.limit.toString());
+
+    const response = await fetch(
+      `${this.baseURL}/admin/orders${query.toString() ? `?${query.toString()}` : ""}`,
+      { headers: this.getAuthHeaders() },
+    );
+
+    return this.handleResponse<PaginatedOrders>(response);
+  }
+
+  // Facebook/бусад сувгаар ирсэн захиалгыг админ гараар бүртгэнэ
+  async createManualOrder(data: CreateManualOrderRequest): Promise<Order> {
+    const response = await fetch(`${this.baseURL}/admin/orders/manual`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    return this.handleResponse<Order>(response);
+  }
+
+  // Гараар бүртгэсэн захиалгын мэдээлэл засах (харилцагчийн нэр/утас,
+  // хаяг, тэмдэглэл, төлөв, огноо гэх мэт)
+  async updateManualOrder(orderId: number, data: UpdateManualOrderRequest): Promise<Order> {
+    const response = await fetch(`${this.baseURL}/admin/orders/${orderId}`, {
+      method: "PATCH",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
     });
 
     return this.handleResponse<Order>(response);
