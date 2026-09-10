@@ -7,7 +7,7 @@ import { useToast } from "@/contexts/ToastContext";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import Link from "next/link";
-import { Users, ShoppingCart, Package, Image as ImageIcon } from "lucide-react";
+import { Users, ShoppingCart, Package, Image as ImageIcon, TrendingUp } from "lucide-react";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -54,6 +54,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     // { id: "dashboard", name: "Үндсэн самbar", icon: BarChart3, href: "/admin/dashboard" },
     { id: "users", name: "Хэрэглэгчид", icon: Users, href: "/admin/users" },
     { id: "orders", name: "Захиалга", icon: ShoppingCart, href: "/admin/orders" },
+    { id: "reports", name: "Орлого", icon: TrendingUp, href: "/admin/reports" },
     { id: "products", name: "Бүтээгдэхүүн", icon: Package, href: "/admin/products" },
     { id: "banners", name: "Баннер", icon: ImageIcon, href: "/admin/banners" },
   ];

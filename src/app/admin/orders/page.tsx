@@ -29,7 +29,8 @@ import {
 } from "lucide-react";
 import Loading from "@/components/Loading";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
+const DEFAULT_PAGE_SIZE = 20;
 
 interface StatusMeta {
   label: string;
@@ -104,6 +105,8 @@ function toDateInputValue(date: Date): string {
 interface ManualItemRow {
   key: string;
   productId: number | null;
+  // Хайлтын оролт болон сонгоогүй бол тэмдэглэлд орох чөлөөт бичвэр
+  query: string;
   quantity: number;
   unitPrice: number | "";
   selectedColor?: string;
@@ -113,14 +116,13 @@ interface ManualItemRow {
 let rowKeyCounter = 0;
 function emptyItemRow(): ManualItemRow {
   rowKeyCounter += 1;
-  return { key: `row-${rowKeyCounter}`, productId: null, quantity: 1, unitPrice: "" };
+  return { key: `row-${rowKeyCounter}`, productId: null, query: "", quantity: 1, unitPrice: "" };
 }
 
 interface OrderFormState {
   source: OrderSource;
   customerName: string;
   phone: string;
-  address: string;
   note: string;
   orderDate: string;
   status: OrderStatus;
@@ -132,7 +134,6 @@ function defaultFormState(): OrderFormState {
     source: "FACEBOOK",
     customerName: "",
     phone: "",
-    address: "",
     note: "",
     orderDate: toDateInputValue(new Date()),
     status: "PENDING",
@@ -158,6 +159,7 @@ export default function AdminOrdersPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
@@ -175,6 +177,17 @@ export default function AdminOrdersPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [form, setForm] = useState<OrderFormState>(defaultFormState());
   const [creating, setCreating] = useState(false);
+  const [openSearchRowKey, setOpenSearchRowKey] = useState<string | null>(null);
+
+  // Модал нээлттэй үед арын хуудас гулсахаас сэргийлж, mobile дээр
+  // scroll хийхэд гарч байсан зөрчлийг арилгана
+  useEffect(() => {
+    if (!showCreateModal && !selectedOrder && !selectedProduct) return;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showCreateModal, selectedOrder, selectedProduct]);
 
   // Хайлтын оролтыг debounce хийж 400мс идэвхгүй байвал л хайлт хийнэ
   useEffect(() => {
@@ -182,10 +195,10 @@ export default function AdminOrdersPage() {
     return () => clearTimeout(timeout);
   }, [searchInput]);
 
-  // Шүүлтүүр солигдоход хуудсыг эхлэл рүү буцаана
+  // Шүүлтүүр эсвэл хуудасны хэмжээ солигдоход хуудсыг эхлэл рүү буцаана
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, statusFilter, sourceFilter]);
+  }, [search, statusFilter, sourceFilter, pageSize]);
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -195,7 +208,7 @@ export default function AdminOrdersPage() {
         status: statusFilter !== "ALL" ? statusFilter : undefined,
         source: sourceFilter !== "ALL" ? sourceFilter : undefined,
         page: currentPage,
-        limit: PAGE_SIZE,
+        limit: pageSize,
       });
       setOrders(result.data);
       setTotal(result.total);
@@ -206,7 +219,7 @@ export default function AdminOrdersPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter, sourceFilter, currentPage, showToast]);
+  }, [search, statusFilter, sourceFilter, currentPage, pageSize, showToast]);
 
   useEffect(() => {
     fetchOrders();
@@ -312,6 +325,7 @@ export default function AdminOrdersPage() {
   const closeCreateModal = () => {
     setShowCreateModal(false);
     setForm(defaultFormState());
+    setOpenSearchRowKey(null);
   };
 
   const updateItemRow = (key: string, patch: Partial<ManualItemRow>) => {
@@ -328,10 +342,17 @@ export default function AdminOrdersPage() {
       : "";
     updateItemRow(key, {
       productId,
+      query: product?.name ?? "",
       unitPrice: effectivePrice,
       selectedColor: undefined,
       selectedSize: undefined,
     });
+  };
+
+  // Хайлтын бичвэр өөрчлөгдөхөд өмнө сонгосон бараа хүчингүй болно — дахин
+  // сонгох хэрэгтэй, эсвэл сонгохгүй орхивол бичсэн нэрээр чөлөөт бараа болно
+  const handleItemQueryChange = (key: string, query: string) => {
+    updateItemRow(key, { query, productId: null });
   };
 
   const addItemRow = () => {
@@ -345,7 +366,10 @@ export default function AdminOrdersPage() {
     }));
   };
 
-  const formTotal = form.items.reduce(
+  // Бараа сонгосон эсвэл чөлөөт нэр бичсэн мөрүүд л захиалгад орно —
+  // бүрмөсөн хоосон мөр алгасагдана
+  const submittableItems = form.items.filter(row => row.productId || row.query.trim());
+  const formTotal = submittableItems.reduce(
     (sum, row) => sum + (Number(row.unitPrice) || 0) * (Number(row.quantity) || 0),
     0,
   );
@@ -357,18 +381,28 @@ export default function AdminOrdersPage() {
       showToast("Хэрэглэгчийн нэр болон утасны дугаараа бөглөнө үү", "error");
       return;
     }
-    if (form.items.some(row => !row.productId || row.quantity < 1)) {
-      showToast("Бараа бүрт барааны нэр болон тоо ширхэгийг зөв бөглөнө үү", "error");
+    if (submittableItems.length === 0) {
+      showToast("Дор хаяж нэг бараа сонгох эсвэл нэрийг нь бичнэ үү", "error");
       return;
     }
 
-    const items: ManualOrderItem[] = form.items.map(row => ({
-      productId: row.productId as number,
-      quantity: row.quantity,
-      unitPrice: row.unitPrice === "" ? undefined : Number(row.unitPrice),
-      selectedColor: row.selectedColor || undefined,
-      selectedSize: row.selectedSize || undefined,
-    }));
+    // Бараа сонгосон бол каталогийн productId-гаар, сонгоогүй бол бичсэн
+    // нэрээр (customName) — аль алиныг нь захиалгад бодит мөр болгож илгээнэ
+    const items: ManualOrderItem[] = submittableItems.map(row =>
+      row.productId
+        ? {
+            productId: row.productId,
+            quantity: row.quantity,
+            unitPrice: row.unitPrice === "" ? undefined : Number(row.unitPrice),
+            selectedColor: row.selectedColor || undefined,
+            selectedSize: row.selectedSize || undefined,
+          }
+        : {
+            customName: row.query.trim(),
+            quantity: row.quantity,
+            unitPrice: row.unitPrice === "" ? undefined : Number(row.unitPrice),
+          },
+    );
 
     setCreating(true);
     try {
@@ -376,7 +410,6 @@ export default function AdminOrdersPage() {
         source: form.source,
         customerName: form.customerName.trim(),
         phone: form.phone.trim(),
-        address: form.address.trim() || undefined,
         note: form.note.trim() || undefined,
         items,
         status: form.status,
@@ -687,33 +720,47 @@ export default function AdminOrdersPage() {
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white rounded-lg shadow px-4 py-3">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white rounded-lg shadow px-4 py-3">
+            <div className="flex items-center gap-3">
               <p className="text-sm text-gray-500">
-                {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, total)} /{" "}
+                {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, total)} /{" "}
                 {total}
               </p>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1.5 text-sm rounded-md border border-gray-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+              <label className="flex items-center gap-2 text-sm text-gray-500">
+                Хуудсанд:
+                <select
+                  value={pageSize}
+                  onChange={e => setPageSize(Number(e.target.value))}
+                  className="border border-gray-300 rounded-md px-2 py-1 text-sm bg-white focus:ring-2 focus:ring-mega-500 focus:border-mega-500"
                 >
-                  Өмнөх
-                </button>
-                <span className="px-3 text-sm text-gray-600">
-                  {currentPage} / {totalPages}
-                </span>
-                <button
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 text-sm rounded-md border border-gray-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
-                >
-                  Дараах
-                </button>
-              </div>
+                  {PAGE_SIZE_OPTIONS.map(size => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
-          )}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 text-sm rounded-md border border-gray-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+              >
+                Өмнөх
+              </button>
+              <span className="px-3 text-sm text-gray-600">
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 text-sm rounded-md border border-gray-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+              >
+                Дараах
+              </button>
+            </div>
+          </div>
         </>
       )}
 
@@ -882,7 +929,7 @@ export default function AdminOrdersPage() {
                       </div>
                       <div className="mt-2 sm:mt-0">
                         <div className="text-sm font-semibold text-gray-900">
-                          {item.product?.name || "-"}
+                          {item.product?.name || item.customName || "-"}
                           {(item.selectedColor || item.selectedSize) && (
                             <span className="text-gray-500 font-normal">
                               {" "}
@@ -1006,15 +1053,19 @@ export default function AdminOrdersPage() {
       {/* Create Manual Order Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-          <div className="bg-white rounded-lg p-4 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
+          <div className="bg-white rounded-lg w-full max-w-2xl max-h-[92dvh] flex flex-col overflow-hidden">
+            <div className="flex justify-between items-center px-4 sm:px-8 py-4 sm:py-6 border-b border-gray-100 shrink-0">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Захиалга бүртгэх</h2>
               <button onClick={closeCreateModal} className="text-gray-500 hover:text-gray-700">
                 <X size={24} />
               </button>
             </div>
 
-            <form onSubmit={handleCreateOrder} className="space-y-8">
+            <form
+              id="manual-order-form"
+              onSubmit={handleCreateOrder}
+              className="flex-1 min-h-0 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] px-4 sm:px-8 py-4 sm:py-6 space-y-8"
+            >
               {/* Хэрэглэгчийн мэдээлэл */}
               <div className="space-y-4">
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-2">
@@ -1045,17 +1096,6 @@ export default function AdminOrdersPage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mega-500"
                     />
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Хаяг <span className="text-gray-400 font-normal">(заавал биш)</span>
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={form.address}
-                    onChange={e => setForm({ ...form, address: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mega-500"
-                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1140,24 +1180,60 @@ export default function AdminOrdersPage() {
                   {form.items.map(row => {
                     const product = products.find(p => p.id === row.productId);
                     const rowTotal = (Number(row.unitPrice) || 0) * (Number(row.quantity) || 0);
+                    const trimmedQuery = row.query.trim();
+                    const suggestions = trimmedQuery
+                      ? products
+                          .filter(p => p.name.toLowerCase().includes(trimmedQuery.toLowerCase()))
+                          .slice(0, 8)
+                      : [];
                     return (
                       <div key={row.key} className="border rounded-lg p-3 space-y-3">
                         <div className="flex flex-col sm:flex-row gap-3">
-                          <select
-                            required
-                            value={row.productId ?? ""}
-                            onChange={e => handleProductSelect(row.key, Number(e.target.value))}
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mega-500 bg-white text-sm"
-                          >
-                            <option value="" disabled>
-                              -- Бараа сонгох --
-                            </option>
-                            {products.map(p => (
-                              <option key={p.id} value={p.id}>
-                                {p.name} ({formatPrice(p.salePrice || p.price)})
-                              </option>
-                            ))}
-                          </select>
+                          <div className="flex-1 relative">
+                            <input
+                              type="text"
+                              placeholder="Бараа хайх... эсвэл олдохгүй бол чөлөөтэй бичнэ үү"
+                              value={row.query}
+                              onChange={e => handleItemQueryChange(row.key, e.target.value)}
+                              onFocus={() => setOpenSearchRowKey(row.key)}
+                              onBlur={() =>
+                                setOpenSearchRowKey(prev => (prev === row.key ? null : prev))
+                              }
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mega-500 bg-white text-sm"
+                            />
+                            {openSearchRowKey === row.key && trimmedQuery && (
+                              <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto overscroll-contain">
+                                {suggestions.length > 0 ? (
+                                  suggestions.map(p => (
+                                    <button
+                                      type="button"
+                                      key={p.id}
+                                      onMouseDown={e => {
+                                        e.preventDefault();
+                                        handleProductSelect(row.key, p.id);
+                                        setOpenSearchRowKey(null);
+                                      }}
+                                      className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                                    >
+                                      {p.name}{" "}
+                                      <span className="text-gray-400">
+                                        ({formatPrice(p.salePrice || p.price)})
+                                      </span>
+                                    </button>
+                                  ))
+                                ) : (
+                                  <div className="px-3 py-2 text-xs text-gray-400">
+                                    Тохирох бараа олдсонгүй — бичсэн нэрээр шууд бүртгэгдэнэ
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {!row.productId && trimmedQuery && (
+                              <p className="mt-1 text-xs text-amber-600">
+                                Каталогт байхгүй тул чөлөөт бараа болж бүртгэгдэнэ
+                              </p>
+                            )}
+                          </div>
                           <button
                             type="button"
                             onClick={() => removeItemRow(row.key)}
@@ -1227,7 +1303,6 @@ export default function AdminOrdersPage() {
                               type="number"
                               min={0}
                               step={100}
-                              required
                               value={row.unitPrice}
                               onChange={e =>
                                 updateItemRow(row.key, {
@@ -1253,24 +1328,25 @@ export default function AdminOrdersPage() {
                   <span className="text-xl font-bold text-mega-700">{formatPrice(formTotal)}</span>
                 </div>
               </div>
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={closeCreateModal}
-                  className="px-4 py-2 bg-gray-100 rounded-lg text-sm font-medium hover:bg-gray-200"
-                >
-                  Болих
-                </button>
-                <button
-                  type="submit"
-                  disabled={creating}
-                  className="px-6 py-2 bg-mega-600 hover:bg-mega-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
-                >
-                  {creating ? "Бүртгэж байна..." : "Захиалга бүртгэх"}
-                </button>
-              </div>
             </form>
+
+            <div className="flex justify-end gap-3 px-4 sm:px-8 py-4 border-t border-gray-100 shrink-0">
+              <button
+                type="button"
+                onClick={closeCreateModal}
+                className="px-4 py-2 bg-gray-100 rounded-lg text-sm font-medium hover:bg-gray-200"
+              >
+                Болих
+              </button>
+              <button
+                type="submit"
+                form="manual-order-form"
+                disabled={creating}
+                className="px-6 py-2 bg-mega-600 hover:bg-mega-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+              >
+                {creating ? "Бүртгэж байна..." : "Захиалга бүртгэх"}
+              </button>
+            </div>
           </div>
         </div>
       )}

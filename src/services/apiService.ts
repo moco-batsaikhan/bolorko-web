@@ -67,14 +67,16 @@ export interface UpdateCartItemRequest {
 export interface OrderItem {
   id: number;
   orderId: number;
-  productId: number;
+  productId: number | null;
+  // Каталогт байхгүй, гараар бичсэн барааны нэр (productId хоосон үед)
+  customName?: string | null;
   quantity: number;
   price: string;
   unitPrice?: string;
   selectedColor?: string | null;
   selectedSize?: string | null;
   createdAt: string;
-  product: Product;
+  product: Product | null;
 }
 
 export interface ShippingAddress {
@@ -160,7 +162,10 @@ export interface UpdateOrderStatusRequest {
 }
 
 export interface ManualOrderItem {
-  productId: number;
+  // Каталогийн бараа сонгосон бол. Хоосон бол customName заавал байна.
+  productId?: number;
+  // Каталогт байхгүй, гараар бичсэн барааны нэр (productId хоосон үед)
+  customName?: string;
   quantity: number;
   // Facebook дээр тохирсон үнэ — хоосон бол барааны идэвхтэй үнийг ашиглана
   unitPrice?: number;
@@ -199,6 +204,44 @@ export interface PaginatedOrders {
   total: number;
   page: number;
   pages: number;
+}
+
+export enum ReportGroupBy {
+  DAY = "day",
+  WEEK = "week",
+  MONTH = "month",
+}
+
+export interface ReportFilterParams {
+  startDate?: string;
+  endDate?: string;
+  groupBy?: ReportGroupBy;
+}
+
+export interface ReportSourceBreakdown {
+  source: OrderSource;
+  orderCount: number;
+  revenue: number;
+}
+
+export interface ReportStatusBreakdown {
+  status: OrderStatus;
+  orderCount: number;
+}
+
+export interface ReportTimelinePoint {
+  period: string;
+  orderCount: number;
+  revenue: number;
+}
+
+export interface ReportSummary {
+  filters: { startDate: string | null; endDate: string | null; groupBy: ReportGroupBy };
+  totalRevenue: number;
+  orderCount: number;
+  bySource: ReportSourceBreakdown[];
+  byStatus: ReportStatusBreakdown[];
+  timeline: ReportTimelinePoint[];
 }
 
 export interface ProductCategory {
@@ -1176,6 +1219,43 @@ class ApiService {
     });
 
     return this.handleResponse<Order>(response);
+  }
+
+  private buildReportQuery(filters?: ReportFilterParams): string {
+    const query = new URLSearchParams();
+    if (filters?.startDate) query.append("startDate", filters.startDate);
+    if (filters?.endDate) query.append("endDate", filters.endDate);
+    if (filters?.groupBy) query.append("groupBy", filters.groupBy);
+    return query.toString();
+  }
+
+  // Орлогын тайлан — эх сурвалж/төлвөөр задаргаа, өдөр/долоо хоног/сараар
+  // цуваа (гараар бүртгэсэн болон вэбсайтын захиалгыг хамтад нь хардаг)
+  async getAdminReportSummary(filters?: ReportFilterParams): Promise<ReportSummary> {
+    const qs = this.buildReportQuery(filters);
+    const response = await fetch(
+      `${this.baseURL}/admin/reports/summary${qs ? `?${qs}` : ""}`,
+      { headers: this.getAuthHeaders() },
+    );
+
+    return this.handleResponse<ReportSummary>(response);
+  }
+
+  // Тухайн хугацааны захиалгуудыг CSV файлаар татах
+  async exportAdminReportCsv(filters?: Pick<ReportFilterParams, "startDate" | "endDate">): Promise<Blob> {
+    const qs = this.buildReportQuery(filters);
+    const response = await fetch(
+      `${this.baseURL}/admin/reports/export${qs ? `?${qs}` : ""}`,
+      { headers: this.getAuthHeaders() },
+    );
+
+    if (!response.ok) {
+      throw new ApiError(`Тайлан татахад алдаа гарлаа (${response.status})`, {
+        status: response.status,
+      });
+    }
+
+    return response.blob();
   }
 
   async createStorePayLoan(data: CreateStorePayLoanRequest): Promise<StorePayLoan> {

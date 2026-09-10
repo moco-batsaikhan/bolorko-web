@@ -235,7 +235,7 @@ export default function OrdersPage() {
                             className="flex items-center space-x-4"
                           >
                             <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center relative overflow-hidden">
-                              {item.product.images && item.product.images[0] ? (
+                              {item.product?.images && item.product.images[0] ? (
                                 <Image
                                   className="object-cover rounded-lg"
                                   src={
@@ -254,7 +254,7 @@ export default function OrdersPage() {
                             </div>
                             <div className="flex-grow min-w-0">
                               <p className="font-medium text-gray-900 truncate">
-                                {item.product?.name || "Бүтээгдэхүүн"}
+                                {item.product?.name || item.customName || "Бүтээгдэхүүн"}
                                 {(item.selectedColor || item.selectedSize) && (
                                   <span className="text-gray-500 font-normal">
                                     {" "}
@@ -266,12 +266,12 @@ export default function OrdersPage() {
                               </p>
                               <p className="text-sm text-gray-500">
                                 Тоо ширхэг: {item.quantity} ×{" "}
-                                {formatPrice(item.product.price)}
+                                {formatPrice(item.product?.price ?? item.price)}
                               </p>
                             </div>
                             <div className="text-sm font-medium text-gray-900">
                               {formatPrice(
-                                parseFloat(item.product.price) * item.quantity
+                                parseFloat(item.product?.price ?? item.price) * item.quantity
                               )}
                             </div>
                           </div>
