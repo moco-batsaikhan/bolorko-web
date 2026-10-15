@@ -716,11 +716,23 @@ class ApiService {
     return response.json().catch(() => undefined);
   }
 
+  // Админы жагсаалт — нийтийн /products нь идэвхгүй болон үнэ тавиагүй
+  // бараануудыг нуудаг тул админ тал тусдаа endpoint ашиглана.
+  // Сервер шинэчлэгдээгүй (404) тохиолдолд хуучин замаар уншина.
   async getAllProducts(): Promise<Product[]> {
-    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.PRODUCTS.ALL}`, {
+    const response = await fetch(`${this.baseURL}${API_ENDPOINTS.PRODUCTS.ADMIN_ALL}`, {
       method: "GET",
       headers: this.getAuthHeaders(),
     });
+
+    if (response.status === 404) {
+      const fallbackResponse = await fetch(`${this.baseURL}${API_ENDPOINTS.PRODUCTS.ALL}`, {
+        method: "GET",
+        headers: this.getAuthHeaders(),
+      });
+
+      return this.handleResponse<Product[]>(fallbackResponse);
+    }
 
     return this.handleResponse<Product[]>(response);
   }

@@ -147,7 +147,9 @@ export default function AdminProducts() {
   const [savingRowId, setSavingRowId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilterId, setCategoryFilterId] = useState<number | "all">("all");
-  const [quickFilter, setQuickFilter] = useState<"all" | "needsAttention" | "sale">("all");
+  const [quickFilter, setQuickFilter] = useState<
+    "all" | "needsAttention" | "sale" | "inactive"
+  >("all");
   // Бараа (PRODUCT) болон зар/мэдээлэл (INFO) постуудыг тусад нь харуулна
   const [productTypeTab, setProductTypeTab] = useState<"PRODUCT" | "INFO">("PRODUCT");
   const [currentPage, setCurrentPage] = useState(1);
@@ -456,6 +458,9 @@ export default function AdminProducts() {
     if (quickFilter === "sale") {
       return !!product.discountPercentage;
     }
+    if (quickFilter === "inactive") {
+      return product.status === "INACTIVE";
+    }
     return true;
   });
 
@@ -463,6 +468,9 @@ export default function AdminProducts() {
   const infoTabCount = products.filter(p => getProductType(p) === "INFO").length;
   const needsAttentionCount = products.filter(
     p => getProductType(p) === productTypeTab && (parseFloat(p.price) <= 0 || p.stock <= 0),
+  ).length;
+  const inactiveCount = products.filter(
+    p => getProductType(p) === productTypeTab && p.status === "INACTIVE",
   ).length;
 
   // Хуудаслалт (client-side) — сервер тал одоогоор page/limit дэмждэггүй
@@ -923,6 +931,18 @@ export default function AdminProducts() {
                 >
                   Хямдралтай
                 </button>
+                <button
+                  onClick={() => setQuickFilter("inactive")}
+                  className={`inline-flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    quickFilter === "inactive"
+                      ? "bg-red-600 text-white"
+                      : "bg-red-50 text-red-700 hover:bg-red-100"
+                  }`}
+                  title="Сайт дээр нуугдсан (идэвхгүй) бараанууд"
+                >
+                  <EyeOff size={14} />
+                  Идэвхгүй ({inactiveCount})
+                </button>
               </div>
             </div>
           </div>
@@ -963,7 +983,13 @@ export default function AdminProducts() {
                 {paginatedProducts.map(product => (
                   <tr
                     key={product.id}
-                    className={`hover:bg-gray-50 ${isRowDirty(product) ? "bg-yellow-50" : ""}`}
+                    className={`hover:bg-gray-50 ${
+                      isRowDirty(product)
+                        ? "bg-yellow-50"
+                        : product.status === "INACTIVE"
+                          ? "bg-gray-100"
+                          : ""
+                    }`}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -1022,6 +1048,19 @@ export default function AdminProducts() {
                               >
                                 <ExternalLink size={13} />
                               </a>
+                            )}
+                            {/* Утсан дээр "Төлөв" багана хажуу тийш гүйлгэж байж
+                                харагддаг тул нэрийн хажууд шууд харуулж, дарахад
+                                идэвхжүүлэх боломжтой болгов */}
+                            {product.status === "INACTIVE" && (
+                              <button
+                                type="button"
+                                onClick={() => handleToggleStatus(product)}
+                                className="lg:hidden inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800 whitespace-nowrap"
+                                title="Дарж идэвхтэй болгоно"
+                              >
+                                <EyeOff size={10} /> Идэвхгүй
+                              </button>
                             )}
                           </div>
                           <div className="text-sm text-gray-500">

@@ -28,6 +28,8 @@ export const API_ENDPOINTS = {
   },
   PRODUCTS: {
     ALL: "/products",
+    // Админ жагсаалт — идэвхгүй болон үнэгүй бараанууд ч ирнэ
+    ADMIN_ALL: "/products/admin/all",
     CREATE: "/products",
     UPDATE: "/products",
     DELETE: "/products",

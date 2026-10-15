@@ -229,7 +229,16 @@ export default function AdminOrdersPage() {
     if (productsLoaded) return;
     try {
       const all = await apiService.getAllProducts();
-      setProducts(all.filter(p => (p.postType ?? "PRODUCT") === "PRODUCT"));
+      // Гар захиалгад зөвхөн зарагдах боломжтой бараа — идэвхгүй болон
+      // үнэ тавиагүй бараануудыг сонголтод оруулахгүй
+      setProducts(
+        all.filter(
+          p =>
+            (p.postType ?? "PRODUCT") === "PRODUCT" &&
+            p.status !== "INACTIVE" &&
+            parseFloat(p.price) > 0,
+        ),
+      );
       setProductsLoaded(true);
     } catch (error) {
       console.error("Failed to fetch products:", error);
